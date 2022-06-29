@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>field</title>
+    <link href="./src/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+    <div id="top">
+        <div id="navBar">
+            <div id="navButtons">
+                <div id="backButton">back</div>
+                <div id="forwardButton">forward</div>
+                <div id="reloadButton">reload</div>
+            </div>
+            <div id="currentPath">/test/shot/cg/0010/fx</div>
+            <div id="loginButton">login</div>
+            <div id="currentUser"></div>
+            <div id="logoutButton">(logout)</div>
+        </div>
+        <div id="optionBar">
+            <input id="assignedCheckBox" type="checkbox"><label for="assignedCheckBox">assigned</label>
+        </div>
+    </div>
+    <div id="middle">
+        <div id="left">
+            <div id="tabSwitchButtons">
+                <div class="tabSwitchButton">Pinned</div>
+                <div class="tabSwitchButton">Recent</div>
+            </div>
+            <div id="pinned" class="bookmarkList">
+                <div class="entryBookmark">/test/shot/cg/0010/match</div>
+                <div class="entryBookmark">/test/shot/cg/0010/ani</div>
+                <div class="entryBookmark">/test/shot/cg/0010/lgt</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/loooooooooooooooong_name</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+                <div class="entryBookmark">/test/shot/cg/0010/fx</div>
+            </div>
+            <div id="recent" class="bookmarkList"></div>
+        </div>
+        <div id="right">
+            <div id="entryList" class="list">
+                <div id="newElementField">
+                    <input id="newElementFieldInput" placeholder="main" />
+                    <span id="newElementFieldProgram"></span>
+                </div>
+            </div>
+            <div id="listsBottomBar">
+                <div id="addProgramLinkPopup" class="hidden"></div>
+                <div id="addProgramLink" class="link">add a program</div>
+                <div style="flex:1;"></div>
+                <div id="newElementButtons"></div>
+            </div>
+        </div>
+    </div>
+    <div id="bottom">
+        <div id="statusBar">done</div>
+    </div>
+</div>
+<script src="./src/main.ts" type="module"></script>
+</body>
+</html>

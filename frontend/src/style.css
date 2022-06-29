@@ -1,0 +1,186 @@
+body {
+    margin: 0;
+}
+
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#top {
+}
+
+#navBar {
+    padding: 0.5rem;
+    display: flex;
+    border-bottom: 1px solid #888888;
+}
+
+#optionBar {
+    padding: 0.25rem 0.5rem;
+    display: flex;
+    border-bottom: 1px solid #888888;
+}
+
+#assignedCheckBox:disabled + label {
+    color: #888;
+}
+
+#middle {
+    flex: 1;
+    height: 10rem;
+    border-bottom: 1px solid #888888;
+    display: flex;
+    width: 100%;
+}
+
+#bottom {
+    padding: 0.25rem 0.5rem;
+}
+
+#left {
+    border-right: 1px solid #888888;
+    width: 12rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#right {
+    padding: 1rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#navButtons {
+    width:12rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+#currentPath {
+    font-size: 1.2rem;
+    flex: 1;
+}
+
+#tabSwitchButtons {
+    display: flex;
+    text-align: center;
+    gap: 1px;
+    padding-bottom: 1px;
+    background-color: #888888;
+}
+
+#forgeRoot {
+    color: #666666;
+}
+
+.tabSwitchButton {
+    flex: 1;
+    background-color: white;
+}
+
+.bookmarkList {
+    width: 12rem;
+    overflow-y: auto;
+    word-break: break-word;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+.entryBookmark:hover {
+    text-decoration: underline;
+}
+
+#pinned {
+}
+
+#recent {
+    display: none;
+}
+
+#lists {
+    flex: 1;
+    display: flex;
+    gap: 0.7rem;
+}
+
+.list {
+    border: 1px solid #888888;
+    overflow-y: auto;
+}
+
+#entryList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.entryList:not(:first-child) {
+    border-left: 1px solid #888888;
+}
+
+#elemList {
+    flex: 1;
+}
+
+.hidden {
+    display: none;
+}
+
+.button {
+    border: 1px solid #444;
+}
+
+.link {
+    text-decoration: underline;
+    color: #224488;
+    cursor: pointer;
+}
+
+#listsBottomBar {
+    position: relative;
+    display: flex;
+    padding: 0.5rem 0 0 0;
+}
+
+#addProgramLinkPopup {
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 2px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#addProgramLinkPopup.hidden {
+    visibility: hidden;
+}
+
+.addProgramPopupItem {
+}
+
+#newElementButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.newElementButton {
+    border: 1px solid black;
+    border-radius: 2px;
+    padding: 4px;
+}
+
+#right:not(.leaf) .newElementButton {
+    opacity: 0.3;
+}
+
+#statusBar {
+    height: 1rem;
+}
+
+#statusBar.error {
+    color: #f44;
+}
