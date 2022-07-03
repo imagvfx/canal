@@ -40,10 +40,10 @@ window.onclick = async function(ev) {
 	}
 	let loginButton = closest(target, "#loginButton");
 	if (loginButton) {
-		await App.Login();
-		await resetProgramsInUse();
-		await App.GoTo("/");
 		try {
+			await App.Login();
+			await resetProgramsInUse();
+			await App.GoTo("/");
 			redrawAll();
 		} catch (err: any) {
 			logError(err);

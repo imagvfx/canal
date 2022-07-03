@@ -17,14 +17,9 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type Site struct {
-	Host     string
-	WorkDir  string
-	WorkFile string
-}
-
 type Config struct {
-	Site Site
+	Host     string
+	SiteElem string
 }
 
 func mustReadConfig() *Config {
@@ -244,7 +239,7 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) OpenLoginPage(key string) error {
-	cmd := exec.Command("open", a.config.Site.Host+"/login?app_session_key="+key)
+	cmd := exec.Command("open", a.config.Host+"/login?app_session_key="+key)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -316,7 +311,7 @@ type forgeUserSettingResponse struct {
 }
 
 func (a *App) getUserSetting() (*forgeUserSetting, error) {
-	resp, err := http.PostForm(a.config.Site.Host+"/api/get-user-setting", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
 		"user":    {a.user},
 	})
@@ -348,7 +343,7 @@ type forgeAPIErrorResponse struct {
 }
 
 func (a *App) arrangeProgramInUse(prog string, at int) error {
-	resp, err := http.PostForm(a.config.Site.Host+"/api/update-user-setting", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
 		"session":                {a.session},
 		"update_programs_in_use": {"1"},
 		"program":                {prog},
@@ -388,7 +383,7 @@ type Environ struct {
 }
 
 func (a *App) EntryEnvirons(path string) ([]Environ, error) {
-	resp, err := http.PostForm(a.config.Site.Host+"/api/entry-environs", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
 		"session": {a.session},
 		"path":    {path},
 	})
@@ -408,15 +403,10 @@ func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 }
 
 func (a *App) NewElement(path, name, prog string) error {
-	envs, err := a.EntryEnvirons(path)
+	_, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
 	}
 	// fill template
-	workDir := a.config.Site.WorkDir
-	workFile := a.config.Site.WorkFile
-	runCommand := []string{"blender", workDir + "/" + workFile}
-	fmt.Println(envs)
-	fmt.Println(runCommand)
 	return nil
 }

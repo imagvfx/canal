@@ -1,5 +1,3 @@
-[Site]
 Host = "https://imagvfx.com"
-WorkDir = "/mnt/drnss/show/{{env 'SHOW'}}/{{env 'CATEG'}}/{{env 'GROUP'}}/{{env 'UNIT'}}/part/{{env 'PART'}}"
-workFile = "{{env 'GROUP'}}_{{env 'UNIT'}}_{{env 'PART'}}_{{env 'ELEM'}}_{{env 'VER'}}.{{env 'PROG_EXT'}}"
+SiteElem = "/kzmd"
 
