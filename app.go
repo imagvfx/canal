@@ -248,7 +248,7 @@ func (a *App) OpenLoginPage(key string) error {
 }
 
 func (a *App) WaitLogin(key string) error {
-	resp, err := http.PostForm("https://imagvfx.com/api/app-login", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/app-login", url.Values{
 		"key": {key},
 	})
 	if err != nil {
