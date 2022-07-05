@@ -136,9 +136,8 @@ function clearLog() {
 }
 
 function logError(err: any) {
-	console.log("here")
 	console.log(err);
-	let e = err.split("\n").slice(0);
+	let e = err.toString().split("\n").slice(0);
 	let bar = querySelector("#statusBar");
 	bar.innerText = e;
 }

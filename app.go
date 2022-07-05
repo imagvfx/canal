@@ -8,8 +8,11 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -35,6 +38,7 @@ func mustReadConfig() *Config {
 type App struct {
 	ctx          context.Context
 	config       *Config
+	programs     []string
 	progsInUse   []string
 	currentPath  string
 	history      []string
@@ -42,6 +46,7 @@ type App struct {
 	assigned     []*Entry
 	isLeaf       map[string]bool
 	user         string
+	userSetting  *userSetting
 	session      string
 	assignedOnly bool
 }
@@ -115,6 +120,7 @@ type SearchResponse struct {
 }
 
 type Entry struct {
+	Type string
 	Path string
 }
 
@@ -123,20 +129,22 @@ func (a *App) ListEntries() ([]string, error) {
 	if a.assignedOnly {
 		paths = a.subAssigned()
 	} else {
-		subs, err := a.subEntries()
+		subs, err := a.subEntries(a.currentPath)
 		if err != nil {
 			return nil, err
 		}
-		paths = subs
+		for _, e := range subs {
+			paths = append(paths, e.Path)
+		}
 	}
 	sort.Strings(paths)
 	return paths, nil
 }
 
-func (a *App) subEntries() ([]string, error) {
+func (a *App) subEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm("https://imagvfx.com/api/sub-entries", url.Values{
 		"session": {a.session},
-		"path":    {a.currentPath},
+		"path":    {path},
 	})
 	if err != nil {
 		return nil, err
@@ -150,11 +158,7 @@ func (a *App) subEntries() ([]string, error) {
 	if r.Err != "" {
 		return nil, fmt.Errorf(r.Err)
 	}
-	paths := make([]string, 0)
-	for _, e := range r.Msg {
-		paths = append(paths, e.Path)
-	}
-	return paths, nil
+	return r.Msg, nil
 }
 
 func (a *App) subAssigned() []string {
@@ -230,6 +234,14 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = a.getUserSetting()
+	if err != nil {
+		return "", err
+	}
+	err = a.getPrograms()
+	if err != nil {
+		return "", err
+	}
 	err = a.searchAssigned()
 	if err != nil {
 		return "", err
@@ -296,46 +308,70 @@ func GenerateRandomString(n int) (string, error) {
 	return string(ret), nil
 }
 
-func (a *App) Programs() []string {
-	// TODO: get available program list
-	return []string{"blender", "nuke"}
+type ProgramInfo struct {
+	Programs []Program
 }
 
-type forgeUserSetting struct {
+type Program struct {
+	Name string
+	Ext  string
+	Exec string
+}
+
+func (a *App) getPrograms() error {
+	ents, err := a.subEntries(a.config.SiteElem)
+	if err != nil {
+		return err
+	}
+	a.programs = make([]string, 0)
+	for _, e := range ents {
+		if e.Type == "program" {
+			a.programs = append(a.programs, path.Base(e.Path))
+		}
+	}
+	sort.Strings(a.programs)
+	return nil
+}
+
+func (a *App) Programs() []string {
+	return a.programs
+}
+
+type userSetting struct {
 	ProgramsInUse []string
 }
 
 type forgeUserSettingResponse struct {
-	Msg *forgeUserSetting
+	Msg *userSetting
 	Err string
 }
 
-func (a *App) getUserSetting() (*forgeUserSetting, error) {
+func (a *App) getUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
 		"user":    {a.user},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	r := forgeUserSettingResponse{}
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&r)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
+		return fmt.Errorf(r.Err)
 	}
-	return r.Msg, nil
+	a.userSetting = r.Msg
+	return nil
 }
 
 func (a *App) ProgramsInUse() ([]string, error) {
-	setting, err := a.getUserSetting()
-	if err != nil {
-		return nil, err
+	if a.userSetting == nil {
+		return []string{}, nil
 	}
-	return setting.ProgramsInUse, nil
+	return a.userSetting.ProgramsInUse, nil
 }
 
 type forgeAPIErrorResponse struct {
@@ -382,6 +418,62 @@ type Environ struct {
 	Eval string
 }
 
+// getEnv get value of a environment variable from `env`.
+// It returns an empty string if it does not find the variable.
+func getEnv(key string, env []string) string {
+	for i := len(env) - 1; i >= 0; i-- {
+		e := env[i]
+		kv := strings.SplitN(e, "=", -1)
+		if len(kv) != 2 {
+			continue
+		}
+		k := strings.TrimSpace(kv[0])
+		v := strings.TrimSpace(kv[1])
+		if k == key {
+			return v
+		}
+	}
+	return ""
+}
+
+// evalEnvString fills environment variables of a string.
+func evalEnvString(v string, env []string) string {
+	reA := regexp.MustCompile(`[$]\w+`)
+	reB := regexp.MustCompile(`[$][{]\w+[}]`)
+	for {
+		a := reA.FindStringIndex(v)
+		b := reB.FindStringIndex(v)
+		if a == nil && b == nil {
+			break
+		}
+		var idxs []int
+		if a != nil && b != nil {
+			if a[0] < b[0] {
+				idxs = a
+			} else {
+				idxs = b
+			}
+		} else {
+			if a != nil {
+				idxs = a
+			}
+			if b != nil {
+				idxs = b
+			}
+		}
+		s := idxs[0]
+		e := idxs[1]
+		pre := v[:s]
+		post := v[e:]
+		envk := v[s+1 : e]
+		envk = strings.TrimPrefix(envk, "{")
+		envk = strings.TrimSuffix(envk, "}")
+		envv := getEnv(envk, env)
+		v = pre + envv + post
+	}
+	return v
+}
+
 func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
 		"session": {a.session},
@@ -403,10 +495,36 @@ func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 }
 
 func (a *App) NewElement(path, name, prog string) error {
-	_, err := a.EntryEnvirons(path)
+	env := os.Environ()
+	envs, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
 	}
-	// fill template
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	envs, err = a.EntryEnvirons(a.config.SiteElem + "/" + prog)
+	if err != nil {
+		return err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	env = append(env, "ELEM="+name)
+	env = append(env, "VER=v001")
+	scene := evalEnvString(getEnv("SCENE", env), env)
+	err = os.MkdirAll(filepath.Dir(scene), 0755)
+	if err != nil {
+		return err
+	}
+	exe := getEnv("EXE", env)
+	cmd := exec.Command(exe, scene)
+	cmd.Env = env
+	b, err := cmd.CombinedOutput()
+	out := string(b)
+	fmt.Println(out)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return nil
 }
