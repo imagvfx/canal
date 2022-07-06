@@ -184,3 +184,7 @@ body {
 #statusBar.error {
     color: #f44;
 }
+
+.entry.selected {
+    background-color: #AAA;
+}

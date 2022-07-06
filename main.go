@@ -23,6 +23,7 @@ func main() {
 		OnStartup: app.startup,
 		Bind: []interface{}{
 			app,
+			&Elem{},
 		},
 	})
 

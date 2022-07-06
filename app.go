@@ -70,6 +70,10 @@ func (a *App) CurrentPath() string {
 	return a.currentPath
 }
 
+func (a *App) AtLeaf() bool {
+	return a.isLeaf[a.currentPath]
+}
+
 // GoTo goes to a path.
 func (a *App) GoTo(pth string) {
 	if pth == "" {
@@ -126,13 +130,6 @@ type Entry struct {
 
 func (a *App) ListEntries() ([]string, error) {
 	var paths []string
-	if a.isLeaf[a.currentPath] {
-		elems, err := a.listElements(a.currentPath)
-		if err != nil {
-			return nil, err
-		}
-		return elems, nil
-	}
 	if a.assignedOnly {
 		paths = a.subAssigned()
 	} else {
@@ -319,6 +316,7 @@ type Program struct {
 	Name   string
 	Ext    string
 	Create string
+	Open   string
 }
 
 func (a *App) getProgramInfo() error {
@@ -340,9 +338,10 @@ func (a *App) getProgramInfo() error {
 			for _, e := range envs {
 				if e.Name == "EXT" {
 					p.Ext = e.Eval
-				}
-				if e.Name == "CREATE" {
+				} else if e.Name == "CREATE" {
 					p.Create = e.Eval
+				} else if e.Name == "OPEN" {
+					p.Open = e.Eval
 				}
 			}
 			a.programs = append(a.programs, p)
@@ -564,10 +563,12 @@ func (a *App) NewElement(path, name, prog string) error {
 
 type Elem struct {
 	Name     string
+	Program  string
 	Versions []string
 }
 
-func (a *App) listElements(path string) ([]string, error) {
+func (a *App) ListElements() ([]*Elem, error) {
+	path := a.currentPath
 	env := os.Environ()
 	envs, err := a.EntryEnvirons(path)
 	if err != nil {
@@ -583,35 +584,105 @@ func (a *App) listElements(path string) ([]string, error) {
 	for _, e := range envs {
 		env = append(env, e.Name+"="+e.Eval)
 	}
+	env = append(env, `ELEM=(?P<ELEM>\w+)`)
+	env = append(env, `VER=(?P<VER>[vV]\d+)`)
+	env = append(env, `EXT=(?P<EXT>\w+)`)
 	scene := evalEnvString(getEnv("SCENE", env), env)
-	dir := filepath.Dir(scene)
-	files, err := os.ReadDir(dir)
+	sceneDir := filepath.Dir(scene)
+	sceneName := filepath.Base(scene)
+	reName, err := regexp.Compile(sceneName)
 	if err != nil {
 		return nil, err
 	}
-	knownExt := make(map[string]bool)
-	for _, p := range a.programs {
-		knownExt[p.Ext] = true
+	files, err := os.ReadDir(sceneDir)
+	if err != nil {
+		return nil, err
 	}
-	elem := make(map[string]bool, 0)
+	programOf := make(map[string]*Program)
+	for _, p := range a.programs {
+		programOf[p.Ext] = p
+	}
+	elem := make(map[string]*Elem, 0)
 	for _, f := range files {
 		if f.IsDir() {
 			continue
 		}
-		ext := filepath.Ext(f.Name())
-		if ext == "" {
+		name := f.Name()
+		idxs := reName.FindStringSubmatchIndex(name)
+		el := string(reName.ExpandString([]byte{}, "$ELEM", name, idxs))
+		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
+		ext := string(reName.ExpandString([]byte{}, "$EXT", name, idxs))
+		fmt.Println(sceneName)
+		fmt.Println(name)
+		fmt.Println(idxs)
+		fmt.Println(el, ver, ext)
+		p := programOf[ext]
+		if p == nil {
 			continue
 		}
-		bare := strings.TrimSuffix(f.Name(), ext)
-		ext = ext[1:]
-		if !knownExt[ext] {
-			continue
+		e := elem[el]
+		if e == nil {
+			e = &Elem{
+				Name:    el,
+				Program: p.Name,
+			}
 		}
-		elem[bare] = true
+		e.Versions = append(e.Versions, ver)
+		elem[el] = e
 	}
-	elems := make([]string, 0, len(elem))
-	for e := range elem {
-		elems = append(elems, e)
+	elems := make([]*Elem, 0, len(elem))
+	for _, el := range elem {
+		elems = append(elems, el)
 	}
+	sort.Slice(elems, func(i, j int) bool {
+		cmp := strings.Compare(elems[i].Name, elems[j].Name)
+		if cmp != 0 {
+			return cmp < 0
+		}
+		cmp = strings.Compare(elems[i].Program, elems[j].Program)
+		return cmp <= 0
+	})
 	return elems, nil
+}
+
+func (a *App) OpenScene(path, elem, ver, prog string) error {
+	var pg *Program
+	for _, p := range a.programs {
+		if p.Name == prog {
+			pg = p
+			break
+		}
+	}
+	if pg == nil {
+		return fmt.Errorf("program not found: %v", prog)
+	}
+	env := os.Environ()
+	envs, err := a.EntryEnvirons(path)
+	if err != nil {
+		return err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	envs, err = a.EntryEnvirons(a.config.SiteEntry)
+	if err != nil {
+		return err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	env = append(env, "ELEM="+elem)
+	env = append(env, "VER="+ver)
+	env = append(env, "EXT="+pg.Ext)
+	scene := evalEnvString(getEnv("SCENE", env), env)
+	fmt.Println(scene)
+	cmd := exec.Command(pg.Open, scene)
+	cmd.Env = env
+	b, err := cmd.CombinedOutput()
+	out := string(b)
+	fmt.Println(out)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return nil
 }

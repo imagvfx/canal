@@ -14,6 +14,10 @@ function querySelector(query: string): HTMLElement {
 	return document.querySelector(query) as HTMLElement
 }
 
+function querySelectorAll(query: string): NodeListOf<HTMLElement> {
+	return document.querySelectorAll(query) as NodeListOf<HTMLElement>
+}
+
 window.onclick = async function(ev) {
 	let target = (<HTMLElement> ev.target);
 
@@ -234,33 +238,65 @@ function checkLeaf(path: string) {
 }
 
 function redrawEntryList() {
-	let list = querySelector("#entryList");
+	let entryList = querySelector("#entryList");
 	// cannot use removeChildren,
 	// #entryList has newElementField as well.
-	let oldEnts = list.querySelectorAll(".entry") as NodeListOf<HTMLElement>;
+	let oldEnts = entryList.querySelectorAll(".entry") as NodeListOf<HTMLElement>;
 	for (let ent of Array.from(oldEnts)) {
-		list.removeChild(ent);
+		entryList.removeChild(ent);
 	}
-
-	App.ListEntries().then(async function(arg: string[] | Error) {
-		let ents = arg as string[];
-		for (let ent of ents) {
-			let toks = ent.split("/");
-			let name = toks[toks.length-1];
-			let div = document.createElement("div");
-			div.classList.add("entry");
-			div.innerText = name;
-			div.onclick = async function() {
-				await App.GoTo(ent);
-				try {
-					redrawAll();
-				} catch (err) {
-					logError(err);
+	App.AtLeaf().then(function(leaf: boolean) {
+		if (leaf) {
+			App.ListElements().then(function(args) {
+				let elems = args as any[];
+				for (let e of elems) {
+					let div = document.createElement("div");
+					div.classList.add("entry");
+					div.dataset.name = e.Name
+					div.dataset.ver = e.Versions[e.Versions.length - 1]
+					div.dataset.program = e.Program
+					div.innerText = e.Name + " (" + e.Program + ")";
+					div.onclick = function() {
+						let divs = querySelectorAll("#entryList .entry");
+						divs.forEach(d => d.classList.remove("selected"));
+						div.classList.add("selected");
+					}
+					div.ondblclick = async function() {
+						try {
+							let path = await App.CurrentPath();
+							let name = div.dataset.name as string;
+							let ver = div.dataset.ver as string;
+							let program = div.dataset.program as string;
+							await App.OpenScene(path, name, ver, program);
+						} catch(err) {
+							logError(err);
+						}
+					}
+					entryList.append(div);
 				}
-			}
-			list.append(div);
+			}).catch(logError);
+		} else {
+			App.ListEntries().then(async function(arg: string[] | Error) {
+				let ents = arg as string[];
+				for (let ent of ents) {
+					let toks = ent.split("/");
+					let name = toks[toks.length-1];
+					let div = document.createElement("div");
+					div.classList.add("entry");
+					div.innerText = name;
+					div.onclick = async function() {
+						await App.GoTo(ent);
+						try {
+							redrawAll();
+						} catch (err) {
+							logError(err);
+						}
+					}
+					entryList.append(div);
+				}
+			}).catch(logError);
 		}
-	}).catch(logError);
+	});
 }
 
 async function redrawNewElementButtons() {
