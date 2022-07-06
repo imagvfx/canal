@@ -21,8 +21,8 @@ import (
 )
 
 type Config struct {
-	Host     string
-	SiteElem string
+	Host      string
+	SiteEntry string
 }
 
 func mustReadConfig() *Config {
@@ -38,7 +38,7 @@ func mustReadConfig() *Config {
 type App struct {
 	ctx          context.Context
 	config       *Config
-	programs     []string
+	programs     []*Program
 	progsInUse   []string
 	currentPath  string
 	history      []string
@@ -126,6 +126,13 @@ type Entry struct {
 
 func (a *App) ListEntries() ([]string, error) {
 	var paths []string
+	if a.isLeaf[a.currentPath] {
+		elems, err := a.listElements(a.currentPath)
+		if err != nil {
+			return nil, err
+		}
+		return elems, nil
+	}
 	if a.assignedOnly {
 		paths = a.subAssigned()
 	} else {
@@ -238,7 +245,7 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = a.getPrograms()
+	err = a.getProgramInfo()
 	if err != nil {
 		return "", err
 	}
@@ -308,33 +315,49 @@ func GenerateRandomString(n int) (string, error) {
 	return string(ret), nil
 }
 
-type ProgramInfo struct {
-	Programs []Program
-}
-
 type Program struct {
-	Name string
-	Ext  string
-	Exec string
+	Name   string
+	Ext    string
+	Create string
 }
 
-func (a *App) getPrograms() error {
-	ents, err := a.subEntries(a.config.SiteElem)
+func (a *App) getProgramInfo() error {
+	ents, err := a.subEntries(a.config.SiteEntry)
 	if err != nil {
 		return err
 	}
-	a.programs = make([]string, 0)
+	a.programs = make([]*Program, 0)
 	for _, e := range ents {
 		if e.Type == "program" {
-			a.programs = append(a.programs, path.Base(e.Path))
+			prog := path.Base(e.Path)
+			envs, err := a.EntryEnvirons(a.config.SiteEntry + "/" + prog)
+			if err != nil {
+				return err
+			}
+			p := &Program{
+				Name: prog,
+			}
+			for _, e := range envs {
+				if e.Name == "EXT" {
+					p.Ext = e.Eval
+				}
+				if e.Name == "CREATE" {
+					p.Create = e.Eval
+				}
+			}
+			a.programs = append(a.programs, p)
 		}
 	}
-	sort.Strings(a.programs)
 	return nil
 }
 
 func (a *App) Programs() []string {
-	return a.programs
+	progs := make([]string, 0)
+	for _, p := range a.programs {
+		progs = append(progs, p.Name)
+	}
+	sort.Strings(progs)
+	return progs
 }
 
 type userSetting struct {
@@ -503,22 +526,32 @@ func (a *App) NewElement(path, name, prog string) error {
 	for _, e := range envs {
 		env = append(env, e.Name+"="+e.Eval)
 	}
-	envs, err = a.EntryEnvirons(a.config.SiteElem + "/" + prog)
+	envs, err = a.EntryEnvirons(a.config.SiteEntry)
 	if err != nil {
 		return err
 	}
 	for _, e := range envs {
 		env = append(env, e.Name+"="+e.Eval)
 	}
+	var pg *Program
+	for _, p := range a.programs {
+		if p.Name == prog {
+			pg = p
+			break
+		}
+	}
+	if pg == nil {
+		return fmt.Errorf("not found program: %v", prog)
+	}
 	env = append(env, "ELEM="+name)
 	env = append(env, "VER=v001")
+	env = append(env, "EXT="+pg.Ext)
 	scene := evalEnvString(getEnv("SCENE", env), env)
 	err = os.MkdirAll(filepath.Dir(scene), 0755)
 	if err != nil {
 		return err
 	}
-	exe := getEnv("EXE", env)
-	cmd := exec.Command(exe, scene)
+	cmd := exec.Command(pg.Create, scene)
 	cmd.Env = env
 	b, err := cmd.CombinedOutput()
 	out := string(b)
@@ -527,4 +560,58 @@ func (a *App) NewElement(path, name, prog string) error {
 		fmt.Println(err)
 	}
 	return nil
+}
+
+type Elem struct {
+	Name     string
+	Versions []string
+}
+
+func (a *App) listElements(path string) ([]string, error) {
+	env := os.Environ()
+	envs, err := a.EntryEnvirons(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	envs, err = a.EntryEnvirons(a.config.SiteEntry)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	scene := evalEnvString(getEnv("SCENE", env), env)
+	dir := filepath.Dir(scene)
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	knownExt := make(map[string]bool)
+	for _, p := range a.programs {
+		knownExt[p.Ext] = true
+	}
+	elem := make(map[string]bool, 0)
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(f.Name())
+		if ext == "" {
+			continue
+		}
+		bare := strings.TrimSuffix(f.Name(), ext)
+		ext = ext[1:]
+		if !knownExt[ext] {
+			continue
+		}
+		elem[bare] = true
+	}
+	elems := make([]string, 0, len(elem))
+	for e := range elem {
+		elems = append(elems, e)
+	}
+	return elems, nil
 }
