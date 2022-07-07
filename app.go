@@ -612,10 +612,6 @@ func (a *App) ListElements() ([]*Elem, error) {
 		el := string(reName.ExpandString([]byte{}, "$ELEM", name, idxs))
 		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
 		ext := string(reName.ExpandString([]byte{}, "$EXT", name, idxs))
-		fmt.Println(sceneName)
-		fmt.Println(name)
-		fmt.Println(idxs)
-		fmt.Println(el, ver, ext)
 		p := programOf[ext]
 		if p == nil {
 			continue
