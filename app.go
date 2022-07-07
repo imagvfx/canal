@@ -27,7 +27,7 @@ type Config struct {
 
 func mustReadConfig() *Config {
 	cfg := &Config{}
-	_, err := toml.DecodeFile("./site.toml", &cfg)
+	_, err := toml.DecodeFile("./config.toml", &cfg)
 	if err != nil {
 		panic(err)
 	}
