@@ -69,6 +69,16 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+	let recentPath = closest(target, ".recentPath");
+	if (recentPath) {
+		try {
+			let path = recentPath.dataset.path as string;
+			await App.GoTo(path);
+			redrawAll();
+		} catch (err) {
+			logError(err);
+		}
+	}
 	let addProgramLink = closest(target, "#addProgramLink");
 	if (addProgramLink) {
 		toggleAddProgramLinkPopup();
@@ -132,7 +142,7 @@ window.onkeydown = async function(ev) {
 				if (name == "") {
 					name = "main";
 				}
-				App.NewElement(path, name, prog).catch(logError);
+				App.NewElement(path, name, prog).then(redrawAll).catch(logError);
 			});
 		}
 		oninput();
@@ -162,6 +172,7 @@ async function redrawAll(): Promise<void> {
 	}).catch(logError);
 	fillAddProgramLinkPopup();
 	redrawNewElementButtons();
+	redrawRecentPaths();
 	hideNewElementField();
 }
 
@@ -273,6 +284,7 @@ function redrawEntryList() {
 							let ver = div.dataset.ver as string;
 							let program = div.dataset.program as string;
 							await App.OpenScene(path, name, ver, program);
+							redrawAll();
 						} catch(err) {
 							logError(err);
 						}
@@ -319,6 +331,28 @@ async function redrawNewElementButtons() {
 		btn.dataset.program = prog;
 		btn.innerText = "+" + prog;
 		btns.append(btn);
+	}
+}
+
+async function redrawRecentPaths() {
+	try {
+		let paths = await App.RecentPaths();
+		if (!paths) {
+			paths = [];
+		}
+		let cnt = querySelector("#recentPaths");
+		console.log(cnt);
+		cnt.replaceChildren();
+		for (let path of paths) {
+			let div = document.createElement("div");
+			div.classList.add("recentPath");
+			div.classList.add("link");
+			div.dataset.path = path;
+			div.innerText = path;
+			cnt.append(div);
+		}
+	} catch (err) {
+		logError(err);
 	}
 }
 

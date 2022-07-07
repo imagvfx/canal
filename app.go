@@ -46,6 +46,7 @@ type App struct {
 	history      []string
 	historyIdx   int
 	assigned     []*Entry
+	recents      []string
 	isLeaf       map[string]bool
 	user         string
 	userSetting  *userSetting
@@ -374,6 +375,50 @@ func (a *App) removeSession() error {
 	return nil
 }
 
+func (a *App) arrangeRecentPaths(path string, at int) error {
+	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
+		"session":             {a.session},
+		"update_recent_paths": {"1"},
+		"path":                {path},
+		"path_at":             {strconv.Itoa(at)},
+	})
+	if err != nil {
+		return err
+	}
+	r := forgeAPIErrorResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
+	if err != nil {
+		return err
+	}
+	if r.Err != "" {
+		return fmt.Errorf(r.Err)
+	}
+	return nil
+}
+
+func (a *App) RecentPaths() []string {
+	if a.userSetting == nil {
+		return []string{}
+	}
+	return a.userSetting.RecentPaths
+}
+
+func (a *App) addRecentPath(path string) error {
+	err := a.arrangeRecentPaths(path, 0)
+	if err != nil {
+		return err
+	}
+	paths := make([]string, 0)
+	for _, pth := range a.userSetting.RecentPaths {
+		if path != pth {
+			paths = append(paths, pth)
+		}
+	}
+	a.userSetting.RecentPaths = append([]string{path}, paths...)
+	return nil
+}
+
 func (a *App) Logout() error {
 	a.assigned = nil
 	a.isLeaf = nil
@@ -454,6 +499,7 @@ func (a *App) Programs() []string {
 
 type userSetting struct {
 	ProgramsInUse []string
+	RecentPaths   []string
 }
 
 type forgeUserSettingResponse struct {
@@ -643,13 +689,19 @@ func (a *App) NewElement(path, name, prog string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(pg.Create, scene)
-	cmd.Env = env
-	b, err := cmd.CombinedOutput()
-	out := string(b)
-	fmt.Println(out)
+	go func() {
+		cmd := exec.Command(pg.Create, scene)
+		cmd.Env = env
+		b, err := cmd.CombinedOutput()
+		out := string(b)
+		fmt.Println(out)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+	err = a.addRecentPath(path)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	return nil
 }
@@ -764,14 +816,19 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
 	scene := evalEnvString(getEnv("SCENE", env), env)
-	fmt.Println(scene)
-	cmd := exec.Command(pg.Open, scene)
-	cmd.Env = env
-	b, err := cmd.CombinedOutput()
-	out := string(b)
-	fmt.Println(out)
+	go func() {
+		cmd := exec.Command(pg.Open, scene)
+		cmd.Env = env
+		b, err := cmd.CombinedOutput()
+		out := string(b)
+		fmt.Println(out)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+	err = a.addRecentPath(path)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	return nil
 }

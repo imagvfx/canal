@@ -81,16 +81,12 @@ body {
     background-color: white;
 }
 
-.bookmarkList {
+#recentPaths {
     width: 12rem;
     overflow-y: auto;
     word-break: break-word;
     padding: 0.5rem;
     box-sizing: border-box;
-}
-
-.entryBookmark:hover {
-    text-decoration: underline;
 }
 
 #pinned {
@@ -132,11 +128,20 @@ body {
     border: 1px solid #444;
 }
 
-.link {
-    text-decoration: underline;
+#addProgramLink {
     color: #224488;
+    text-decoration: underline;
+}
+
+.link {
     cursor: pointer;
 }
+
+.link:hover {
+    text-decoration: underline;
+}
+
+
 
 #listsBottomBar {
     position: relative;
