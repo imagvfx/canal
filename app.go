@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -64,6 +66,21 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.GoTo("/")
+}
+
+func (a *App) Prepare() error {
+	err := a.readSession()
+	if err != nil {
+		return err
+	}
+	if a.session == "" {
+		return nil
+	}
+	err = a.getUserInfo()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) CurrentPath() string {
@@ -238,20 +255,32 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = a.getUserSetting()
-	if err != nil {
-		return "", err
-	}
-	err = a.getProgramInfo()
-	if err != nil {
-		return "", err
-	}
-	err = a.searchAssigned()
+	err = a.getUserInfo()
 	if err != nil {
 		return "", err
 	}
 	fmt.Println("login done")
 	return a.user, nil
+}
+
+func (a *App) getUserInfo() error {
+	err := a.writeSession()
+	if err != nil {
+		return err
+	}
+	err = a.getUserSetting()
+	if err != nil {
+		return err
+	}
+	err = a.getProgramInfo()
+	if err != nil {
+		return err
+	}
+	err = a.searchAssigned()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) OpenLoginPage(key string) error {
@@ -284,11 +313,75 @@ func (a *App) WaitLogin(key string) error {
 	return nil
 }
 
-func (a *App) Logout() {
+func (a *App) writeSession() error {
+	confd, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(confd+"/field", 0755)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(confd + "/field/session")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.WriteString(f, a.user+" "+a.session)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) readSession() error {
+	confd, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	f, err := os.Open(confd + "/field/session")
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		return nil
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	toks := strings.Split(string(data), " ")
+	if len(toks) != 2 {
+		return fmt.Errorf("invalid session")
+	}
+	a.user = toks[0]
+	a.session = toks[1]
+	return nil
+}
+
+func (a *App) removeSession() error {
 	a.user = ""
 	a.session = ""
+	confd, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	err = os.Remove(confd + "/field/session")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) Logout() error {
 	a.assigned = nil
 	a.isLeaf = nil
+	err := a.removeSession()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) SessionUser() string {

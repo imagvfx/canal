@@ -2,8 +2,13 @@
 
 import * as App from '../wailsjs/go/main/App.js'
 
-window.onload = function() {
-	redrawAll();
+window.onload = async function() {
+	try {
+		await App.Prepare();
+		redrawAll();
+	} catch(err) {
+		logError(err);
+	}
 }
 
 function closest(from: HTMLElement, query: string): HTMLElement {
@@ -55,10 +60,10 @@ window.onclick = async function(ev) {
 	}
 	let logoutButton = closest(target, "#logoutButton");
 	if (logoutButton) {
-		await App.Logout();
-		await resetProgramsInUse();
-		await App.GoTo("/");
 		try {
+			await App.Logout();
+			await resetProgramsInUse();
+			await App.GoTo("/");
 			redrawAll();
 		} catch (err: any) {
 			logError(err);
