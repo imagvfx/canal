@@ -110,6 +110,8 @@ body {
 #entryList {
     flex: 1;
     overflow-y: auto;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .entryList:not(:first-child) {
