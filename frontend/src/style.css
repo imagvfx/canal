@@ -96,6 +96,10 @@ body {
     display: none;
 }
 
+.recentPath {
+    font-size: 0.9rem;
+}
+
 #lists {
     flex: 1;
     display: flex;
