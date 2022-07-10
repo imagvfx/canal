@@ -4,8 +4,6 @@ import {main} from '../models';
 
 export function AddProgramInUse(arg1:string,arg2:number):Promise<Error>;
 
-export function AtLeaf():Promise<boolean>;
-
 export function ClearEntries():void;
 
 export function CurrentPath():Promise<string>;
@@ -18,7 +16,7 @@ export function GoForward():Promise<string>;
 
 export function GoTo(arg1:string):void;
 
-export function IsLeaf(arg1:string):Promise<boolean>;
+export function IsLeaf(arg1:string):Promise<boolean|Error>;
 
 export function ListElements():Promise<Array<main.Elem>|Error>;
 

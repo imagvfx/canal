@@ -6,10 +6,6 @@ export function AddProgramInUse(arg1, arg2) {
   return window['go']['main']['App']['AddProgramInUse'](arg1, arg2);
 }
 
-export function AtLeaf() {
-  return window['go']['main']['App']['AtLeaf']();
-}
-
 export function ClearEntries() {
   return window['go']['main']['App']['ClearEntries']();
 }

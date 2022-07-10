@@ -1,3 +1,15 @@
 Host = "https://imagvfx.com"
-SiteEntry = "/kzmd"
+LeafEntryType = "part"
+Scene = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}/part/${PART}/${GROUP}_${UNIT}_${PART}_${ELEM}_${VER}.${EXT}"
+
+Envs = [
+	"SHOW_ROOT=/Users/kybin/show",
+	"NEW_VER=v001",
+]
+
+[[Programs]]
+Name = "Blender"
+Ext = "blend"
+Create = "Blender"
+Open = "Blender"
 

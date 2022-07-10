@@ -243,9 +243,9 @@ function setCurrentPath(path: string) {
 }
 
 function checkLeaf(path: string) {
-	App.IsLeaf(path).then(function(leaf) {
+	App.IsLeaf(path).then(function(ok) {
 		let right = querySelector("#right");
-		if (leaf) {
+		if (ok) {
 			right.classList.add("leaf");
 		} else {
 			right.classList.remove("leaf");
@@ -253,7 +253,7 @@ function checkLeaf(path: string) {
 	});
 }
 
-function redrawEntryList() {
+async function redrawEntryList() {
 	let entryList = querySelector("#entryList");
 	// cannot use removeChildren,
 	// #entryList has newElementField as well.
@@ -261,7 +261,11 @@ function redrawEntryList() {
 	for (let ent of Array.from(oldEnts)) {
 		entryList.removeChild(ent);
 	}
-	App.AtLeaf().then(function(leaf: boolean) {
+	try {
+		let path = await App.CurrentPath();
+		console.log(path);
+		let leaf = await App.IsLeaf(path) as boolean;
+		console.log(leaf);
 		if (leaf) {
 			App.ListElements().then(function(args) {
 				let elems = args as any[];
@@ -313,7 +317,10 @@ function redrawEntryList() {
 				}
 			}).catch(logError);
 		}
-	});
+	} catch (err) {
+		logError(err);
+	}
+
 }
 
 async function redrawNewElementButtons() {

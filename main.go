@@ -24,6 +24,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 			&Elem{},
+			&Entry{},
 		},
 	})
 

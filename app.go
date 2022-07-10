@@ -23,8 +23,11 @@ import (
 )
 
 type Config struct {
-	Host      string
-	SiteEntry string
+	Host          string
+	LeafEntryType string
+	Scene         string
+	Envs          []string
+	Programs      []*Program
 }
 
 func mustReadConfig() *Config {
@@ -40,14 +43,12 @@ func mustReadConfig() *Config {
 type App struct {
 	ctx          context.Context
 	config       *Config
-	programs     []*Program
 	progsInUse   []string
 	currentPath  string
 	history      []string
 	historyIdx   int
 	assigned     []*Entry
 	recents      []string
-	isLeaf       map[string]bool
 	user         string
 	userSetting  *userSetting
 	session      string
@@ -88,8 +89,37 @@ func (a *App) CurrentPath() string {
 	return a.currentPath
 }
 
-func (a *App) AtLeaf() bool {
-	return a.isLeaf[a.currentPath]
+type EntryResponse struct {
+	Msg *Entry
+	Err string
+}
+
+func (a *App) getEntry(path string) (*Entry, error) {
+	resp, err := http.PostForm("https://imagvfx.com/api/get-entry", url.Values{
+		"session": {a.session},
+		"path":    {path},
+	})
+	if err != nil {
+		return nil, err
+	}
+	r := EntryResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+	if r.Err != "" {
+		return nil, fmt.Errorf(r.Err)
+	}
+	return r.Msg, nil
+}
+
+func (a *App) IsLeaf(path string) (bool, error) {
+	e, err := a.getEntry(path)
+	if err != nil {
+		return false, err
+	}
+	return e.Type == a.config.LeafEntryType, nil
 }
 
 // GoTo goes to a path.
@@ -147,17 +177,18 @@ type Entry struct {
 }
 
 func (a *App) ListEntries() ([]string, error) {
-	var paths []string
 	if a.assignedOnly {
-		paths = a.subAssigned()
-	} else {
-		subs, err := a.subEntries(a.currentPath)
-		if err != nil {
-			return nil, err
-		}
-		for _, e := range subs {
-			paths = append(paths, e.Path)
-		}
+		paths := a.subAssigned()
+		sort.Strings(paths)
+		return paths, nil
+	}
+	subs, err := a.subEntries(a.currentPath)
+	if err != nil {
+		return nil, err
+	}
+	paths := make([]string, 0)
+	for _, e := range subs {
+		paths = append(paths, e.Path)
 	}
 	sort.Strings(paths)
 	return paths, nil
@@ -221,10 +252,6 @@ func (a *App) searchAssigned() error {
 		return fmt.Errorf(r.Err)
 	}
 	a.assigned = r.Msg
-	a.isLeaf = make(map[string]bool)
-	for _, e := range a.assigned {
-		a.isLeaf[e.Path] = true
-	}
 	return nil
 }
 
@@ -270,10 +297,6 @@ func (a *App) getUserInfo() error {
 		return err
 	}
 	err = a.getUserSetting()
-	if err != nil {
-		return err
-	}
-	err = a.getProgramInfo()
 	if err != nil {
 		return err
 	}
@@ -421,7 +444,6 @@ func (a *App) addRecentPath(path string) error {
 
 func (a *App) Logout() error {
 	a.assigned = nil
-	a.isLeaf = nil
 	err := a.removeSession()
 	if err != nil {
 		return err
@@ -431,10 +453,6 @@ func (a *App) Logout() error {
 
 func (a *App) SessionUser() string {
 	return a.user
-}
-
-func (a *App) IsLeaf(path string) bool {
-	return a.isLeaf[path]
 }
 
 func GenerateRandomString(n int) (string, error) {
@@ -457,40 +475,9 @@ type Program struct {
 	Open   string
 }
 
-func (a *App) getProgramInfo() error {
-	ents, err := a.subEntries(a.config.SiteEntry)
-	if err != nil {
-		return err
-	}
-	a.programs = make([]*Program, 0)
-	for _, e := range ents {
-		if e.Type == "program" {
-			prog := path.Base(e.Path)
-			envs, err := a.EntryEnvirons(a.config.SiteEntry + "/" + prog)
-			if err != nil {
-				return err
-			}
-			p := &Program{
-				Name: prog,
-			}
-			for _, e := range envs {
-				if e.Name == "EXT" {
-					p.Ext = e.Eval
-				} else if e.Name == "CREATE" {
-					p.Create = e.Eval
-				} else if e.Name == "OPEN" {
-					p.Open = e.Eval
-				}
-			}
-			a.programs = append(a.programs, p)
-		}
-	}
-	return nil
-}
-
 func (a *App) Programs() []string {
 	progs := make([]string, 0)
-	for _, p := range a.programs {
+	for _, p := range a.config.Programs {
 		progs = append(progs, p.Name)
 	}
 	sort.Strings(progs)
@@ -657,6 +644,9 @@ func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 
 func (a *App) NewElement(path, name, prog string) error {
 	env := os.Environ()
+	for _, e := range a.config.Envs {
+		env = append(env, e)
+	}
 	envs, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
@@ -664,15 +654,8 @@ func (a *App) NewElement(path, name, prog string) error {
 	for _, e := range envs {
 		env = append(env, e.Name+"="+e.Eval)
 	}
-	envs, err = a.EntryEnvirons(a.config.SiteEntry)
-	if err != nil {
-		return err
-	}
-	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
-	}
 	var pg *Program
-	for _, p := range a.programs {
+	for _, p := range a.config.Programs {
 		if p.Name == prog {
 			pg = p
 			break
@@ -682,9 +665,9 @@ func (a *App) NewElement(path, name, prog string) error {
 		return fmt.Errorf("not found program: %v", prog)
 	}
 	env = append(env, "ELEM="+name)
-	env = append(env, "VER=v001")
+	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
-	scene := evalEnvString(getEnv("SCENE", env), env)
+	scene := evalEnvString(a.config.Scene, env)
 	err = os.MkdirAll(filepath.Dir(scene), 0755)
 	if err != nil {
 		return err
@@ -715,14 +698,10 @@ type Elem struct {
 func (a *App) ListElements() ([]*Elem, error) {
 	path := a.currentPath
 	env := os.Environ()
+	for _, e := range a.config.Envs {
+		env = append(env, e)
+	}
 	envs, err := a.EntryEnvirons(path)
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
-	}
-	envs, err = a.EntryEnvirons(a.config.SiteEntry)
 	if err != nil {
 		return nil, err
 	}
@@ -732,7 +711,7 @@ func (a *App) ListElements() ([]*Elem, error) {
 	env = append(env, `ELEM=(?P<ELEM>\w+)`)
 	env = append(env, `VER=(?P<VER>[vV]\d+)`)
 	env = append(env, `EXT=(?P<EXT>\w+)`)
-	scene := evalEnvString(getEnv("SCENE", env), env)
+	scene := evalEnvString(a.config.Scene, env)
 	sceneDir := filepath.Dir(scene)
 	sceneName := filepath.Base(scene)
 	reName, err := regexp.Compile(sceneName)
@@ -741,10 +720,13 @@ func (a *App) ListElements() ([]*Elem, error) {
 	}
 	files, err := os.ReadDir(sceneDir)
 	if err != nil {
-		return nil, err
+		if !errors.As(err, os.ErrNotExist) {
+			return nil, err
+		}
+		files = []os.DirEntry{}
 	}
 	programOf := make(map[string]*Program)
-	for _, p := range a.programs {
+	for _, p := range a.config.Programs {
 		programOf[p.Ext] = p
 	}
 	elem := make(map[string]*Elem, 0)
@@ -788,7 +770,7 @@ func (a *App) ListElements() ([]*Elem, error) {
 
 func (a *App) OpenScene(path, elem, ver, prog string) error {
 	var pg *Program
-	for _, p := range a.programs {
+	for _, p := range a.config.Programs {
 		if p.Name == prog {
 			pg = p
 			break
@@ -798,14 +780,10 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 		return fmt.Errorf("program not found: %v", prog)
 	}
 	env := os.Environ()
+	for _, e := range a.config.Envs {
+		env = append(env, e)
+	}
 	envs, err := a.EntryEnvirons(path)
-	if err != nil {
-		return err
-	}
-	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
-	}
-	envs, err = a.EntryEnvirons(a.config.SiteEntry)
 	if err != nil {
 		return err
 	}
@@ -815,7 +793,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
-	scene := evalEnvString(getEnv("SCENE", env), env)
+	scene := evalEnvString(a.config.Scene, env)
 	go func() {
 		cmd := exec.Command(pg.Open, scene)
 		cmd.Env = env
