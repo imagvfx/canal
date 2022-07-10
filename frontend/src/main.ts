@@ -51,7 +51,6 @@ window.onclick = async function(ev) {
 	if (loginButton) {
 		try {
 			await App.Login();
-			await resetProgramsInUse();
 			await App.GoTo("/");
 			redrawAll();
 		} catch (err: any) {
@@ -62,7 +61,6 @@ window.onclick = async function(ev) {
 	if (logoutButton) {
 		try {
 			await App.Logout();
-			await resetProgramsInUse();
 			await App.GoTo("/");
 			redrawAll();
 		} catch (err: any) {
@@ -170,10 +168,15 @@ async function redrawAll(): Promise<void> {
 		checkLeaf(path);
 		redrawEntryList();
 	}).catch(logError);
-	fillAddProgramLinkPopup();
-	redrawNewElementButtons();
+	await redrawProgramsBar();
 	redrawRecentPaths();
 	hideNewElementField();
+}
+
+async function redrawProgramsBar() {
+	await App.GetUserSetting();
+	fillAddProgramLinkPopup();
+	redrawNewElementButtons();
 }
 
 function redrawLoginArea() {
@@ -338,6 +341,10 @@ async function redrawNewElementButtons() {
 		btn.dataset.program = prog;
 		btn.innerText = "+" + prog;
 		btns.append(btn);
+		let ok = await App.IsValidProgram(prog);
+		if (!ok) {
+			btn.classList.add("invalid");
+		}
 	}
 }
 
@@ -374,7 +381,7 @@ function toggleAddProgramLinkPopup() {
 	}
 }
 
-function fillAddProgramLinkPopup() {
+async function fillAddProgramLinkPopup() {
 	let popup = querySelector("#addProgramLinkPopup");
 	popup.replaceChildren();
 	App.Programs().then(function(progs) {
@@ -388,24 +395,6 @@ function fillAddProgramLinkPopup() {
 	}).catch(logError);
 }
 
-async function resetProgramsInUse() {
-	let progs: string[] = [];
-	try {
-		progs = await App.ProgramsInUse() as string[];
-	} catch (err: any) {
-		logError(err);
-	}
-	let btns = querySelector("#newElementButtons");
-	btns.replaceChildren();
-	for (let prog of progs) {
-		let btn = document.createElement("div");
-		btn.classList.add("newElementButton");
-		btn.dataset.program = prog;
-		btn.innerText = "+" + prog;
-		btns.append(btn);
-	}
-}
-
 async function toggleNewElementButton(prog: string) {
 	let btns = querySelector("#newElementButtons");
 	let btn = btns.querySelector(`.newElementButton[data-program=${prog}]`);
@@ -417,13 +406,17 @@ async function toggleNewElementButton(prog: string) {
 		}
 		btn.remove();
 	} else {
-		App.AddProgramInUse(prog, btns.children.length).then(function() {
+		try {
+			await App.AddProgramInUse(prog, btns.children.length);
 			let btn = document.createElement("div");
 			btn.classList.add("newElementButton");
 			btn.dataset.program = prog;
 			btn.innerText = "+" + prog;
 			btns.append(btn);
-		}).catch(logError);
+			await App.GetUserSetting();
+		} catch (err) {
+			logError(err);
+		}
 	}
 }
 

@@ -10,6 +10,8 @@ export function CurrentPath():Promise<string>;
 
 export function EntryEnvirons(arg1:string):Promise<Array<main.Environ>|Error>;
 
+export function GetUserSetting():Promise<Error>;
+
 export function GoBack():Promise<string>;
 
 export function GoForward():Promise<string>;
@@ -17,6 +19,8 @@ export function GoForward():Promise<string>;
 export function GoTo(arg1:string):void;
 
 export function IsLeaf(arg1:string):Promise<boolean|Error>;
+
+export function IsValidProgram(arg1:string):Promise<boolean>;
 
 export function ListElements():Promise<Array<main.Elem>|Error>;
 
@@ -36,7 +40,7 @@ export function Prepare():Promise<Error>;
 
 export function Programs():Promise<Array<string>>;
 
-export function ProgramsInUse():Promise<Array<string>|Error>;
+export function ProgramsInUse():Promise<Array<string>>;
 
 export function RecentPaths():Promise<Array<string>>;
 

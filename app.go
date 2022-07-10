@@ -43,7 +43,6 @@ func mustReadConfig() *Config {
 type App struct {
 	ctx          context.Context
 	config       *Config
-	progsInUse   []string
 	currentPath  string
 	history      []string
 	historyIdx   int
@@ -296,7 +295,7 @@ func (a *App) getUserInfo() error {
 	if err != nil {
 		return err
 	}
-	err = a.getUserSetting()
+	err = a.GetUserSetting()
 	if err != nil {
 		return err
 	}
@@ -476,12 +475,30 @@ type Program struct {
 }
 
 func (a *App) Programs() []string {
-	progs := make([]string, 0)
+	prog := make(map[string]bool, 0)
 	for _, p := range a.config.Programs {
-		progs = append(progs, p.Name)
+		prog[p.Name] = true
+	}
+	// User might have programs currently not defined for some reason.
+	// Let's add those so user can remove if they want.
+	for _, name := range a.userSetting.ProgramsInUse {
+		prog[name] = true
+	}
+	progs := make([]string, 0, len(prog))
+	for name := range prog {
+		progs = append(progs, name)
 	}
 	sort.Strings(progs)
 	return progs
+}
+
+func (a *App) IsValidProgram(prog string) bool {
+	for _, p := range a.config.Programs {
+		if p.Name == prog {
+			return true
+		}
+	}
+	return false
 }
 
 type userSetting struct {
@@ -494,7 +511,7 @@ type forgeUserSettingResponse struct {
 	Err string
 }
 
-func (a *App) getUserSetting() error {
+func (a *App) GetUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
 		"user":    {a.user},
@@ -515,11 +532,11 @@ func (a *App) getUserSetting() error {
 	return nil
 }
 
-func (a *App) ProgramsInUse() ([]string, error) {
+func (a *App) ProgramsInUse() []string {
 	if a.userSetting == nil {
-		return []string{}, nil
+		return []string{}
 	}
-	return a.userSetting.ProgramsInUse, nil
+	return a.userSetting.ProgramsInUse
 }
 
 type forgeAPIErrorResponse struct {

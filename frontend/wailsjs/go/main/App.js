@@ -18,6 +18,10 @@ export function EntryEnvirons(arg1) {
   return window['go']['main']['App']['EntryEnvirons'](arg1);
 }
 
+export function GetUserSetting() {
+  return window['go']['main']['App']['GetUserSetting']();
+}
+
 export function GoBack() {
   return window['go']['main']['App']['GoBack']();
 }
@@ -32,6 +36,10 @@ export function GoTo(arg1) {
 
 export function IsLeaf(arg1) {
   return window['go']['main']['App']['IsLeaf'](arg1);
+}
+
+export function IsValidProgram(arg1) {
+  return window['go']['main']['App']['IsValidProgram'](arg1);
 }
 
 export function ListElements() {
