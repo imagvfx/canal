@@ -201,6 +201,14 @@ body {
     color: #f44;
 }
 
-.entry.selected {
+.element.selected {
     background-color: #AAA;
+}
+
+.element:not(.latest) {
+    padding-left: 0.5rem;
+}
+
+.element:not(.latest) + .element.latest{
+    margin-top: 0.5rem;
 }

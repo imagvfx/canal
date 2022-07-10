@@ -67,6 +67,12 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+	let element = closest(target, "#entryList .element");
+	if (element) {
+		let divs = querySelectorAll("#entryList .element");
+		divs.forEach(d => d.classList.remove("selected"));
+		element.classList.add("selected");
+	}
 	let recentPath = closest(target, ".recentPath");
 	if (recentPath) {
 		try {
@@ -98,6 +104,23 @@ window.onclick = async function(ev) {
 	let newElementField = closest(target, "#newElementField");
 	if (newElementButton == null && newElementField == null) {
 		hideNewElementField();
+	}
+}
+
+window.ondblclick = async function(ev) {
+	let target = ev.target as HTMLElement;
+	let element = closest(target, "#entryList .element");
+	if (element) {
+		try {
+			let path = await App.CurrentPath();
+			let name = element.dataset.name as string;
+			let ver = element.dataset.ver as string;
+			let program = element.dataset.program as string;
+			await App.OpenScene(path, name, ver, program);
+			redrawAll();
+		} catch(err) {
+			logError(err);
+		}
 	}
 }
 
@@ -260,43 +283,35 @@ async function redrawEntryList() {
 	let entryList = querySelector("#entryList");
 	// cannot use removeChildren,
 	// #entryList has newElementField as well.
-	let oldEnts = entryList.querySelectorAll(".entry") as NodeListOf<HTMLElement>;
+	let oldEnts = entryList.querySelectorAll(".element") as NodeListOf<HTMLElement>;
 	for (let ent of Array.from(oldEnts)) {
 		entryList.removeChild(ent);
 	}
 	try {
 		let path = await App.CurrentPath();
-		console.log(path);
 		let leaf = await App.IsLeaf(path) as boolean;
-		console.log(leaf);
 		if (leaf) {
 			App.ListElements().then(function(args) {
 				let elems = args as any[];
 				for (let e of elems) {
 					let div = document.createElement("div");
-					div.classList.add("entry");
-					div.dataset.name = e.Name
-					div.dataset.ver = e.Versions[e.Versions.length - 1]
-					div.dataset.program = e.Program
+					div.classList.add("element");
+					div.classList.add("latest");
+					div.dataset.name = e.Name;
+					div.dataset.ver = e.Versions[e.Versions.length - 1];
+					div.dataset.program = e.Program;
 					div.innerText = e.Name + " (" + e.Program + ")";
-					div.onclick = function() {
-						let divs = querySelectorAll("#entryList .entry");
-						divs.forEach(d => d.classList.remove("selected"));
-						div.classList.add("selected");
-					}
-					div.ondblclick = async function() {
-						try {
-							let path = await App.CurrentPath();
-							let name = div.dataset.name as string;
-							let ver = div.dataset.ver as string;
-							let program = div.dataset.program as string;
-							await App.OpenScene(path, name, ver, program);
-							redrawAll();
-						} catch(err) {
-							logError(err);
-						}
-					}
 					entryList.append(div);
+					let vers = e.Versions.reverse();
+					for (let v of vers) {
+						let div = document.createElement("div");
+						div.classList.add("element");
+						div.dataset.name = e.Name;
+						div.dataset.ver = v;
+						div.dataset.program = e.Program;
+						div.innerText = v;
+						entryList.append(div);
+					}
 				}
 			}).catch(logError);
 		} else {
