@@ -116,10 +116,7 @@ body {
     overflow-y: auto;
     user-select: none;
     -webkit-user-select: none;
-}
-
-.entryList:not(:first-child) {
-    border-left: 1px solid #888888;
+    cursor: default;
 }
 
 #elemList {
@@ -127,7 +124,7 @@ body {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .button {
@@ -201,14 +198,33 @@ body {
     color: #f44;
 }
 
-.element.selected {
-    background-color: #AAA;
+.element {
 }
 
-.element:not(.latest) {
-    padding-left: 0.5rem;
+.sceneListExpander {
+    padding: 0 0.2rem;
 }
 
-.element:not(.latest) + .element.latest{
-    margin-top: 0.5rem;
+.sceneList {
+    flex: 1;
+}
+
+.scene {
+    display: flex;
+}
+
+.scene.selected {
+    background-color: #AAA !important;
+}
+
+.scene:not(.latest) {
+    padding-left: 1rem;
+}
+
+.item {
+    padding: 0.1rem 0.2rem;
+}
+
+.item:hover {
+    background-color: #EEE;
 }

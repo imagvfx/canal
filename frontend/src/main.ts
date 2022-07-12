@@ -23,6 +23,8 @@ function querySelectorAll(query: string): NodeListOf<HTMLElement> {
 	return document.querySelectorAll(query) as NodeListOf<HTMLElement>
 }
 
+let lastSceneClick = Date.now();
+
 window.onclick = async function(ev) {
 	let target = (<HTMLElement> ev.target);
 
@@ -67,11 +69,49 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
-	let element = closest(target, "#entryList .element");
-	if (element) {
-		let divs = querySelectorAll("#entryList .element");
-		divs.forEach(d => d.classList.remove("selected"));
-		element.classList.add("selected");
+	let scene = closest(target, "#entryList .scene");
+	if (scene) {
+		let sceneListExpander = closest(target, ".sceneListExpander");
+		if (sceneListExpander) {
+			let elem = closest(sceneListExpander, ".element");
+			let showing = sceneListExpander.dataset.showing as string;
+			if (!showing) {
+				showing = "1";
+			} else {
+				showing = "";
+			}
+			sceneListExpander.dataset.showing = showing;
+			for (let scene of elem.querySelectorAll(".scene:not(.latest)")) {
+				if (showing) {
+					scene.classList.remove("hidden");
+				} else {
+					scene.classList.add("hidden");
+				}
+			}
+		} else {
+			let scenes = querySelectorAll("#entryList .scene");
+			scenes.forEach(s => s.classList.remove("selected"));
+			scene.classList.add("selected");
+			if (ev.detail == 2) {
+				// double click
+				let now = Date.now();
+				let ellapsed = now - lastSceneClick;
+				if (ellapsed < 300) {
+					try {
+						let path = await App.CurrentPath();
+						let name = scene.dataset.name as string;
+						let ver = scene.dataset.ver as string;
+						let program = scene.dataset.program as string;
+						await App.OpenScene(path, name, ver, program);
+						// redrawAll();
+					} catch(err) {
+						logError(err);
+					}
+				}
+			} else {
+				lastSceneClick = Date.now()
+			}
+		}
 	}
 	let recentPath = closest(target, ".recentPath");
 	if (recentPath) {
@@ -99,27 +139,11 @@ window.onclick = async function(ev) {
 	let newElementButton = closest(target, ".newElementButton");
 	if (newElementButton) {
 		let prog = newElementButton.dataset.program as string;
-		showNewElementField(prog);
-	}
-	let newElementField = closest(target, "#newElementField");
-	if (newElementButton == null && newElementField == null) {
-		hideNewElementField();
-	}
-}
-
-window.ondblclick = async function(ev) {
-	let target = ev.target as HTMLElement;
-	let element = closest(target, "#entryList .element");
-	if (element) {
-		try {
-			let path = await App.CurrentPath();
-			let name = element.dataset.name as string;
-			let ver = element.dataset.ver as string;
-			let program = element.dataset.program as string;
-			await App.OpenScene(path, name, ver, program);
-			redrawAll();
-		} catch(err) {
-			logError(err);
+		addNewElementField(prog);
+	} else {
+		let newElementField = closest(target, ".newElementField");
+		if (newElementField == null) {
+			removeNewElementField();
 		}
 	}
 }
@@ -148,15 +172,14 @@ window.onchange = async function(ev) {
 
 window.onkeydown = async function(ev) {
 	let target = (<HTMLElement> ev.target);
-
-	let newElementFieldInput = closest(target, "#newElementFieldInput");
+	let newElementFieldInput = closest(target, ".newElementFieldInput");
 	if (newElementFieldInput) {
 		let input = newElementFieldInput as HTMLInputElement;
 		let oninput = function() {
 			if (ev.key != "Enter") {
 				return;
 			}
-			let field = closest(input, "#newElementField");
+			let field = closest(input, ".newElementField");
 			let prog = field.dataset.program as string;
 			App.CurrentPath().then(function(path: string) {
 				let name = input.value as string;
@@ -193,7 +216,6 @@ async function redrawAll(): Promise<void> {
 	}).catch(logError);
 	await redrawProgramsBar();
 	redrawRecentPaths();
-	hideNewElementField();
 }
 
 async function redrawProgramsBar() {
@@ -281,12 +303,7 @@ function checkLeaf(path: string) {
 
 async function redrawEntryList() {
 	let entryList = querySelector("#entryList");
-	// cannot use removeChildren,
-	// #entryList has newElementField as well.
-	let oldEnts = entryList.querySelectorAll(".element") as NodeListOf<HTMLElement>;
-	for (let ent of Array.from(oldEnts)) {
-		entryList.removeChild(ent);
-	}
+	entryList.replaceChildren();
 	try {
 		let path = await App.CurrentPath();
 		let leaf = await App.IsLeaf(path) as boolean;
@@ -294,23 +311,35 @@ async function redrawEntryList() {
 			App.ListElements().then(function(args) {
 				let elems = args as any[];
 				for (let e of elems) {
-					let div = document.createElement("div");
-					div.classList.add("element");
-					div.classList.add("latest");
-					div.dataset.name = e.Name;
-					div.dataset.ver = e.Versions[e.Versions.length - 1];
-					div.dataset.program = e.Program;
-					div.innerText = e.Name + " (" + e.Program + ")";
-					entryList.append(div);
+					let elem = document.createElement("div");
+					elem.classList.add("element");
+					entryList.append(elem);
+					let sceneList = document.createElement("div");
+					let scene = document.createElement("div");
+					scene.classList.add("scene");
+					scene.classList.add("item");
+					scene.classList.add("latest");
+					scene.dataset.name = e.Name;
+					let v = e.Versions[e.Versions.length - 1];
+					scene.dataset.ver = v;
+					scene.dataset.program = e.Program;
+					elem.append(scene);
+					let expander = document.createElement("div");
+					expander.classList.add("sceneListExpander");
+					expander.innerText = "+"
+					scene.append(expander);
+					scene.innerHTML += e.Name + " (" + e.Program + ")";
 					let vers = e.Versions.reverse();
 					for (let v of vers) {
-						let div = document.createElement("div");
-						div.classList.add("element");
-						div.dataset.name = e.Name;
-						div.dataset.ver = v;
-						div.dataset.program = e.Program;
-						div.innerText = v;
-						entryList.append(div);
+						let scene = document.createElement("div");
+						scene.classList.add("scene");
+						scene.classList.add("item");
+						scene.classList.add("hidden");
+						scene.dataset.name = e.Name;
+						scene.dataset.ver = v;
+						scene.dataset.program = e.Program;
+						scene.innerText = v;
+						elem.append(scene);
 					}
 				}
 			}).catch(logError);
@@ -322,6 +351,7 @@ async function redrawEntryList() {
 					let name = toks[toks.length-1];
 					let div = document.createElement("div");
 					div.classList.add("entry");
+					div.classList.add("item");
 					div.innerText = name;
 					div.onclick = async function() {
 						await App.GoTo(ent);
@@ -370,7 +400,6 @@ async function redrawRecentPaths() {
 			paths = [];
 		}
 		let cnt = querySelector("#recentPaths");
-		console.log(cnt);
 		cnt.replaceChildren();
 		for (let path of paths) {
 			let div = document.createElement("div");
@@ -387,8 +416,11 @@ async function redrawRecentPaths() {
 
 function toggleAddProgramLinkPopup() {
 	let popup = querySelector("#addProgramLinkPopup");
+	let hidden = popup.classList.contains("hidden");
+	// should unhide the popup to get bounding rect
+	popup.classList.remove("hidden");
 	let rect = popup.getBoundingClientRect();
-	if (popup.classList.contains("hidden")) {
+	if (hidden) {
 		popup.style.top = String(-rect.height) + "px";
 		popup.classList.remove("hidden");
 	} else {
@@ -435,18 +467,26 @@ async function toggleNewElementButton(prog: string) {
 	}
 }
 
-function showNewElementField(prog: string) {
-	let field = querySelector("#newElementField");
+function addNewElementField(prog: string) {
+	removeNewElementField();
+	let field = document.createElement("div");
+	field.classList.add("newElementField");
+	// let field = querySelector(".newElementField");
 	field.dataset.program = prog;
-	let span = field.querySelector("#newElementFieldProgram") as HTMLElement;
-	span.innerText = "- " + prog;
-	field.classList.remove("hidden");
-	let input = field.querySelector("#newElementFieldInput") as HTMLElement;
+	let list = document.querySelector("#entryList");
+	list.append(field);
+	let input = document.createElement("input");
+	input.classList.add("newElementFieldInput");
+	field.append(input);
+	let span = document.createElement("span");
+	span.innerText = " (" + prog + ")";
+	field.append(span);
 	input.focus();
 }
 
-function hideNewElementField() {
-	let field = querySelector("#newElementField");
-	field.dataset.program = "";
-	field.classList.add("hidden");
+function removeNewElementField() {
+	let field = querySelector(".newElementField");
+	if (field) {
+		field.remove();
+	}
 }
