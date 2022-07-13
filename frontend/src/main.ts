@@ -261,6 +261,7 @@ function setCurrentPath(path: string) {
 	let root = document.createElement("span");
 	root.id = "forgeRoot";
 	root.innerText = "forge:";
+	root.classList.add("link");
 	root.onclick = async function() {
 		await App.GoTo("/");
 		try {
@@ -275,8 +276,10 @@ function setCurrentPath(path: string) {
 		goto = gotoPath;
 		let span = document.createElement("span");
 		span.innerText = "/"
+		span.classList.add("link");
 		currentPath.append(span)
 		span = document.createElement("span");
+		span.classList.add("link");
 		span.innerText = t
 		span.onclick = async function() {
 			await App.GoTo(gotoPath);
@@ -421,7 +424,7 @@ function toggleAddProgramLinkPopup() {
 	popup.classList.remove("hidden");
 	let rect = popup.getBoundingClientRect();
 	if (hidden) {
-		popup.style.top = String(-rect.height) + "px";
+		popup.style.top = String(-rect.height-4) + "px";
 		popup.classList.remove("hidden");
 	} else {
 		popup.classList.add("hidden");

@@ -6,21 +6,26 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: Apple SD Gothic Neo,arial,sans-serif;
+    background-color: #f4f4f4;
 }
 
 #top {
+    background-color: #000;
+    color: #fff;
 }
 
 #navBar {
     padding: 0.5rem;
     display: flex;
     border-bottom: 1px solid #888888;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #optionBar {
-    padding: 0.25rem 0.5rem;
+    margin: 0.5rem 1rem;
     display: flex;
-    border-bottom: 1px solid #888888;
 }
 
 #assignedCheckBox:disabled + label {
@@ -47,7 +52,7 @@ body {
 }
 
 #right {
-    padding: 1rem;
+    // padding: 1rem;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -62,23 +67,27 @@ body {
 #currentPath {
     font-size: 1.2rem;
     flex: 1;
+    color: #8ab4f8;
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 4px 6px;
 }
 
 #tabSwitchButtons {
     display: flex;
-    text-align: center;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
     gap: 1px;
     padding-bottom: 1px;
-    background-color: #888888;
+    border-bottom: 1px solid #888;
 }
 
 #forgeRoot {
-    color: #666666;
 }
 
 .tabSwitchButton {
-    flex: 1;
-    background-color: white;
 }
 
 #recentPaths {
@@ -87,6 +96,9 @@ body {
     word-break: break-word;
     padding: 0.5rem;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 #pinned {
@@ -117,6 +129,13 @@ body {
     user-select: none;
     -webkit-user-select: none;
     cursor: default;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background-color: #ccc;
+    border-radius: 3px;
+    margin: 0 1rem;
 }
 
 #elemList {
@@ -149,7 +168,8 @@ body {
 #programsBar {
     position: relative;
     display: flex;
-    padding: 0.5rem 0 0 0;
+    margin: 0.5rem 1rem;
+    height: 2rem;
 }
 
 #addProgramLinkPopup {
@@ -161,6 +181,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    padding: 0.2rem;
 }
 
 #addProgramLinkPopup.hidden {
@@ -179,6 +200,7 @@ body {
     border: 1px solid black;
     border-radius: 2px;
     padding: 4px;
+    height: 1rem;
 }
 
 #right:not(.leaf) .newElementButton {
@@ -214,17 +236,17 @@ body {
 }
 
 .scene.selected {
-    background-color: #AAA !important;
+    background-color: #bbb !important;
 }
 
 .scene:not(.latest) {
+    border-top: 1px solid #e4e4e4;
+    background-color: #eee;
     padding-left: 1rem;
 }
 
 .item {
     padding: 0.1rem 0.2rem;
+    background-color: #fafafa;
 }
 
-.item:hover {
-    background-color: #EEE;
-}
