@@ -75,7 +75,7 @@ body {
 }
 
 #navButtons {
-    width:12rem;
+    width: 16rem;
     display: flex;
     gap: 0.5rem;
 }
@@ -166,13 +166,11 @@ body {
     display: none !important;
 }
 
-.button {
-    border: 1px solid #444;
-}
-
 #addProgramLink {
     color: #224488;
     text-decoration: underline;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .link {
@@ -183,7 +181,9 @@ body {
     text-decoration: underline;
 }
 
-
+.button {
+    cursor: pointer;
+}
 
 #programsBar {
     position: relative;

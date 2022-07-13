@@ -394,6 +394,7 @@ async function redrawNewElementButtons() {
 	for (let prog of progs) {
 		let btn = document.createElement("div");
 		btn.classList.add("newElementButton");
+		btn.classList.add("button");
 		btn.dataset.program = prog;
 		btn.innerText = "+" + prog;
 		btns.append(btn);
@@ -446,6 +447,7 @@ async function fillAddProgramLinkPopup() {
 		for (let prog of progs) {
 			let div = document.createElement("div");
 			div.classList.add("addProgramLinkPopupItem");
+			div.classList.add("button");
 			div.dataset.value = prog;
 			div.innerText = prog;
 			popup.append(div);
@@ -468,6 +470,7 @@ async function toggleNewElementButton(prog: string) {
 			await App.AddProgramInUse(prog, btns.children.length);
 			let btn = document.createElement("div");
 			btn.classList.add("newElementButton");
+			btn.classList.add("button");
 			btn.dataset.program = prog;
 			btn.innerText = "+" + prog;
 			btns.append(btn);
