@@ -51,7 +51,6 @@ body {
 }
 
 #right {
-    // padding: 1rem;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -227,7 +226,28 @@ body {
 }
 
 .sceneListExpander {
-    padding: 0 0.2rem;
+    display: flex;
+    box-sizing: border-box;
+    justify-content: center;
+    background-image: url("/src/assets/down-arrow.svg");
+    background-repeat: no-repeat;
+    background-size: 8px;
+    background-origin: content-box;
+    background-position: center;
+    rotate: 270deg;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 2px;
+}
+
+.sceneListExpander[data-showing="1"] {
+    rotate: 0deg;
+}
+
+.sceneListExpander:hover {
+    border: 1px solid #8ab8;
+    border-radius: 2px;
+    background-color: #acd8;
 }
 
 .sceneList {

@@ -329,7 +329,6 @@ async function redrawEntryList() {
 					elem.append(scene);
 					let expander = document.createElement("div");
 					expander.classList.add("sceneListExpander");
-					expander.innerText = "+"
 					scene.append(expander);
 					scene.innerHTML += e.Name + " (" + e.Program + ")";
 					let vers = e.Versions.reverse();
