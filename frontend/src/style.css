@@ -46,7 +46,6 @@ body {
 
 #left {
     border-right: 1px solid #888888;
-    width: 12rem;
     display: flex;
     flex-direction: column;
 }
@@ -91,7 +90,7 @@ body {
 }
 
 #recentPaths {
-    width: 12rem;
+    width: 16rem;
     overflow-y: auto;
     word-break: break-word;
     padding: 0.5rem;
@@ -109,7 +108,7 @@ body {
 }
 
 .recentPath {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 #lists {
@@ -133,7 +132,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1px;
-    background-color: #ccc;
+    background-color: #bbb;
     border-radius: 3px;
     margin: 0 1rem;
 }
@@ -221,6 +220,10 @@ body {
 }
 
 .element {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background-color: #e0e0e0;
 }
 
 .sceneListExpander {
@@ -236,12 +239,11 @@ body {
 }
 
 .scene.selected {
-    background-color: #bbb !important;
+    background-color: #cde !important;
+    outline: 1px solid #9ab;
 }
 
 .scene:not(.latest) {
-    border-top: 1px solid #e4e4e4;
-    background-color: #eee;
     padding-left: 1rem;
 }
 

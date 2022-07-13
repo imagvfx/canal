@@ -737,7 +737,7 @@ func (a *App) ListElements() ([]*Elem, error) {
 	}
 	files, err := os.ReadDir(sceneDir)
 	if err != nil {
-		if !errors.As(err, os.ErrNotExist) {
+		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 		files = []os.DirEntry{}

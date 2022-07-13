@@ -81,11 +81,12 @@ window.onclick = async function(ev) {
 				showing = "";
 			}
 			sceneListExpander.dataset.showing = showing;
-			for (let scene of elem.querySelectorAll(".scene:not(.latest)")) {
+			let vers = elem.querySelectorAll(".scene:not(.latest)") as NodeListOf<HTMLElement>;
+			for (let v of Array.from(vers)) {
 				if (showing) {
-					scene.classList.remove("hidden");
+					v.classList.remove("hidden");
 				} else {
-					scene.classList.add("hidden");
+					v.classList.add("hidden");
 				}
 			}
 		} else {
@@ -103,7 +104,7 @@ window.onclick = async function(ev) {
 						let ver = scene.dataset.ver as string;
 						let program = scene.dataset.program as string;
 						await App.OpenScene(path, name, ver, program);
-						// redrawAll();
+						redrawRecentPaths();
 					} catch(err) {
 						logError(err);
 					}
@@ -160,8 +161,6 @@ window.onchange = async function(ev) {
 	}
 	let assignedCheckBox = closest(target, "#assignedCheckBox");
 	if (assignedCheckBox) {
-		let checkBox = assignedCheckBox as HTMLInputElement;
-		await App.SetAssignedOnly(checkBox.checked);
 		try {
 			redrawAll();
 		} catch (err: any) {
@@ -305,6 +304,8 @@ function checkLeaf(path: string) {
 }
 
 async function redrawEntryList() {
+	let cb = querySelector("#assignedCheckBox") as HTMLInputElement;
+	await App.SetAssignedOnly(cb.checked)
 	let entryList = querySelector("#entryList");
 	entryList.replaceChildren();
 	try {
@@ -317,7 +318,6 @@ async function redrawEntryList() {
 					let elem = document.createElement("div");
 					elem.classList.add("element");
 					entryList.append(elem);
-					let sceneList = document.createElement("div");
 					let scene = document.createElement("div");
 					scene.classList.add("scene");
 					scene.classList.add("item");
@@ -474,9 +474,8 @@ function addNewElementField(prog: string) {
 	removeNewElementField();
 	let field = document.createElement("div");
 	field.classList.add("newElementField");
-	// let field = querySelector(".newElementField");
 	field.dataset.program = prog;
-	let list = document.querySelector("#entryList");
+	let list = querySelector("#entryList");
 	list.append(field);
 	let input = document.createElement("input");
 	input.classList.add("newElementFieldInput");
