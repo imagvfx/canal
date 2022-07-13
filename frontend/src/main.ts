@@ -146,6 +146,9 @@ window.onclick = async function(ev) {
 			toggleAddProgramLinkPopup();
 		}
 	}
+	if (!addProgramLink && !addProgramLinkPopup) {
+		hideAddProgramLinkPopup();
+	}
 	let newElementButton = closest(target, ".newElementButton");
 	if (newElementButton) {
 		let prog = newElementButton.dataset.program as string;
@@ -438,6 +441,11 @@ function toggleAddProgramLinkPopup() {
 	} else {
 		popup.classList.add("hidden");
 	}
+}
+
+function hideAddProgramLinkPopup() {
+	let popup = querySelector("#addProgramLinkPopup");
+	popup.classList.add("hidden");
 }
 
 async function fillAddProgramLinkPopup() {

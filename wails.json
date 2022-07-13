@@ -1,6 +1,6 @@
 {
-  "name": "field",
-  "outputfilename": "field",
+  "name": "Canal",
+  "outputfilename": "canal",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
