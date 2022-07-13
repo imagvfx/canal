@@ -32,6 +32,8 @@ export function Logout():Promise<Error>;
 
 export function NewElement(arg1:string,arg2:string,arg3:string):Promise<Error>;
 
+export function OpenDir(arg1:string):Promise<Error>;
+
 export function OpenLoginPage(arg1:string):Promise<Error>;
 
 export function OpenScene(arg1:string,arg2:string,arg3:string,arg4:string):Promise<Error>;

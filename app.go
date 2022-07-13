@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,6 +28,7 @@ type Config struct {
 	LeafEntryType string
 	Scene         string
 	Envs          []string
+	Dir           map[string]string
 	Programs      []*Program
 }
 
@@ -822,6 +824,46 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 		}
 	}()
 	err = a.addRecentPath(path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) OpenDir(path string) error {
+	ent, err := a.getEntry(path)
+	if err != nil {
+		return err
+	}
+	dirTmpl, ok := a.config.Dir[ent.Type]
+	if !ok {
+		return fmt.Errorf("directory not defined for type %s", ent.Type)
+	}
+	var open string
+	switch runtime.GOOS {
+	case "windows":
+		open = "start"
+	case "darwin":
+		open = "open"
+	case "linux":
+		open = "xdg-open"
+	default:
+		return fmt.Errorf("unsupported os: %s", runtime.GOOS)
+	}
+	env := os.Environ()
+	for _, e := range a.config.Envs {
+		env = append(env, e)
+	}
+	envs, err := a.EntryEnvirons(path)
+	if err != nil {
+		return err
+	}
+	for _, e := range envs {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	dir := evalEnvString(dirTmpl, env)
+	cmd := exec.Command(open, dir)
+	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}

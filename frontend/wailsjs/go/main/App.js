@@ -62,6 +62,10 @@ export function NewElement(arg1, arg2, arg3) {
   return window['go']['main']['App']['NewElement'](arg1, arg2, arg3);
 }
 
+export function OpenDir(arg1) {
+  return window['go']['main']['App']['OpenDir'](arg1);
+}
+
 export function OpenLoginPage(arg1) {
   return window['go']['main']['App']['OpenLoginPage'](arg1);
 }

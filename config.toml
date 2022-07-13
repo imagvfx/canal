@@ -7,6 +7,14 @@ Envs = [
 	"NEW_VER=v001",
 ]
 
+[Dir]
+show = "${SHOW_ROOT}/${SHOW}"
+category = "${SHOW_ROOT}/${SHOW}/${CATEG}"
+group = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}"
+shot = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}"
+asset = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}"
+part = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}/part/${PART}"
+
 [[Programs]]
 Name = "Blender"
 Ext = "blend"

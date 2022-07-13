@@ -24,12 +24,30 @@ body {
 }
 
 #optionBar {
-    margin: 0.5rem 1rem;
+    margin: 0.5rem 1rem 0.2rem 1rem;
     display: flex;
 }
 
 #assignedCheckBox:disabled + label {
     color: #888;
+}
+
+#openDirButton {
+    width: 1.3rem;
+    height: 1.3rem;
+    box-sizing: border-box;
+    border-radius: 2px;
+    cursor: pointer;
+    background-image: url("/src/assets/dir.svg");
+    background-repeat: no-repeat;
+    background-size: 1.1rem;
+    background-origin: content-box;
+    background-position: center;
+}
+
+#openDirButton:hover {
+    border: 1px solid #cde;
+    background-color: #cde8;
 }
 
 #middle {
@@ -137,6 +155,10 @@ body {
 }
 
 #elemList {
+    flex: 1;
+}
+
+.divider {
     flex: 1;
 }
 

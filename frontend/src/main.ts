@@ -69,6 +69,15 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+	let openDirButton = closest(target, "#openDirButton");
+	if (openDirButton) {
+		let path = await App.CurrentPath();
+		try {
+			await App.OpenDir(path);
+		} catch (err) {
+			logError(err);
+		}
+	}
 	let scene = closest(target, "#entryList .scene");
 	if (scene) {
 		let sceneListExpander = closest(target, ".sceneListExpander");
