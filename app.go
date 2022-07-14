@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -54,6 +55,7 @@ type App struct {
 	userSetting  *userSetting
 	session      string
 	assignedOnly bool
+	openCmd      string
 }
 
 // NewApp creates a new App application struct
@@ -67,6 +69,16 @@ func NewApp() *App {
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
+	switch runtime.GOOS {
+	case "windows":
+		a.openCmd = "start"
+	case "darwin":
+		a.openCmd = "open"
+	case "linux":
+		a.openCmd = "xdg-open"
+	default:
+		log.Fatalf("unsupported os: %s", runtime.GOOS)
+	}
 	a.ctx = ctx
 	a.GoTo("/")
 }
@@ -309,7 +321,7 @@ func (a *App) getUserInfo() error {
 }
 
 func (a *App) OpenLoginPage(key string) error {
-	cmd := exec.Command("open", a.config.Host+"/login?app_session_key="+key)
+	cmd := exec.Command(a.openCmd, a.config.Host+"/login?app_session_key="+key)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -839,17 +851,6 @@ func (a *App) OpenDir(path string) error {
 	if !ok {
 		return fmt.Errorf("directory not defined for type %s", ent.Type)
 	}
-	var open string
-	switch runtime.GOOS {
-	case "windows":
-		open = "start"
-	case "darwin":
-		open = "open"
-	case "linux":
-		open = "xdg-open"
-	default:
-		return fmt.Errorf("unsupported os: %s", runtime.GOOS)
-	}
 	env := os.Environ()
 	for _, e := range a.config.Envs {
 		env = append(env, e)
@@ -862,7 +863,7 @@ func (a *App) OpenDir(path string) error {
 		env = append(env, e.Name+"="+e.Eval)
 	}
 	dir := evalEnvString(dirTmpl, env)
-	cmd := exec.Command(open, dir)
+	cmd := exec.Command(a.openCmd, dir)
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return err
