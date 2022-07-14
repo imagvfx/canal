@@ -462,10 +462,10 @@ func GenerateRandomString(n int) (string, error) {
 }
 
 type Program struct {
-	Name   string
-	Ext    string
-	Create string
-	Open   string
+	Name      string
+	Ext       string
+	CreateCmd []string
+	OpenCmd   []string
 }
 
 func (a *App) Programs() []string {
@@ -675,6 +675,9 @@ func (a *App) NewElement(path, name, prog string) error {
 	if pg == nil {
 		return fmt.Errorf("not found program: %v", prog)
 	}
+	if len(pg.CreateCmd) == 0 {
+		return fmt.Errorf("CreateCmd is not defined for program: %s", prog)
+	}
 	env = append(env, "ELEM="+name)
 	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
@@ -683,8 +686,13 @@ func (a *App) NewElement(path, name, prog string) error {
 	if err != nil {
 		return err
 	}
+	env = append(env, "SCENE="+scene)
+	createCmd := append([]string{}, pg.CreateCmd...)
+	for i, c := range createCmd {
+		createCmd[i] = evalEnvString(c, env)
+	}
 	go func() {
-		cmd := exec.Command(pg.Create, scene)
+		cmd := exec.Command(createCmd[0], createCmd[1:]...)
 		cmd.Env = env
 		b, err := cmd.CombinedOutput()
 		out := string(b)
@@ -790,6 +798,9 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	if pg == nil {
 		return fmt.Errorf("program not found: %v", prog)
 	}
+	if len(pg.OpenCmd) == 0 {
+		return fmt.Errorf("OpenCmd is not defined for program: %v", prog)
+	}
 	env := os.Environ()
 	for _, e := range a.config.Envs {
 		env = append(env, e)
@@ -804,9 +815,13 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
-	scene := evalEnvString(a.config.Scene, env)
+	env = append(env, "SCENE="+evalEnvString(a.config.Scene, env))
+	openCmd := append([]string{}, pg.OpenCmd...)
+	for i, c := range openCmd {
+		openCmd[i] = evalEnvString(c, env)
+	}
 	go func() {
-		cmd := exec.Command(pg.Open, scene)
+		cmd := exec.Command(openCmd[0], openCmd[1:]...)
 		cmd.Env = env
 		b, err := cmd.CombinedOutput()
 		out := string(b)
