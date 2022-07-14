@@ -20,27 +20,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/BurntSushi/toml"
 )
-
-type Config struct {
-	Host          string
-	LeafEntryType string
-	Scene         string
-	Envs          []string
-	Dir           map[string]string
-	Programs      []*Program
-}
-
-func mustReadConfig() *Config {
-	cfg := &Config{}
-	_, err := toml.DecodeFile("./config.toml", &cfg)
-	if err != nil {
-		panic(err)
-	}
-	return cfg
-}
 
 // App struct
 type App struct {
@@ -59,10 +39,9 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	config := mustReadConfig()
+func NewApp(cfg *Config) *App {
 	return &App{
-		config: config,
+		config: cfg,
 	}
 }
 
@@ -79,6 +58,7 @@ func (a *App) startup(ctx context.Context) {
 	default:
 		log.Fatalf("unsupported os: %s", runtime.GOOS)
 	}
+
 	a.ctx = ctx
 	a.GoTo("/")
 }
