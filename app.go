@@ -843,6 +843,16 @@ func (a *App) OpenDir(path string) error {
 		env = append(env, e.Name+"="+e.Eval)
 	}
 	dir := evalEnvString(dirTmpl, env)
+	_, err = os.Stat(dir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
 	cmd := exec.Command(a.openCmd, dir)
 	_, err = cmd.CombinedOutput()
 	if err != nil {
