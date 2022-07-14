@@ -66,14 +66,14 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) Prepare() error {
 	err := a.readSession()
 	if err != nil {
-		return err
+		return fmt.Errorf("read session: %v", err)
 	}
 	if a.session == "" {
 		return nil
 	}
 	err = a.getUserInfo()
 	if err != nil {
-		return err
+		return fmt.Errorf("get user info: %v", err)
 	}
 	return nil
 }
@@ -287,15 +287,15 @@ func (a *App) Login() (string, error) {
 func (a *App) getUserInfo() error {
 	err := a.writeSession()
 	if err != nil {
-		return err
+		return fmt.Errorf("write session: %v", err)
 	}
 	err = a.GetUserSetting()
 	if err != nil {
-		return err
+		return fmt.Errorf("user setting: %v", err)
 	}
 	err = a.searchAssigned()
 	if err != nil {
-		return err
+		return fmt.Errorf("search assigned: %v", err)
 	}
 	return nil
 }
