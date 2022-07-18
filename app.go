@@ -209,7 +209,7 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 
 func (a *App) subAssigned() []string {
 	dir := strings.TrimSuffix(a.currentPath, "/")
-	paths := make([]string, 0)
+	subs := make(map[string]bool)
 	for _, e := range a.assigned {
 		pth := strings.TrimSuffix(e.Path, "/")
 		if e.Path == dir {
@@ -220,9 +220,14 @@ func (a *App) subAssigned() []string {
 		}
 		rest := strings.TrimPrefix(pth, dir+"/")
 		toks := strings.SplitN(rest, "/", 2)
-		sub := dir + "/" + toks[0]
-		paths = append(paths, sub)
+		sub := toks[0]
+		subs[sub] = true
 	}
+	paths := make([]string, 0)
+	for sub := range subs {
+		paths = append(paths, dir+"/"+sub)
+	}
+	sort.Strings(paths)
 	return paths
 }
 
