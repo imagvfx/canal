@@ -88,7 +88,7 @@ type EntryResponse struct {
 }
 
 func (a *App) getEntry(path string) (*Entry, error) {
-	resp, err := http.PostForm("https://imagvfx.com/api/get-entry", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/get-entry", url.Values{
 		"session": {a.session},
 		"path":    {path},
 	})
@@ -188,7 +188,7 @@ func (a *App) ListEntries() ([]string, error) {
 }
 
 func (a *App) subEntries(path string) ([]*Entry, error) {
-	resp, err := http.PostForm("https://imagvfx.com/api/sub-entries", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/sub-entries", url.Values{
 		"session": {a.session},
 		"path":    {path},
 	})
@@ -227,7 +227,7 @@ func (a *App) subAssigned() []string {
 }
 
 func (a *App) searchAssigned() error {
-	resp, err := http.PostForm("https://imagvfx.com/api/search-entries", url.Values{
+	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
 		"session": {a.session},
 		"from":    {"/"},
 		"q":       {"assignee=" + a.user},
