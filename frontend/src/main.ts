@@ -217,16 +217,19 @@ function logError(err: any) {
 }
 
 async function redrawAll(): Promise<void> {
-	clearLog();
-	redrawLoginArea();
-	redrawOptionBar();
-	App.CurrentPath().then(function(path) {
-		setCurrentPath(path);
-		checkLeaf(path);
-		redrawEntryList();
-	}).catch(logError);
-	await redrawProgramsBar();
-	redrawRecentPaths();
+	try {
+		clearLog();
+		redrawLoginArea();
+		redrawOptionBar();
+		let path = await App.CurrentPath();
+		await setCurrentPath(path);
+		await checkLeaf(path);
+		await redrawEntryList();
+		await redrawProgramsBar();
+		await redrawRecentPaths();
+	} catch (err) {
+		logError(err);
+	}
 }
 
 async function redrawProgramsBar() {
