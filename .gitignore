@@ -1,4 +1,5 @@
 .DS_Store
+go.work
 build/bin
 frontend/dist
 frontend/node_modules
