@@ -8,7 +8,7 @@ export function ClearEntries():void;
 
 export function CurrentPath():Promise<string>;
 
-export function EntryEnvirons(arg1:string):Promise<Array<main.Environ>|Error>;
+export function EntryEnvirons(arg1:string):Promise<Array<main.Environ>>;
 
 export function GetUserSetting():Promise<Error>;
 
@@ -18,15 +18,15 @@ export function GoForward():Promise<string>;
 
 export function GoTo(arg1:string):void;
 
-export function IsLeaf(arg1:string):Promise<boolean|Error>;
+export function IsLeaf(arg1:string):Promise<boolean>;
 
 export function IsValidProgram(arg1:string):Promise<boolean>;
 
-export function ListElements():Promise<Array<main.Elem>|Error>;
+export function ListElements():Promise<Array<main.Elem>>;
 
-export function ListEntries():Promise<Array<string>|Error>;
+export function ListEntries():Promise<Array<string>>;
 
-export function Login():Promise<string|Error>;
+export function Login():Promise<string>;
 
 export function Logout():Promise<Error>;
 
