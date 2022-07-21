@@ -274,7 +274,9 @@ function setCurrentPath(path: string) {
 	let toks = path.split("/").slice(1);
 	let root = document.createElement("span");
 	root.id = "forgeRoot";
-	root.innerText = "forge:";
+	App.Host().then(function(host) {
+		root.innerText = host;
+	})
 	root.classList.add("link");
 	root.onclick = async function() {
 		await App.GoTo("/");

@@ -18,6 +18,8 @@ export function GoForward():Promise<string>;
 
 export function GoTo(arg1:string):void;
 
+export function Host():Promise<string>;
+
 export function IsLeaf(arg1:string):Promise<boolean>;
 
 export function IsValidProgram(arg1:string):Promise<boolean>;

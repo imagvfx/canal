@@ -34,6 +34,10 @@ export function GoTo(arg1) {
   return window['go']['main']['App']['GoTo'](arg1);
 }
 
+export function Host() {
+  return window['go']['main']['App']['Host']();
+}
+
 export function IsLeaf(arg1) {
   return window['go']['main']['App']['IsLeaf'](arg1);
 }

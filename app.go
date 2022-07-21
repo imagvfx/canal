@@ -78,6 +78,14 @@ func (a *App) Prepare() error {
 	return nil
 }
 
+func (a *App) Host() string {
+	toks := strings.Split(a.config.Host, "://")
+	if len(toks) == 1 {
+		return toks[0]
+	}
+	return toks[1]
+}
+
 func (a *App) CurrentPath() string {
 	return a.currentPath
 }
