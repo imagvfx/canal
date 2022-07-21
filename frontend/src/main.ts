@@ -267,6 +267,16 @@ function redrawOptionBar() {
 			assignedCheckBox.disabled = false;
 		}
 	})
+	App.CurrentPath().then(function(path) {
+		App.DirExists(path).then(function(ok) {
+			let newDir = querySelector("#newDir");
+			if (ok) {
+				newDir.classList.add("hidden");
+			} else {
+				newDir.classList.remove("hidden");
+			}
+		})
+	}).catch(logError);
 }
 
 function setCurrentPath(path: string) {

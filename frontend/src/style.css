@@ -35,8 +35,12 @@ body {
 #openDirButton {
     width: 1.3rem;
     height: 1.3rem;
+    display: flex;
+    justify-content: end;
+    align-items: start;
     box-sizing: border-box;
     border-radius: 2px;
+    border: 1px solid #0000;
     cursor: pointer;
     background-image: url("/src/assets/dir.svg");
     background-repeat: no-repeat;
@@ -48,6 +52,11 @@ body {
 #openDirButton:hover {
     border: 1px solid #cde;
     background-color: #cde8;
+}
+
+#newDir {
+    font-size: 0.8rem;
+    color: #aa4488;
 }
 
 #middle {
@@ -293,4 +302,3 @@ body {
     padding: 0.5rem 0.2rem;
     background-color: #fafafa;
 }
-

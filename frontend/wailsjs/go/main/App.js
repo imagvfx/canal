@@ -14,6 +14,10 @@ export function CurrentPath() {
   return window['go']['main']['App']['CurrentPath']();
 }
 
+export function DirExists(arg1) {
+  return window['go']['main']['App']['DirExists'](arg1);
+}
+
 export function EntryEnvirons(arg1) {
   return window['go']['main']['App']['EntryEnvirons'](arg1);
 }

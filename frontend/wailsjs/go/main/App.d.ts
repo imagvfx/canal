@@ -8,6 +8,8 @@ export function ClearEntries():void;
 
 export function CurrentPath():Promise<string>;
 
+export function DirExists(arg1:string):Promise<boolean>;
+
 export function EntryEnvirons(arg1:string):Promise<Array<main.Environ>>;
 
 export function GetUserSetting():Promise<Error>;

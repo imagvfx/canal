@@ -850,14 +850,14 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	return nil
 }
 
-func (a *App) OpenDir(path string) error {
+func (a *App) dirPath(path string) (string, error) {
 	ent, err := a.getEntry(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	dirTmpl, ok := a.config.Dir[ent.Type]
 	if !ok {
-		return fmt.Errorf("directory not defined for type %s", ent.Type)
+		return "", fmt.Errorf("directory not defined for type %s", ent.Type)
 	}
 	env := os.Environ()
 	for _, e := range a.config.Envs {
@@ -865,12 +865,35 @@ func (a *App) OpenDir(path string) error {
 	}
 	envs, err := a.EntryEnvirons(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, e := range envs {
 		env = append(env, e.Name+"="+e.Eval)
 	}
 	dir := evalEnvString(dirTmpl, env)
+	return dir, nil
+}
+
+func (a *App) DirExists(path string) (bool, error) {
+	dir, err := a.dirPath(path)
+	if err != nil {
+		return false, err
+	}
+	_, err = os.Stat(dir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return false, err
+		}
+		return false, nil
+	}
+	return true, nil
+}
+
+func (a *App) OpenDir(path string) error {
+	dir, err := a.dirPath(path)
+	if err != nil {
+		return err
+	}
 	_, err = os.Stat(dir)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
