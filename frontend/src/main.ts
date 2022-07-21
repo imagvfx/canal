@@ -221,21 +221,23 @@ async function redrawAll(): Promise<void> {
 		clearLog();
 		redrawLoginArea();
 		redrawOptionBar();
-		let path = await App.CurrentPath();
-		await setCurrentPath(path);
-		await checkLeaf(path);
-		await redrawEntryList();
-		await redrawProgramsBar();
-		await redrawRecentPaths();
+		App.CurrentPath().then(function(path) {
+			setCurrentPath(path);
+			checkLeaf(path);
+		});
+		redrawEntryList();
+		redrawProgramsBar();
+		redrawRecentPaths();
 	} catch (err) {
 		logError(err);
 	}
 }
 
-async function redrawProgramsBar() {
-	await App.GetUserSetting();
-	fillAddProgramLinkPopup();
-	redrawNewElementButtons();
+function redrawProgramsBar() {
+	App.GetUserSetting().then(function() {
+		fillAddProgramLinkPopup();
+		redrawNewElementButtons();
+	});
 }
 
 function redrawLoginArea() {
