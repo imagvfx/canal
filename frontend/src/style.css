@@ -90,6 +90,7 @@ body {
 }
 
 #currentPath {
+    height: 1.5rem;
     font-size: 1.2rem;
     flex: 1;
     color: #8ab4f8;
