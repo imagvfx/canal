@@ -906,3 +906,12 @@ func (a *App) OpenDir(dir string) error {
 	}
 	return nil
 }
+
+func (a *App) OpenURL(path string) error {
+	cmd := exec.Command(a.openCmd, a.config.Host+path)
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}

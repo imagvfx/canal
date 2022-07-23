@@ -102,11 +102,29 @@ body {
     height: 1.5rem;
     font-size: 1.2rem;
     flex: 1;
+    display: flex;
     color: #8ab4f8;
     background-color: #222;
     border: 1px solid #444;
     border-radius: 4px;
     padding: 4px 6px;
+}
+
+#urlLink {
+    width: 1.4rem;
+    height: 1.4rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    background-image: url("/src/assets/link.svg");
+    background-repeat: no-repeat;
+    background-size: 1.2rem;
+    background-origin: content-box;
+    background-position: center;
+    filter: invert() brightness(0.5);
+}
+
+#urlLink:hover {
+    filter: invert() brightness(0.8);
 }
 
 #tabSwitchButtons {

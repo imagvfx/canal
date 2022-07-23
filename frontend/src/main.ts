@@ -69,6 +69,12 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+	let urlLink = closest(target, "#urlLink");
+	if (urlLink) {
+		App.CurrentPath().then(function(path) {
+			App.OpenURL(path).catch(logError);
+		});
+	}
 	let openDirButton = closest(target, "#openDirButton");
 	if (openDirButton) {
 		try {
@@ -328,6 +334,12 @@ function setCurrentPath(path: string) {
 		}
 		currentPath.append(span)
 	}
+	let divider = document.createElement("div");
+	divider.classList.add("divider");
+	currentPath.append(divider);
+	let link = document.createElement("div");
+	link.id = "urlLink";
+	currentPath.append(link)
 }
 
 function checkLeaf(path: string) {
