@@ -256,7 +256,7 @@ function redrawLoginArea() {
 			logoutButton.classList.remove("hidden");
 			currentUser.innerText = user;
 		}
-	}).catch(logError);
+	});
 }
 
 function redrawOptionBar() {
@@ -337,14 +337,19 @@ function checkLeaf(path: string) {
 
 async function redrawEntryList() {
 	let cb = querySelector("#assignedCheckBox") as HTMLInputElement;
-	await App.SetAssignedOnly(cb.checked)
+	await App.SetAssignedOnly(cb.checked);
 	let entryList = querySelector("#entryList");
-	entryList.replaceChildren();
+	let user = await App.SessionUser();
+	if (user == "") {
+		entryList.replaceChildren();
+		return;
+	}
 	try {
 		let path = await App.CurrentPath();
 		let leaf = await App.IsLeaf(path) as boolean;
 		if (leaf) {
 			App.ListElements().then(function(args) {
+				entryList.replaceChildren();
 				let elems = args as any[];
 				for (let e of elems) {
 					let elem = document.createElement("div");
@@ -379,6 +384,7 @@ async function redrawEntryList() {
 			}).catch(logError);
 		} else {
 			App.ListEntries().then(async function(arg: string[] | Error) {
+				entryList.replaceChildren();
 				let ents = arg as string[];
 				for (let ent of ents) {
 					let toks = ent.split("/");
@@ -426,8 +432,7 @@ function redrawNewElementButtons() {
 }
 
 async function redrawRecentPaths() {
-	try {
-		let paths = await App.RecentPaths();
+	App.RecentPaths().then(function(paths) {
 		if (!paths) {
 			paths = [];
 		}
@@ -441,9 +446,7 @@ async function redrawRecentPaths() {
 			div.innerText = path;
 			cnt.append(div);
 		}
-	} catch (err) {
-		logError(err);
-	}
+	}).catch(logError);
 }
 
 function toggleAddProgramLinkPopup() {
