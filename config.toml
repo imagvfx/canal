@@ -18,6 +18,6 @@ part = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}/part/${PART}"
 [[Programs]]
 Name = "Blender"
 Ext = "blend"
-Create = "Blender"
-Open = "Blender"
+CreateCmd = ["Blender", "${SCENE}"]
+OpenCmd = ["Blender", "${SCENE}"]
 
