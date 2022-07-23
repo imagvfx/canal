@@ -71,9 +71,12 @@ window.onclick = async function(ev) {
 	}
 	let openDirButton = closest(target, "#openDirButton");
 	if (openDirButton) {
-		let path = await App.CurrentPath();
 		try {
-			await App.OpenDir(path);
+			let path = await App.CurrentPath();
+			let dir = await App.Dir(path);
+			if (dir != "") {
+				await App.OpenDir(dir);
+			}
 		} catch (err) {
 			logError(err);
 		}
@@ -266,14 +269,16 @@ function redrawOptionBar() {
 		}
 	})
 	App.CurrentPath().then(function(path) {
-		App.DirExists(path).then(function(ok) {
-			let newDir = querySelector("#newDir");
-			if (ok) {
-				newDir.classList.add("hidden");
-			} else {
-				newDir.classList.remove("hidden");
-			}
-		})
+		App.Dir(path).then(function(dir) {
+			App.DirExists(dir).then(function(ok) {
+				let newDir = querySelector("#newDir");
+				if (ok) {
+					newDir.classList.add("hidden");
+				} else {
+					newDir.classList.remove("hidden");
+				}
+			});
+		});
 	}).catch(logError);
 }
 
