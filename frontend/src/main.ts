@@ -154,8 +154,10 @@ window.onclick = async function(ev) {
 	}
 	let newElementButton = closest(target, ".newElementButton");
 	if (newElementButton) {
-		let prog = newElementButton.dataset.program as string;
-		addNewElementField(prog);
+		if (!newElementButton.classList.contains("invalid")) {
+			let prog = newElementButton.dataset.program as string;
+			addNewElementField(prog);
+		}
 	} else {
 		let newElementField = closest(target, ".newElementField");
 		if (newElementField == null) {
@@ -430,6 +432,13 @@ function redrawNewElementButtons() {
 				if (!ok) {
 					btn.classList.add("invalid");
 				}
+			});
+			App.CurrentPath().then(function(path) {
+				App.IsLeaf(path).then(function(leaf) {
+					if (!leaf) {
+						btn.classList.add("invalid");
+					}
+				})
 			});
 		}
 	});

@@ -204,6 +204,10 @@ body {
     cursor: pointer;
 }
 
+.button.invalid {
+    cursor: default;
+}
+
 #programsBar {
     position: relative;
     display: flex;
@@ -242,13 +246,12 @@ body {
     height: 1rem;
 }
 
-#right:not(.leaf) .newElementButton {
+.newElementButton.invalid {
     opacity: 0.3;
 }
 
-.newElementButton.invalid {
-    background-color: #888;
-    opacity: 0.3;
+.newElementButton:not(.invalid):hover {
+    background-color: #cde8;
 }
 
 #statusBar {
