@@ -6,4 +6,5 @@ frontend/node_modules
 frontend/package-lock.json
 frontend/wailsjs/runtime/runtime.d.ts
 frontend/wailsjs/runtime/runtime.js
-
+frontend/wailsjs/go/main/App.d.ts
+frontend/wailsjs/go/main/App.js
