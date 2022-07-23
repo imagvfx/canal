@@ -270,12 +270,16 @@ function redrawOptionBar() {
 	})
 	App.CurrentPath().then(function(path) {
 		App.Dir(path).then(function(dir) {
+			let openDirButton = querySelector("#openDirButton");
+			if (dir == "") {
+				openDirButton.dataset.type = "disabled";
+				return;
+			}
 			App.DirExists(dir).then(function(ok) {
-				let newDir = querySelector("#newDir");
 				if (ok) {
-					newDir.classList.add("hidden");
+					openDirButton.dataset.type = "";
 				} else {
-					newDir.classList.remove("hidden");
+					openDirButton.dataset.type = "new";
 				}
 			});
 		});

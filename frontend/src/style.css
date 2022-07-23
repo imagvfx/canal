@@ -54,9 +54,18 @@ body {
     background-color: #cde8;
 }
 
+#openDirButton[data-type="disabled"] {
+    filter: grayscale();
+}
+
 #newDir {
     font-size: 0.8rem;
-    color: #aa4488;
+    color: #4488aa;
+    -webkit-user-select: none;
+}
+
+#openDirButton:not([data-type="new"]) #newDir {
+    display: none;
 }
 
 #middle {
