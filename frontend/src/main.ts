@@ -234,10 +234,8 @@ async function redrawAll(): Promise<void> {
 }
 
 function redrawProgramsBar() {
-	App.GetUserSetting().then(function() {
-		fillAddProgramLinkPopup();
-		redrawNewElementButtons();
-	});
+	fillAddProgramLinkPopup();
+	redrawNewElementButtons();
 }
 
 function redrawLoginArea() {
@@ -402,27 +400,24 @@ async function redrawEntryList() {
 
 }
 
-async function redrawNewElementButtons() {
-	let progs: string[] = [];
-	try {
-		progs = await App.ProgramsInUse() as string[];
-	} catch (err) {
-		logError(err);
-	}
-	let btns = querySelector("#newElementButtons");
-	btns.replaceChildren();
-	for (let prog of progs) {
-		let btn = document.createElement("div");
-		btn.classList.add("newElementButton");
-		btn.classList.add("button");
-		btn.dataset.program = prog;
-		btn.innerText = "+" + prog;
-		btns.append(btn);
-		let ok = await App.IsValidProgram(prog);
-		if (!ok) {
-			btn.classList.add("invalid");
+function redrawNewElementButtons() {
+	App.ProgramsInUse().then(function(progs: string[]) {
+		let btns = querySelector("#newElementButtons");
+		btns.replaceChildren();
+		for (let prog of progs) {
+			let btn = document.createElement("div");
+			btn.classList.add("newElementButton");
+			btn.classList.add("button");
+			btn.dataset.program = prog;
+			btn.innerText = "+" + prog;
+			btns.append(btn);
+			App.IsValidProgram(prog).then(function(ok: boolean) {
+				if (!ok) {
+					btn.classList.add("invalid");
+				}
+			});
 		}
-	}
+	});
 }
 
 async function redrawRecentPaths() {
@@ -499,11 +494,11 @@ async function toggleNewElementButton(prog: string) {
 			btn.dataset.program = prog;
 			btn.innerText = "+" + prog;
 			btns.append(btn);
-			await App.GetUserSetting();
 		} catch (err) {
 			logError(err);
 		}
 	}
+	App.GetUserSetting();
 }
 
 function addNewElementField(prog: string) {

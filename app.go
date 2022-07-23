@@ -450,6 +450,7 @@ func (a *App) addRecentPath(path string) error {
 
 func (a *App) Logout() error {
 	a.assigned = nil
+	a.userSetting = nil
 	err := a.removeSession()
 	if err != nil {
 		return err
@@ -486,10 +487,12 @@ func (a *App) Programs() []string {
 	for _, p := range a.config.Programs {
 		prog[p.Name] = true
 	}
-	// User might have programs currently not defined for some reason.
-	// Let's add those so user can remove if they want.
-	for _, name := range a.userSetting.ProgramsInUse {
-		prog[name] = true
+	if a.userSetting != nil {
+		// User might have programs currently not defined for some reason.
+		// Let's add those so user can remove if they want.
+		for _, name := range a.userSetting.ProgramsInUse {
+			prog[name] = true
+		}
 	}
 	progs := make([]string, 0, len(prog))
 	for name := range prog {
