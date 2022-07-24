@@ -251,7 +251,7 @@ func (a *App) subAssigned() []string {
 	return paths
 }
 
-func (a *App) searchAssigned() error {
+func (a *App) SearchAssigned() error {
 	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
 		"session": {a.session},
 		"from":    {"/"},
@@ -318,7 +318,7 @@ func (a *App) getUserInfo() error {
 	if err != nil {
 		return fmt.Errorf("user setting: %v", err)
 	}
-	err = a.searchAssigned()
+	err = a.SearchAssigned()
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
 	}

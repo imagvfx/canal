@@ -26,10 +26,31 @@ body {
 #optionBar {
     margin: 0.5rem 1rem 0.2rem 1rem;
     display: flex;
+    align-items: center;
 }
 
 #assignedCheckBox:disabled + label {
     color: #888;
+}
+
+#reloadAssignedButton {
+    width: 1rem;
+    height: 1rem;
+    box-sizing: border-box;
+    border-radius: 2px;
+    border: 1px solid #0000;
+    cursor: pointer;
+    background-image: url("/src/assets/reload.svg");
+    background-repeat: no-repeat;
+    background-size: 0.6rem;
+    background-origin: content-box;
+    background-position: center;
+}
+
+#reloadAssignedButton:hover {
+    border: 1px solid #cde;
+    background-color: #cde8;
+    filter: none;
 }
 
 #openDirButton {

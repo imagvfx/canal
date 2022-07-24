@@ -75,6 +75,10 @@ window.onclick = async function(ev) {
 			App.OpenURL(path).catch(logError);
 		});
 	}
+	let reloadAssignedButton = closest(target, "#reloadAssignedButton");
+	if (reloadAssignedButton) {
+		App.SearchAssigned().then(redrawAll).catch(logError);
+	}
 	let openDirButton = closest(target, "#openDirButton");
 	if (openDirButton) {
 		try {
