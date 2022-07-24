@@ -24,18 +24,18 @@ import (
 
 // App struct
 type App struct {
-	ctx          context.Context
-	config       *Config
-	currentPath  string
-	history      []string
-	historyIdx   int
-	assigned     []*Entry
-	recents      []string
-	user         string
-	userSetting  *userSetting
-	session      string
-	assignedOnly bool
-	openCmd      string
+	ctx         context.Context
+	config      *Config
+	currentPath string
+	history     []string
+	historyIdx  int
+	assigned    []*Entry
+	recents     []string
+	user        string
+	userSetting *userSetting
+	session     string
+	options     Options
+	openCmd     string
 }
 
 // NewApp creates a new App application struct
@@ -74,6 +74,10 @@ func (a *App) Prepare() error {
 	err = a.getUserInfo()
 	if err != nil {
 		return fmt.Errorf("get user info: %v", err)
+	}
+	err = a.readOptions()
+	if err != nil {
+		return fmt.Errorf("read options: %v", err)
 	}
 	return nil
 }
@@ -163,8 +167,17 @@ func (a *App) GoForward() string {
 	return a.currentPath
 }
 
-func (a *App) SetAssignedOnly(only bool) {
-	a.assignedOnly = only
+func (a *App) SetAssignedOnly(only bool) error {
+	a.options.AssignedOnly = only
+	err := a.writeOptions()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) AssignedOnly() bool {
+	return a.options.AssignedOnly
 }
 
 type SearchResponse struct {
@@ -178,7 +191,7 @@ type Entry struct {
 }
 
 func (a *App) ListEntries() ([]string, error) {
-	if a.assignedOnly {
+	if a.options.AssignedOnly {
 		paths := a.subAssigned()
 		sort.Strings(paths)
 		return paths, nil
@@ -343,7 +356,27 @@ func (a *App) WaitLogin(key string) error {
 	return nil
 }
 
-func (a *App) writeSession() error {
+func readConfigData(filename string) ([]byte, error) {
+	confd, err := os.UserConfigDir()
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(confd + "/field/" + filename)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+		return []byte{}, nil
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func writeConfigData(filename string, data []byte) error {
 	confd, err := os.UserConfigDir()
 	if err != nil {
 		return err
@@ -352,12 +385,24 @@ func (a *App) writeSession() error {
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(confd + "/field/session")
+	f, err := os.Create(confd + "/field/" + filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	_, err = io.WriteString(f, a.user+" "+a.session)
+	_, err = f.Write(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeConfigFile(filename string) error {
+	confd, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	err = os.Remove(confd + "/field/" + filename)
 	if err != nil {
 		return err
 	}
@@ -365,19 +410,7 @@ func (a *App) writeSession() error {
 }
 
 func (a *App) readSession() error {
-	confd, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-	f, err := os.Open(confd + "/field/session")
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-		return nil
-	}
-	defer f.Close()
-	data, err := io.ReadAll(f)
+	data, err := readConfigData("session")
 	if err != nil {
 		return err
 	}
@@ -390,14 +423,53 @@ func (a *App) readSession() error {
 	return nil
 }
 
-func (a *App) removeSession() error {
-	a.user = ""
-	a.session = ""
-	confd, err := os.UserConfigDir()
+func (a *App) writeSession() error {
+	data := []byte(a.user + " " + a.session)
+	err := writeConfigData("session", data)
 	if err != nil {
 		return err
 	}
-	err = os.Remove(confd + "/field/session")
+	return nil
+}
+
+func (a *App) removeSession() error {
+	a.user = ""
+	a.session = ""
+	err := removeConfigFile("session")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Options struct {
+	AssignedOnly bool
+}
+
+func (a *App) readOptions() error {
+	if a.user == "" {
+		return nil
+	}
+	data, err := readConfigData("options_" + a.user)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(data, &a.options)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) writeOptions() error {
+	if a.user == "" {
+		return nil
+	}
+	data, err := json.Marshal(&a.options)
+	if err != nil {
+		return err
+	}
+	err = writeConfigData("options_"+a.user, data)
 	if err != nil {
 		return err
 	}

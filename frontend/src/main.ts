@@ -185,6 +185,14 @@ window.onchange = async function(ev) {
 	let assignedCheckBox = closest(target, "#assignedCheckBox");
 	if (assignedCheckBox) {
 		try {
+			let checkbox = assignedCheckBox as HTMLInputElement;
+			await App.SetAssignedOnly(checkbox.checked);
+		} catch (err) {
+			// The option may not be restored whenuser run the App next time.
+			// But not a fatal error. Just log it.
+			logError(err);
+		}
+		try {
 			redrawAll();
 		} catch (err: any) {
 			logError(err);
@@ -274,6 +282,9 @@ function redrawOptionBar() {
 			assignedCheckBox.disabled = true;
 		} else {
 			assignedCheckBox.disabled = false;
+			App.AssignedOnly().then(function(ok) {
+				assignedCheckBox.checked = ok;
+			});
 		}
 	})
 	App.CurrentPath().then(function(path) {
@@ -354,8 +365,6 @@ function checkLeaf(path: string) {
 }
 
 async function redrawEntryList() {
-	let cb = querySelector("#assignedCheckBox") as HTMLInputElement;
-	await App.SetAssignedOnly(cb.checked);
 	let entryList = querySelector("#entryList");
 	let user = await App.SessionUser();
 	if (user == "") {
