@@ -56,6 +56,9 @@ body {
 
 #openDirButton[data-type="disabled"] {
     filter: grayscale();
+    cursor: default;
+    border: 0;
+    background-color: #0000;
 }
 
 #newDir {
