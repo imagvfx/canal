@@ -30,7 +30,6 @@ type App struct {
 	history     []string
 	historyIdx  int
 	assigned    []*Entry
-	recents     []string
 	user        string
 	userSetting *userSetting
 	session     string
