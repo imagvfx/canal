@@ -413,6 +413,9 @@ func (a *App) readSession() error {
 	if err != nil {
 		return err
 	}
+	if len(data) == 0 {
+		return nil
+	}
 	toks := strings.Split(string(data), " ")
 	if len(toks) != 2 {
 		return fmt.Errorf("invalid session")
@@ -452,6 +455,9 @@ func (a *App) readOptions() error {
 	data, err := readConfigData("options_" + a.user)
 	if err != nil {
 		return err
+	}
+	if len(data) == 0 {
+		return nil
 	}
 	err = json.Unmarshal(data, &a.options)
 	if err != nil {
