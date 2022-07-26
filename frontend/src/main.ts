@@ -207,8 +207,11 @@ window.onchange = async function(ev) {
 window.onkeydown = async function(ev) {
 	let ctrlLike = ev.ctrlKey || ev.metaKey;
 	if (ctrlLike) {
+		ev.preventDefault();
+		if (ev.key == "r") {
+			redrawAll();
+		}
 		if (ev.key == "c") {
-			ev.preventDefault();
 			let sel = document.querySelector<HTMLElement>(".item.selected");
 			if (!sel) {
 				return;
