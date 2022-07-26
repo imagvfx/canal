@@ -804,7 +804,12 @@ func (a *App) NewElement(path, name, prog string) error {
 type Elem struct {
 	Name     string
 	Program  string
-	Versions []string
+	Versions []Version
+}
+
+type Version struct {
+	Name  string
+	Scene string
 }
 
 func (a *App) ListElements() ([]*Elem, error) {
@@ -862,7 +867,8 @@ func (a *App) ListElements() ([]*Elem, error) {
 				Program: p.Name,
 			}
 		}
-		e.Versions = append(e.Versions, ver)
+		v := Version{Name: ver, Scene: sceneDir + "/" + name}
+		e.Versions = append(e.Versions, v)
 		elem[el] = e
 	}
 	elems := make([]*Elem, 0, len(elem))

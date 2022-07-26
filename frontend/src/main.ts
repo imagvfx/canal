@@ -205,6 +205,18 @@ window.onchange = async function(ev) {
 }
 
 window.onkeydown = async function(ev) {
+	let ctrlLike = ev.ctrlKey || ev.metaKey;
+	if (ctrlLike) {
+		if (ev.key == "c") {
+			ev.preventDefault();
+			let sel = document.querySelector<HTMLElement>(".item.selected");
+			if (!sel) {
+				return;
+			}
+			let scene = sel.dataset.scene as string;
+			navigator.clipboard.writeText(scene);
+		}
+	}
 	let target = (<HTMLElement> ev.target);
 	let newElementFieldInput = closest(target, ".newElementFieldInput");
 	if (newElementFieldInput) {
@@ -391,9 +403,10 @@ async function redrawEntryList() {
 					scene.classList.add("item");
 					scene.classList.add("latest");
 					scene.dataset.name = e.Name;
-					let v = e.Versions[e.Versions.length - 1];
-					scene.dataset.ver = v;
 					scene.dataset.program = e.Program;
+					let v = e.Versions[e.Versions.length - 1];
+					scene.dataset.ver = v.Name;
+					scene.dataset.scene = v.Scene;
 					elem.append(scene);
 					let expander = document.createElement("div");
 					expander.classList.add("sceneListExpander");
@@ -406,9 +419,10 @@ async function redrawEntryList() {
 						scene.classList.add("item");
 						scene.classList.add("hidden");
 						scene.dataset.name = e.Name;
-						scene.dataset.ver = v;
 						scene.dataset.program = e.Program;
-						scene.innerText = v;
+						scene.dataset.ver = v.Name;
+						scene.dataset.scene = v.Scene;
+						scene.innerText = v.Name;
 						elem.append(scene);
 					}
 				}
