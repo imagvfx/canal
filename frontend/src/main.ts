@@ -205,6 +205,7 @@ window.onchange = async function(ev) {
 }
 
 window.onkeydown = async function(ev) {
+	// NOTE: metaKey is used instead of both ctrl or alt on mac
 	let ctrlLike = ev.ctrlKey || ev.metaKey;
 	if (ctrlLike) {
 		ev.preventDefault();
@@ -218,6 +219,18 @@ window.onkeydown = async function(ev) {
 			}
 			let scene = sel.dataset.scene as string;
 			navigator.clipboard.writeText(scene);
+		}
+	}
+	let altLike = ev.altKey || ev.metaKey;
+	if (altLike) {
+		ev.preventDefault();
+		if (ev.key == "ArrowLeft") {
+			App.GoBack().then(redrawAll).catch(logError);
+			return;
+		}
+		if (ev.key == "ArrowRight") {
+			App.GoForward().then(redrawAll).catch(logError);
+			return;
 		}
 	}
 	let target = (<HTMLElement> ev.target);
