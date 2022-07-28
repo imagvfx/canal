@@ -218,7 +218,8 @@ window.onkeydown = async function(ev) {
 				return;
 			}
 			let scene = sel.dataset.scene as string;
-			navigator.clipboard.writeText(scene);
+			copyToClipboard(scene);
+			log("path copied: " + scene);
 		}
 	}
 	let altLike = ev.altKey || ev.metaKey;
@@ -255,14 +256,36 @@ window.onkeydown = async function(ev) {
 	}
 }
 
+function copyToClipboard(msg: string) {
+	let t = document.createElement("textarea");
+	t.value = msg;
+	t.style.position = "fixed"; // prevents scrolling
+	document.body.appendChild(t);
+	t.focus();
+	t.select();
+	try {
+		document.execCommand("copy");
+	} catch (err) {
+		logError(err);
+		return;
+	}
+	document.body.removeChild(t);
+}
+
 function clearLog() {
 	let bar = querySelector("#statusBar");
 	bar.innerText = "";
 }
 
+function log(msg: string) {
+	let m = msg.split("\n")[0];
+	let bar = querySelector("#statusBar");
+	bar.innerText = m;
+}
+
 function logError(err: any) {
 	console.log(err);
-	let e = err.toString().split("\n").slice(0);
+	let e = err.toString().split("\n")[0];
 	let bar = querySelector("#statusBar");
 	bar.innerText = e;
 }
