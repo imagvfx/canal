@@ -831,7 +831,7 @@ func (a *App) ListElements() ([]*Elem, error) {
 	scene := evalEnvString(a.config.Scene, env)
 	sceneDir := filepath.Dir(scene)
 	sceneName := filepath.Base(scene)
-	reName, err := regexp.Compile(sceneName)
+	reName, err := regexp.Compile("^" + sceneName + "$") // match as a whole
 	if err != nil {
 		return nil, err
 	}
