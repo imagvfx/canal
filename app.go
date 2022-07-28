@@ -360,7 +360,7 @@ func readConfigData(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	f, err := os.Open(confd + "/field/" + filename)
+	f, err := os.Open(confd + "/canal/" + filename)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
@@ -380,11 +380,11 @@ func writeConfigData(filename string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(confd+"/field", 0755)
+	err = os.MkdirAll(confd+"/canal", 0755)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(confd + "/field/" + filename)
+	f, err := os.Create(confd + "/canal/" + filename)
 	if err != nil {
 		return err
 	}
@@ -401,7 +401,7 @@ func removeConfigFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	err = os.Remove(confd + "/field/" + filename)
+	err = os.Remove(confd + "/canal/" + filename)
 	if err != nil {
 		return err
 	}
