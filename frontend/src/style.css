@@ -105,15 +105,21 @@ body {
 }
 
 #recentPathArea {
+    width: 16rem;
     border-right: 1px solid #888888;
     display: flex;
     flex-direction: column;
 }
 
 #entryArea {
-    width: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
+}
+
+#infoArea {
+    border-left: 1px solid #aaa;
+    width: 16rem;
 }
 
 #navButtons {
@@ -168,7 +174,6 @@ body {
 }
 
 #recentPaths {
-    width: 16rem;
     overflow-y: auto;
     word-break: break-word;
     padding: 0.5rem;
