@@ -430,7 +430,7 @@ async function redrawEntryList() {
 		let path = await App.CurrentPath();
 		let leaf = await App.IsLeaf(path) as boolean;
 		if (leaf) {
-			App.ListElements().then(function(args) {
+			App.ListElements(path).then(function(args) {
 				entryList.replaceChildren();
 				let elems = args as any[];
 				for (let e of elems) {
@@ -467,7 +467,7 @@ async function redrawEntryList() {
 				}
 			}).catch(logError);
 		} else {
-			App.ListEntries().then(async function(arg: string[] | Error) {
+			App.ListEntries(path).then(async function(arg: string[] | Error) {
 				entryList.replaceChildren();
 				let ents = arg as string[];
 				for (let ent of ents) {

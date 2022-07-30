@@ -189,13 +189,13 @@ type Entry struct {
 	Path string
 }
 
-func (a *App) ListEntries() ([]string, error) {
+func (a *App) ListEntries(path string) ([]string, error) {
 	if a.options.AssignedOnly {
-		paths := a.subAssigned()
+		paths := a.subAssigned(path)
 		sort.Strings(paths)
 		return paths, nil
 	}
-	subs, err := a.subEntries(a.currentPath)
+	subs, err := a.subEntries(path)
 	if err != nil {
 		return nil, err
 	}
@@ -227,8 +227,8 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 	return r.Msg, nil
 }
 
-func (a *App) subAssigned() []string {
-	dir := strings.TrimSuffix(a.currentPath, "/")
+func (a *App) subAssigned(path string) []string {
+	dir := strings.TrimSuffix(path, "/")
 	subs := make(map[string]bool)
 	for _, e := range a.assigned {
 		pth := strings.TrimSuffix(e.Path, "/")
@@ -812,8 +812,7 @@ type Version struct {
 	Scene string
 }
 
-func (a *App) ListElements() ([]*Elem, error) {
-	path := a.currentPath
+func (a *App) ListElements(path string) ([]*Elem, error) {
 	env := os.Environ()
 	for _, e := range a.config.Envs {
 		env = append(env, e)
