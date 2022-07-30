@@ -104,13 +104,13 @@ body {
     padding: 0.25rem 0.5rem;
 }
 
-#left {
+#recentPathArea {
     border-right: 1px solid #888888;
     display: flex;
     flex-direction: column;
 }
 
-#right {
+#entryArea {
     width: 100%;
     display: flex;
     flex-direction: column;

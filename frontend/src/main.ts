@@ -410,11 +410,11 @@ function setCurrentPath(path: string) {
 
 function checkLeaf(path: string) {
 	App.IsLeaf(path).then(function(ok) {
-		let right = querySelector("#right");
+		let area = querySelector("#entryArea");
 		if (ok) {
-			right.classList.add("leaf");
+			area.classList.add("leaf");
 		} else {
-			right.classList.remove("leaf");
+			area.classList.remove("leaf");
 		}
 	});
 }
