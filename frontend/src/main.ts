@@ -174,6 +174,16 @@ window.onclick = async function(ev) {
 			removeNewElementField();
 		}
 	}
+	let partLink = closest(target, ".partLink");
+	if (partLink) {
+		let path = partLink.dataset.path as string;
+		await App.GoTo(path);
+		try {
+			redrawAll();
+		} catch(err) {
+			logError(err);
+		}
+	}
 }
 
 window.onchange = async function(ev) {
@@ -300,6 +310,7 @@ async function redrawAll(): Promise<void> {
 			checkLeaf(path);
 		});
 		redrawEntryList();
+		redrawInfoArea();
 		redrawProgramsBar();
 		redrawRecentPaths();
 	} catch (err) {
@@ -538,6 +549,28 @@ async function redrawRecentPaths() {
 			cnt.append(div);
 		}
 	}).catch(logError);
+}
+
+async function redrawInfoArea() {
+	let area = querySelector("#infoArea");
+	area.replaceChildren();
+	let path = await App.CurrentPath();
+	let leaf = await App.IsLeaf(path);
+	if (!leaf) {
+		return;
+	}
+	let parent = await App.Parent(path);
+	let ents = await App.ListEntries(parent);
+	for (let ent of ents) {
+		let toks = ent.split("/");
+		let name = toks[toks.length-1];
+		let div = document.createElement("div");
+		div.classList.add("partLink");
+		div.classList.add("link");
+		div.innerText = name;
+		div.dataset.path = ent;
+		area.append(div);
+	}
 }
 
 function toggleAddProgramLinkPopup() {

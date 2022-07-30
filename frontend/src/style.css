@@ -120,6 +120,10 @@ body {
 #infoArea {
     border-left: 1px solid #aaa;
     width: 16rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
 }
 
 #navButtons {
@@ -361,4 +365,8 @@ body {
 .item {
     padding: 0.5rem 0.2rem;
     background-color: #fafafa;
+}
+
+.partLink {
+    padding: 0.2rem;
 }

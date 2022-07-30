@@ -997,3 +997,7 @@ func (a *App) OpenURL(path string) error {
 	}
 	return nil
 }
+
+func (a *App) Parent(pth string) string {
+	return path.Dir(pth)
+}
