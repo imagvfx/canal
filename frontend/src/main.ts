@@ -478,9 +478,8 @@ async function redrawEntryList() {
 				}
 			}).catch(logError);
 		} else {
-			App.ListEntries(path).then(async function(arg: string[] | Error) {
+			App.ListEntries(path).then(function(ents) {
 				entryList.replaceChildren();
-				let ents = arg as string[];
 				for (let ent of ents) {
 					let div = document.createElement("div");
 					div.classList.add("entry");
@@ -593,22 +592,28 @@ async function redrawInfoArea() {
 			title.append(name);
 			let info = document.createElement("div");
 			info.classList.add("titleInfo");
-			info.innerText = "~ " + ent.Property["due"].Eval;
+			let due = ent.Property["due"].Eval;
+			if (due != "") {
+				info.innerText = "~ " + due;
+			}
 			title.append(info);
 			shot.append(title);
-			let elems = null;
+			let parts = [];
 			try {
-				elems = await App.ListEntries(ent.Path);
+				parts = await App.ListAllEntries(ent.Path);
 			} catch(err) {
 				logError(err);
 				return;
 			}
-			for (let elem of elems) {
+			for (let part of parts) {
 				let div = document.createElement("div");
 				div.classList.add("partLink");
 				div.classList.add("link");
-				div.innerText = elem.Name;
-				div.dataset.path = elem.Path;
+				if (part.Path == path) {
+					div.classList.add("current");
+				}
+				div.innerText = part.Name + " - " + part.Property["assignee"].Eval;
+				div.dataset.path = part.Path;
 				shot.append(div);
 			}
 		}

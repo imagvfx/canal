@@ -235,6 +235,17 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 	return ents, nil
 }
 
+func (a *App) ListAllEntries(path string) ([]*Entry, error) {
+	ents, err := a.subEntries(path)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(ents, func(i, j int) bool {
+		return ents[i].Name < ents[j].Name
+	})
+	return ents, nil
+}
+
 func (a *App) subEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/sub-entries", url.Values{
 		"session": {a.session},
