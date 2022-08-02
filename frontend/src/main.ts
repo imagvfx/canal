@@ -561,35 +561,34 @@ async function redrawInfoArea() {
 		return;
 	}
 	ents.push(ent);
-	let show = null;
-	let shot = null;
+	let entDivs = [];
 	for (let ent of ents) {
+		if (ent.Path == "/") {
+			continue;
+		}
+		let entDiv = document.createElement("div");
+		entDiv.classList.add("entryInfo");
+		entDiv.dataset.type = ent.Type;
+		entDiv.dataset.path = ent.Path;
+		let title = document.createElement("div");
+		title.classList.add("title");
+		let name = document.createElement("div");
+		name.classList.add("titleName");
+		name.innerText = ent.Name;
+		title.append(name);
+		entDiv.append(title)
 		if (ent.Type == "show") {
-			show = document.createElement("div");
-			show.classList.add("entryInfo");
-			let title = document.createElement("div");
-			title.classList.add("title");
-			let name = document.createElement("div");
-			name.classList.add("titleName");
-			name.innerText = ent.Name;
-			title.append(name);
 			let info = document.createElement("div");
 			info.classList.add("titleInfo");
 			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;;
 			title.append(info);
-			show.append(title);
-			let res = document.createElement("div");
-			res.innerText = "resolution: " + ent.Property["resolution"].Eval;
-			show.append(res);
-		}
-		if (ent.Type == "shot") {
-			shot = document.createElement("div");
-			let title = document.createElement("div");
-			title.classList.add("title");
-			let name = document.createElement("div");
-			name.classList.add("titleName");
-			name.innerText = ent.Name;
-			title.append(name);
+			for (let prop of ["resolution", "fps"]) {
+				let p = document.createElement("div");
+				p.innerText = prop + ": " + ent.Property[prop].Eval;
+				entDiv.append(p);
+			}
+			entDivs.push(entDiv);
+		} else if (ent.Type == "shot" || ent.Type == "asset") {
 			let info = document.createElement("div");
 			info.classList.add("titleInfo");
 			let due = ent.Property["due"].Eval;
@@ -597,7 +596,6 @@ async function redrawInfoArea() {
 				info.innerText = "~ " + due;
 			}
 			title.append(info);
-			shot.append(title);
 			let parts = [];
 			try {
 				parts = await App.ListAllEntries(ent.Path);
@@ -614,16 +612,14 @@ async function redrawInfoArea() {
 				}
 				div.innerText = part.Name + " - " + part.Property["assignee"].Eval;
 				div.dataset.path = part.Path;
-				shot.append(div);
+				entDiv.append(div);
 			}
+			entDivs.push(entDiv);
 		}
 	}
 	area.replaceChildren();
-	if (show) {
-		area.append(show)
-	}
-	if (shot) {
-		area.append(shot)
+	for (let div of entDivs) {
+		area.append(div);
 	}
 }
 

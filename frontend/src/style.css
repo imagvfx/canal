@@ -372,11 +372,15 @@ body {
 }
 
 .entryInfo {
-    margin-bottom: 1rem;
+    margin: 0.25rem;
+    font-size: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
 }
 
 .title {
     display: flex;
+    font-size: 1rem;
     justify-content: space-between;
 }
 
