@@ -366,13 +366,6 @@ body {
     background-color: #fafafa;
 }
 
-.partLink {
-    font-size: 0.8rem;
-}
-
-.partLink.current {
-}
-
 .entryInfo {
     margin: 0.25rem;
     font-size: 0.8rem;
@@ -384,6 +377,10 @@ body {
     display: flex;
     font-size: 1rem;
     justify-content: space-between;
+}
+
+.sub .title {
+    font-size: 0.9rem;
 }
 
 .titleName {

@@ -174,9 +174,9 @@ window.onclick = async function(ev) {
 			removeNewElementField();
 		}
 	}
-	let partLink = closest(target, ".partLink");
-	if (partLink) {
-		let path = partLink.dataset.path as string;
+	let pathLink = closest(target, ".pathLink");
+	if (pathLink) {
+		let path = pathLink.dataset.path as string;
 		await App.GoTo(path);
 		try {
 			redrawAll();
@@ -574,6 +574,9 @@ async function redrawInfoArea() {
 		title.classList.add("title");
 		let name = document.createElement("div");
 		name.classList.add("titleName");
+		name.classList.add("pathLink");
+		name.classList.add("link");
+		name.dataset.path = ent.Path;
 		name.innerText = ent.Name;
 		title.append(name);
 		entDiv.append(title)
@@ -596,6 +599,7 @@ async function redrawInfoArea() {
 				info.innerText = "~ " + due;
 			}
 			title.append(info);
+			entDivs.push(entDiv);
 			let parts = [];
 			try {
 				parts = await App.ListAllEntries(ent.Path);
@@ -603,18 +607,27 @@ async function redrawInfoArea() {
 				logError(err);
 				return;
 			}
-			for (let part of parts) {
-				let div = document.createElement("div");
-				div.classList.add("partLink");
-				div.classList.add("link");
-				if (part.Path == path) {
-					div.classList.add("current");
-				}
-				div.innerText = part.Name + " - " + part.Property["assignee"].Eval;
-				div.dataset.path = part.Path;
-				entDiv.append(div);
+			for (let ent of parts) {
+				let entDiv = document.createElement("div");
+				entDiv.classList.add("entryInfo");
+				entDiv.classList.add("sub");
+				entDiv.dataset.type = ent.Type;
+				let title = document.createElement("div");
+				title.classList.add("title");
+				let name = document.createElement("div");
+				name.classList.add("titleName");
+				name.classList.add("pathLink");
+				name.classList.add("link");
+				name.dataset.path = ent.Path;
+				name.innerText = ent.Name;
+				title.append(name);
+				let info = document.createElement("div");
+				info.classList.add("titleInfo");
+				info.innerText = ent.Property["assignee"].Eval;
+				title.append(info);
+				entDiv.append(title);
+				entDivs.push(entDiv);
 			}
-			entDivs.push(entDiv);
 		}
 	}
 	area.replaceChildren();
