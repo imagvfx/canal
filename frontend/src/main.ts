@@ -561,30 +561,33 @@ async function redrawInfoArea() {
 		return;
 	}
 	ents.push(ent);
+	let addEntryInfoDiv = function(ent) {
+		let div = document.createElement("div");
+		div.classList.add("entryInfo");
+		div.dataset.path = ent.Path;
+		div.dataset.type = ent.Type;
+		let title = document.createElement("div");
+		title.classList.add("title");
+		let name = document.createElement("div");
+		name.classList.add("titleName", "pathLink", "link");
+		name.dataset.path = ent.Path;
+		name.innerText = ent.Name;
+		title.append(name);
+		let info = document.createElement("div");
+		info.classList.add("titleInfo");
+		title.append(info);
+		div.append(title)
+		return div
+	}
 	let entDivs = [];
 	for (let ent of ents) {
 		if (ent.Path == "/") {
 			continue;
 		}
-		let entDiv = document.createElement("div");
-		entDiv.classList.add("entryInfo");
-		entDiv.dataset.type = ent.Type;
-		entDiv.dataset.path = ent.Path;
-		let title = document.createElement("div");
-		title.classList.add("title");
-		let name = document.createElement("div");
-		name.classList.add("titleName");
-		name.classList.add("pathLink");
-		name.classList.add("link");
-		name.dataset.path = ent.Path;
-		name.innerText = ent.Name;
-		title.append(name);
-		entDiv.append(title)
 		if (ent.Type == "show") {
-			let info = document.createElement("div");
-			info.classList.add("titleInfo");
+			let entDiv = addEntryInfoDiv(ent);
+			let info = entDiv.querySelector(".titleInfo");
 			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;;
-			title.append(info);
 			for (let prop of ["resolution", "fps"]) {
 				let p = document.createElement("div");
 				p.innerText = prop + ": " + ent.Property[prop].Eval;
@@ -592,13 +595,12 @@ async function redrawInfoArea() {
 			}
 			entDivs.push(entDiv);
 		} else if (ent.Type == "shot" || ent.Type == "asset") {
-			let info = document.createElement("div");
-			info.classList.add("titleInfo");
+			let entDiv = addEntryInfoDiv(ent);
+			let info = entDiv.querySelector(".titleInfo");
 			let due = ent.Property["due"].Eval;
 			if (due != "") {
 				info.innerText = "~ " + due;
 			}
-			title.append(info);
 			entDivs.push(entDiv);
 			let parts = [];
 			try {
@@ -608,24 +610,10 @@ async function redrawInfoArea() {
 				return;
 			}
 			for (let ent of parts) {
-				let entDiv = document.createElement("div");
-				entDiv.classList.add("entryInfo");
+				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
-				entDiv.dataset.type = ent.Type;
-				let title = document.createElement("div");
-				title.classList.add("title");
-				let name = document.createElement("div");
-				name.classList.add("titleName");
-				name.classList.add("pathLink");
-				name.classList.add("link");
-				name.dataset.path = ent.Path;
-				name.innerText = ent.Name;
-				title.append(name);
-				let info = document.createElement("div");
-				info.classList.add("titleInfo");
+				let info = entDiv.querySelector(".titleInfo");
 				info.innerText = ent.Property["assignee"].Eval;
-				title.append(info);
-				entDiv.append(title);
 				entDivs.push(entDiv);
 			}
 		}
