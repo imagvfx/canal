@@ -118,6 +118,14 @@ func (a *App) getEntry(path string) (*Entry, error) {
 	return r.Msg, nil
 }
 
+func (a *App) GetEntry(path string) (*Entry, error) {
+	ent, err := a.getEntry(path)
+	if err != nil {
+		return nil, err
+	}
+	return ent, nil
+}
+
 func (a *App) IsLeaf(path string) (bool, error) {
 	e, err := a.getEntry(path)
 	if err != nil {
@@ -185,8 +193,19 @@ type SearchResponse struct {
 }
 
 type Entry struct {
-	Type string
-	Path string
+	Type     string
+	Path     string
+	Name     string
+	Property map[string]*Property
+}
+
+type Property struct {
+	Value string
+	Eval  string
+}
+
+func (p *Property) String() string {
+	return p.Eval
 }
 
 func (a *App) ListEntries(path string) ([]string, error) {
@@ -249,6 +268,26 @@ func (a *App) subAssigned(path string) []string {
 	}
 	sort.Strings(paths)
 	return paths
+}
+
+func (a *App) ParentEntries(path string) ([]*Entry, error) {
+	resp, err := http.PostForm(a.config.Host+"/api/parent-entries", url.Values{
+		"session": {a.session},
+		"path":    {path},
+	})
+	if err != nil {
+		return nil, err
+	}
+	r := SearchResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+	if r.Err != "" {
+		return nil, fmt.Errorf(r.Err)
+	}
+	return r.Msg, nil
 }
 
 func (a *App) SearchAssigned() error {
@@ -1000,4 +1039,12 @@ func (a *App) OpenURL(path string) error {
 
 func (a *App) Parent(pth string) string {
 	return path.Dir(pth)
+}
+
+func (a *App) Thumbnail(path string) string {
+	return a.config.Host + "/thumbnail" + path + "?session=" + url.QueryEscape(a.session)
+}
+
+func (a *App) Session() string {
+	return a.session
 }

@@ -553,23 +553,76 @@ async function redrawRecentPaths() {
 
 async function redrawInfoArea() {
 	let area = querySelector("#infoArea");
-	area.replaceChildren();
 	let path = await App.CurrentPath();
-	let leaf = await App.IsLeaf(path);
-	if (!leaf) {
+	let ents = null;
+	let ent = null;
+	try {
+		ents = await App.ParentEntries(path);
+		ent = await App.GetEntry(path);
+	} catch(err) {
+		logError(err);
 		return;
 	}
-	let parent = await App.Parent(path);
-	let ents = await App.ListEntries(parent);
+	ents.push(ent);
+	let show = null;
+	let shot = null;
 	for (let ent of ents) {
-		let toks = ent.split("/");
-		let name = toks[toks.length-1];
-		let div = document.createElement("div");
-		div.classList.add("partLink");
-		div.classList.add("link");
-		div.innerText = name;
-		div.dataset.path = ent;
-		area.append(div);
+		if (ent.Type == "show") {
+			show = document.createElement("div");
+			show.classList.add("entryInfo");
+			let title = document.createElement("div");
+			title.classList.add("title");
+			let name = document.createElement("div");
+			name.classList.add("titleName");
+			name.innerText = ent.Name;
+			title.append(name);
+			let info = document.createElement("div");
+			info.classList.add("titleInfo");
+			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;;
+			title.append(info);
+			show.append(title);
+			let res = document.createElement("div");
+			res.innerText = "resolution: " + ent.Property["resolution"].Eval;
+			show.append(res);
+		}
+		if (ent.Type == "shot") {
+			shot = document.createElement("div");
+			let title = document.createElement("div");
+			title.classList.add("title");
+			let name = document.createElement("div");
+			name.classList.add("titleName");
+			name.innerText = ent.Name;
+			title.append(name);
+			let info = document.createElement("div");
+			info.classList.add("titleInfo");
+			info.innerText = "~ " + ent.Property["due"].Eval;
+			title.append(info);
+			shot.append(title);
+			let elems = null;
+			try {
+				elems = await App.ListEntries(ent.Path);
+			} catch(err) {
+				logError(err);
+				return;
+			}
+			for (let elem of elems) {
+				let toks = elem.split("/");
+				let name = toks[toks.length - 1];
+				let div = document.createElement("div");
+				div.classList.add("partLink");
+				div.classList.add("link");
+				div.innerText = name;
+				div.dataset.path = elem;
+				shot.append(div);
+			}
+		}
+	}
+	area.replaceChildren();
+	if (show) {
+		area.append(show)
+	}
+	if (shot) {
+		area.append(shot)
 	}
 }
 
