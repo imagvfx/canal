@@ -588,11 +588,6 @@ async function redrawInfoArea() {
 			let entDiv = addEntryInfoDiv(ent);
 			let info = entDiv.querySelector(".titleInfo");
 			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;;
-			for (let prop of ["resolution", "fps"]) {
-				let p = document.createElement("div");
-				p.innerText = prop + ": " + ent.Property[prop].Eval;
-				entDiv.append(p);
-			}
 			entDivs.push(entDiv);
 		} else if (ent.Type == "shot" || ent.Type == "asset") {
 			let entDiv = addEntryInfoDiv(ent);
