@@ -482,14 +482,12 @@ async function redrawEntryList() {
 				entryList.replaceChildren();
 				let ents = arg as string[];
 				for (let ent of ents) {
-					let toks = ent.split("/");
-					let name = toks[toks.length-1];
 					let div = document.createElement("div");
 					div.classList.add("entry");
 					div.classList.add("item");
-					div.innerText = name;
+					div.innerText = ent.Name;
 					div.onclick = async function() {
-						await App.GoTo(ent);
+						await App.GoTo(ent.Path);
 						try {
 							redrawAll();
 						} catch (err) {
@@ -606,13 +604,11 @@ async function redrawInfoArea() {
 				return;
 			}
 			for (let elem of elems) {
-				let toks = elem.split("/");
-				let name = toks[toks.length - 1];
 				let div = document.createElement("div");
 				div.classList.add("partLink");
 				div.classList.add("link");
-				div.innerText = name;
-				div.dataset.path = elem;
+				div.innerText = elem.Name;
+				div.dataset.path = elem.Path;
 				shot.append(div);
 			}
 		}

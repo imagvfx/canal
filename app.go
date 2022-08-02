@@ -208,22 +208,31 @@ func (p *Property) String() string {
 	return p.Eval
 }
 
-func (a *App) ListEntries(path string) ([]string, error) {
-	if a.options.AssignedOnly {
-		paths := a.subAssigned(path)
-		sort.Strings(paths)
-		return paths, nil
-	}
+func (a *App) ListEntries(path string) ([]*Entry, error) {
 	subs, err := a.subEntries(path)
 	if err != nil {
 		return nil, err
 	}
-	paths := make([]string, 0)
-	for _, e := range subs {
-		paths = append(paths, e.Path)
+	vis := make(map[string]bool)
+	if a.options.AssignedOnly {
+		paths := a.subAssigned(path)
+		for _, p := range paths {
+			vis[p] = true
+		}
 	}
-	sort.Strings(paths)
-	return paths, nil
+	ents := make([]*Entry, 0, len(subs))
+	for _, e := range subs {
+		if a.options.AssignedOnly {
+			if !vis[e.Path] {
+				continue
+			}
+		}
+		ents = append(ents, e)
+	}
+	sort.Slice(ents, func(i, j int) bool {
+		return ents[i].Name < ents[j].Name
+	})
+	return ents, nil
 }
 
 func (a *App) subEntries(path string) ([]*Entry, error) {
