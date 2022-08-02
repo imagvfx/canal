@@ -121,6 +121,8 @@ body {
     border-left: 1px solid #aaa;
     width: 16rem;
     padding: 0.5rem;
+    overflow-x: wrap;
+    overflow-wrap: break-word;
 }
 
 #navButtons {
