@@ -27,7 +27,11 @@ let lastSceneClick = Date.now();
 
 window.onclick = async function(ev) {
 	let target = (<HTMLElement> ev.target);
-
+	let contextMenu = closest(target, "#contextMenu");
+	if (!contextMenu) {
+		let menu = querySelector("#contextMenu");
+		menu.style.display = "none";
+	}
 	let bookmark = closest(target, ".entryBookmark");
 	if (bookmark) {
 		try {
@@ -184,6 +188,40 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+}
+
+
+let entryList = querySelector("#entryList");
+
+entryList.oncontextmenu = function(ev) {
+	ev.preventDefault();
+	let menu = querySelector("#contextMenu");
+    menu.style.left = ev.pageX + "px";
+    menu.style.top = ev.pageY + "px";
+    menu.replaceChildren();
+	let entItem = closest(ev.target, ".scene.item");
+	if (!entItem) {
+	    menu.style.display = "none";
+		return;
+	}
+    menu.style.display = "flex";
+	let ver = entItem.dataset.ver as string;
+    let label = document.createElement("div");
+    label.classList.add("contextMenuLabel");
+    label.innerText = ver;
+    menu.append(label);
+    let item = document.createElement("div");
+    item.classList.add("contextMenuItem");
+    item.innerText = "publish";
+    menu.append(item);
+}
+
+let contextMenu = querySelector("#contextMenu");
+
+contextMenu.oncontextmenu = function(ev) {
+	ev.preventDefault();
+	let menu = querySelector("#contextMenu");
+	menu.style.display = "none";
 }
 
 window.onchange = async function(ev) {

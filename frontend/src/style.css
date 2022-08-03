@@ -1,12 +1,13 @@
 body {
     margin: 0;
+    overflow: hidden;
+    font-family: Apple SD Gothic Neo,arial,sans-serif;
 }
 
 #app {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: Apple SD Gothic Neo,arial,sans-serif;
     background-color: #f4f4f4;
 }
 
@@ -123,6 +124,39 @@ body {
     padding: 0.5rem;
     overflow-x: wrap;
     overflow-wrap: break-word;
+}
+
+#contextMenu {
+    position: absolute;
+    display: none;
+    border: 1px solid #888;
+    border-radius: 2px;
+    flex-direction: column;
+    gap: 1px;
+    width: 8rem;
+    font-size: 0.9rem;
+    background-color: #bbb;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
+.contextMenuLabel {
+    padding: 0.2rem;
+    background-color: #eee;
+    height: 0.9rem;
+    color: #24a;
+}
+
+.contextMenuItem {
+    padding: 0.2rem;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.contextMenuItem:hover {
+    background-color: #dde8fa;
 }
 
 #navButtons {
