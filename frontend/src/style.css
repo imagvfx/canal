@@ -405,23 +405,32 @@ body {
 }
 
 .sub.entryInfo {
+    margin-bottom: 0.05rem;
+}
+
+.sub.entryInfo:not(.current) {
     border-bottom: 1px dashed #ddd;
-    margin-bottom: 0;
 }
 
 .title {
     display: flex;
     font-size: 1rem;
-    justify-content: space-between;
 }
 
-.sub .title {
-    font-size: 0.9rem;
+.sub:not(.current) .title {
+    font-size: 0.8rem;
+    color: #888;
 }
 
 .titleName {
+    flex: 1;
+    text-decoration: none !important;
+}
+
+.titleName:hover {
+    color: #46d;
 }
 
 .titleInfo {
-    font-size: 0.8rem;
+    font-size: 0.85em;
 }

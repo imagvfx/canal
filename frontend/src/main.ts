@@ -645,6 +645,9 @@ async function redrawInfoArea() {
 			for (let ent of parts) {
 				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
+				if (ent.Path == path) {
+					entDiv.classList.add("current");
+				}
 				let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 				info.innerText = ent.Property["assignee"].Eval;
 				entDivs.push(entDiv);
