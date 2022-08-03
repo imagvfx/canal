@@ -196,24 +196,26 @@ let entryList = querySelector("#entryList");
 entryList.oncontextmenu = function(ev) {
 	ev.preventDefault();
 	let menu = querySelector("#contextMenu");
-    menu.style.left = ev.pageX + "px";
-    menu.style.top = ev.pageY + "px";
-    menu.replaceChildren();
-	let entItem = closest(ev.target, ".scene.item");
+	menu.style.left = ev.pageX + "px";
+	menu.style.top = ev.pageY + "px";
+	menu.replaceChildren();
+	let target = ev.target as HTMLElement;
+	let entItem = target.closest(".scene.item") as HTMLElement;
 	if (!entItem) {
 	    menu.style.display = "none";
 		return;
 	}
-    menu.style.display = "flex";
+	menu.style.display = "flex";
+	let elem = entItem.dataset.name as string;
 	let ver = entItem.dataset.ver as string;
-    let label = document.createElement("div");
-    label.classList.add("contextMenuLabel");
-    label.innerText = ver;
-    menu.append(label);
-    let item = document.createElement("div");
-    item.classList.add("contextMenuItem");
-    item.innerText = "publish";
-    menu.append(item);
+	let label = document.createElement("div");
+	label.classList.add("contextMenuLabel");
+	label.innerText = elem + " / " + ver;
+	menu.append(label);
+	let item = document.createElement("div");
+	item.classList.add("contextMenuItem");
+	item.innerText = "publish";
+	menu.append(item);
 }
 
 let contextMenu = querySelector("#contextMenu");
