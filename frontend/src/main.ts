@@ -561,7 +561,7 @@ async function redrawInfoArea() {
 		return;
 	}
 	ents.push(ent);
-	let addEntryInfoDiv = function(ent) {
+	let addEntryInfoDiv = function(ent: any) {
 		let div = document.createElement("div");
 		div.classList.add("entryInfo");
 		div.dataset.path = ent.Path;
@@ -586,12 +586,12 @@ async function redrawInfoArea() {
 		}
 		if (ent.Type == "show") {
 			let entDiv = addEntryInfoDiv(ent);
-			let info = entDiv.querySelector(".titleInfo");
-			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;;
+			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
+			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;
 			entDivs.push(entDiv);
 		} else if (ent.Type == "shot" || ent.Type == "asset") {
 			let entDiv = addEntryInfoDiv(ent);
-			let info = entDiv.querySelector(".titleInfo");
+			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 			let due = ent.Property["due"].Eval;
 			if (due != "") {
 				info.innerText = "~ " + due;
@@ -607,7 +607,7 @@ async function redrawInfoArea() {
 			for (let ent of parts) {
 				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
-				let info = entDiv.querySelector(".titleInfo");
+				let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 				info.innerText = ent.Property["assignee"].Eval;
 				entDivs.push(entDiv);
 			}
