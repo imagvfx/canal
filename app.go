@@ -62,6 +62,9 @@ func (a *App) startup(ctx context.Context) {
 	a.GoTo("/")
 }
 
+// Prepare prepares start up of the app gui.
+// It is similar to startup, but I need separate method for functions
+// those return error.
 func (a *App) Prepare() error {
 	err := a.readSession()
 	if err != nil {
@@ -81,6 +84,7 @@ func (a *App) Prepare() error {
 	return nil
 }
 
+// Host returns hostname which excludes protocol specifier.
 func (a *App) Host() string {
 	toks := strings.Split(a.config.Host, "://")
 	if len(toks) == 1 {
@@ -89,6 +93,7 @@ func (a *App) Host() string {
 	return toks[1]
 }
 
+// CurrentPath is the path, the app currently stands.
 func (a *App) CurrentPath() string {
 	return a.currentPath
 }
@@ -98,6 +103,7 @@ type EntryResponse struct {
 	Err string
 }
 
+// getEntry gets entry info from host.
 func (a *App) getEntry(path string) (*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-entry", url.Values{
 		"session": {a.session},
@@ -118,6 +124,7 @@ func (a *App) getEntry(path string) (*Entry, error) {
 	return r.Msg, nil
 }
 
+// GetEntry gets entry info from host.
 func (a *App) GetEntry(path string) (*Entry, error) {
 	ent, err := a.getEntry(path)
 	if err != nil {
@@ -126,6 +133,7 @@ func (a *App) GetEntry(path string) (*Entry, error) {
 	return ent, nil
 }
 
+// IsLeaf checks whether a path is leaf.
 func (a *App) IsLeaf(path string) (bool, error) {
 	e, err := a.getEntry(path)
 	if err != nil {
@@ -174,6 +182,7 @@ func (a *App) GoForward() string {
 	return a.currentPath
 }
 
+// SetAssignedOnly set assignedOnly option enabled/disabled.
 func (a *App) SetAssignedOnly(only bool) error {
 	a.options.AssignedOnly = only
 	err := a.writeOptions()
@@ -183,6 +192,7 @@ func (a *App) SetAssignedOnly(only bool) error {
 	return nil
 }
 
+// AssignedOnly returns assignedOnly option value currently set.
 func (a *App) AssignedOnly() bool {
 	return a.options.AssignedOnly
 }
@@ -192,6 +202,7 @@ type SearchResponse struct {
 	Err string
 }
 
+// Entry is a entry info.
 type Entry struct {
 	Type     string
 	Path     string
@@ -199,15 +210,19 @@ type Entry struct {
 	Property map[string]*Property
 }
 
+// Property is a property an entry is holding.
 type Property struct {
 	Value string
 	Eval  string
 }
 
+// String represents the property as string.
 func (p *Property) String() string {
 	return p.Eval
 }
 
+// ListEntries shows sub entries of an entry,
+// it shows only paths to assigned entries when the options is enabled.
 func (a *App) ListEntries(path string) ([]*Entry, error) {
 	subs, err := a.subEntries(path)
 	if err != nil {
@@ -235,6 +250,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 	return ents, nil
 }
 
+// ListAllEntries shows all sub entries of an entry.
 func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 	ents, err := a.subEntries(path)
 	if err != nil {
@@ -246,6 +262,7 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 	return ents, nil
 }
 
+// subEntries get all sub entries of an entry from host.
 func (a *App) subEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/sub-entries", url.Values{
 		"session": {a.session},
@@ -266,6 +283,7 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 	return r.Msg, nil
 }
 
+// subAssigned returns sub entry paths to assigned entries only.
 func (a *App) subAssigned(path string) []string {
 	dir := strings.TrimSuffix(path, "/")
 	subs := make(map[string]bool)
@@ -290,6 +308,7 @@ func (a *App) subAssigned(path string) []string {
 	return paths
 }
 
+// ParentEntries get parent entries of an entry.
 func (a *App) ParentEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/parent-entries", url.Values{
 		"session": {a.session},
@@ -310,6 +329,7 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 	return r.Msg, nil
 }
 
+// SearchAssigned searches entries from host those have logged in user as assignee.
 func (a *App) SearchAssigned() error {
 	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
 		"session": {a.session},
@@ -332,10 +352,12 @@ func (a *App) SearchAssigned() error {
 	return nil
 }
 
+// ClearEntries clears assigned entries.
 func (a *App) ClearEntries() {
 	a.assigned = nil
 }
 
+// SessionInfo is a session info of logged in user.
 type SessionInfo struct {
 	User    string
 	Session string
@@ -368,6 +390,7 @@ func (a *App) Login() (string, error) {
 	return a.user, nil
 }
 
+// getUserInfo gets user info from host.
 func (a *App) getUserInfo() error {
 	err := a.writeSession()
 	if err != nil {
@@ -384,6 +407,7 @@ func (a *App) getUserInfo() error {
 	return nil
 }
 
+// OpenLoginPage shows login page to user.
 func (a *App) OpenLoginPage(key string) error {
 	cmd := exec.Command(a.openCmd, a.config.Host+"/login?app_session_key="+key)
 	_, err := cmd.CombinedOutput()
@@ -393,6 +417,7 @@ func (a *App) OpenLoginPage(key string) error {
 	return nil
 }
 
+// WaitLogin waits until the user log in.
 func (a *App) WaitLogin(key string) error {
 	resp, err := http.PostForm(a.config.Host+"/api/app-login", url.Values{
 		"key": {key},
@@ -414,6 +439,7 @@ func (a *App) WaitLogin(key string) error {
 	return nil
 }
 
+// readConfigData reads data from a config file.
 func readConfigData(filename string) ([]byte, error) {
 	confd, err := os.UserConfigDir()
 	if err != nil {
@@ -434,6 +460,7 @@ func readConfigData(filename string) ([]byte, error) {
 	return data, nil
 }
 
+// writeConfigData writes data to a config file.
 func writeConfigData(filename string, data []byte) error {
 	confd, err := os.UserConfigDir()
 	if err != nil {
@@ -455,6 +482,7 @@ func writeConfigData(filename string, data []byte) error {
 	return nil
 }
 
+// removeConfigFile removes a config file.
 func removeConfigFile(filename string) error {
 	confd, err := os.UserConfigDir()
 	if err != nil {
@@ -467,6 +495,7 @@ func removeConfigFile(filename string) error {
 	return nil
 }
 
+// readSession reads session from a config file.
 func (a *App) readSession() error {
 	data, err := readConfigData("session")
 	if err != nil {
@@ -484,6 +513,7 @@ func (a *App) readSession() error {
 	return nil
 }
 
+// writeSession writes session to a config file.
 func (a *App) writeSession() error {
 	data := []byte(a.user + " " + a.session)
 	err := writeConfigData("session", data)
@@ -493,6 +523,7 @@ func (a *App) writeSession() error {
 	return nil
 }
 
+// removeSession removes sesson config file.
 func (a *App) removeSession() error {
 	a.user = ""
 	a.session = ""
@@ -503,10 +534,13 @@ func (a *App) removeSession() error {
 	return nil
 }
 
+// Options are options of the app those will remembered by config files.
+// Note that options those are closely related with the user will remembered by host instead.
 type Options struct {
 	AssignedOnly bool
 }
 
+// readOptions reads options config file of the logged in user.
 func (a *App) readOptions() error {
 	if a.user == "" {
 		return nil
@@ -525,6 +559,7 @@ func (a *App) readOptions() error {
 	return nil
 }
 
+// writeOptions writes options config file of the logged in user.
 func (a *App) writeOptions() error {
 	if a.user == "" {
 		return nil
@@ -540,6 +575,7 @@ func (a *App) writeOptions() error {
 	return nil
 }
 
+// arrangeRecentPaths insert/move/remove recent paths where user want.
 func (a *App) arrangeRecentPaths(path string, at int) error {
 	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
 		"session":             {a.session},
@@ -562,6 +598,7 @@ func (a *App) arrangeRecentPaths(path string, at int) error {
 	return nil
 }
 
+// RecentPaths returns recent paths of the logged in user.
 func (a *App) RecentPaths() []string {
 	if a.userSetting == nil {
 		return []string{}
@@ -569,6 +606,8 @@ func (a *App) RecentPaths() []string {
 	return a.userSetting.RecentPaths
 }
 
+// addRecentPath adds a path to head of recent paths.
+// If the path has already in recent paths, it will move to head instead.
 func (a *App) addRecentPath(path string) error {
 	err := a.arrangeRecentPaths(path, 0)
 	if err != nil {
@@ -584,6 +623,7 @@ func (a *App) addRecentPath(path string) error {
 	return nil
 }
 
+// Logout forgets session info of latest logged in user.
 func (a *App) Logout() error {
 	a.assigned = nil
 	a.userSetting = nil
@@ -594,10 +634,12 @@ func (a *App) Logout() error {
 	return nil
 }
 
+// SessionUser returns a user name currently logged in.
 func (a *App) SessionUser() string {
 	return a.user
 }
 
+// GenerateRandomString returns random string that has length 'n', using alpha-numeric characters.
 func GenerateRandomString(n int) (string, error) {
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	ret := make([]byte, n)
@@ -611,6 +653,7 @@ func GenerateRandomString(n int) (string, error) {
 	return string(ret), nil
 }
 
+// Program is a program info.
 type Program struct {
 	Name      string
 	Ext       string
@@ -618,6 +661,8 @@ type Program struct {
 	OpenCmd   []string
 }
 
+// Programs returns programs in config, and legacy programs
+// which user registred earlier when they were existed in previous config.
 func (a *App) Programs() []string {
 	prog := make(map[string]bool, 0)
 	for _, p := range a.config.Programs {
@@ -638,6 +683,7 @@ func (a *App) Programs() []string {
 	return progs
 }
 
+// IsValidProgram returns true if the program is defined in current config.
 func (a *App) IsValidProgram(prog string) bool {
 	for _, p := range a.config.Programs {
 		if p.Name == prog {
@@ -647,6 +693,7 @@ func (a *App) IsValidProgram(prog string) bool {
 	return false
 }
 
+// userSetting is user setting saved in host that is related with this app.
 type userSetting struct {
 	ProgramsInUse []string
 	RecentPaths   []string
@@ -657,6 +704,7 @@ type forgeUserSettingResponse struct {
 	Err string
 }
 
+// GetUserSetting get user setting from host, and remember it.
 func (a *App) GetUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
@@ -678,6 +726,7 @@ func (a *App) GetUserSetting() error {
 	return nil
 }
 
+// ProgramsInUse returns programs what user marked as in use.
 func (a *App) ProgramsInUse() []string {
 	if a.userSetting == nil {
 		return []string{}
@@ -689,6 +738,7 @@ type forgeAPIErrorResponse struct {
 	Err string
 }
 
+// arrangeProgramInUse insert/move/remove a in-use program to where user wants.
 func (a *App) arrangeProgramInUse(prog string, at int) error {
 	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
 		"session":                {a.session},
@@ -711,10 +761,12 @@ func (a *App) arrangeProgramInUse(prog string, at int) error {
 	return nil
 }
 
+// AddProgramInUse adds a in-use program to where user wants.
 func (a *App) AddProgramInUse(prog string, at int) error {
 	return a.arrangeProgramInUse(prog, at)
 }
 
+// RemoveProgramInUse removes a in-use program.
 func (a *App) RemoveProgramInUse(prog string) error {
 	return a.arrangeProgramInUse(prog, -1)
 }
@@ -724,6 +776,7 @@ type entryEnvironsResponse struct {
 	Err string
 }
 
+// Environ indicates a environment variable that is a key value pair.
 type Environ struct {
 	Name string
 	Eval string
@@ -785,6 +838,7 @@ func evalEnvString(v string, env []string) string {
 	return v
 }
 
+// EntryEnvirons gets environs from an entry.
 func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
 		"session": {a.session},
@@ -805,6 +859,7 @@ func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 	return r.Msg, nil
 }
 
+// NewElement creates a new element by creating a scene file.
 func (a *App) NewElement(path, name, prog string) error {
 	env := os.Environ()
 	for _, e := range a.config.Envs {
@@ -860,17 +915,20 @@ func (a *App) NewElement(path, name, prog string) error {
 	return nil
 }
 
+// Elem is an element of a part.
 type Elem struct {
 	Name     string
 	Program  string
 	Versions []Version
 }
 
+// Version is a version of an element.
 type Version struct {
 	Name  string
 	Scene string
 }
 
+// ListElements returns elements of a part entry each of which holds versions as well.
 func (a *App) ListElements(path string) ([]*Elem, error) {
 	env := os.Environ()
 	for _, e := range a.config.Envs {
@@ -944,6 +1002,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	return elems, nil
 }
 
+// OpenScene opens a scene that corresponds to the args (path, elem, ver, prog).
 func (a *App) OpenScene(path, elem, ver, prog string) error {
 	var pg *Program
 	for _, p := range a.config.Programs {
@@ -994,6 +1053,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	return nil
 }
 
+// Dir returns directory path of an entry.
 func (a *App) Dir(path string) (string, error) {
 	ent, err := a.getEntry(path)
 	if err != nil {
@@ -1018,6 +1078,7 @@ func (a *App) Dir(path string) (string, error) {
 	return dir, nil
 }
 
+// DirExists returns whether the directory path exists in filesystem.
 func (a *App) DirExists(dir string) (bool, error) {
 	_, err := os.Stat(dir)
 	if err != nil {
@@ -1029,6 +1090,7 @@ func (a *App) DirExists(dir string) (bool, error) {
 	return true, nil
 }
 
+// OpenDir opens a directory using native file browser of current OS.
 func (a *App) OpenDir(dir string) error {
 	_, err := os.Stat(dir)
 	if err != nil {
@@ -1048,6 +1110,7 @@ func (a *App) OpenDir(dir string) error {
 	return nil
 }
 
+// OpenURL opens a url page which shows information about the entry.
 func (a *App) OpenURL(path string) error {
 	cmd := exec.Command(a.openCmd, a.config.Host+path)
 	_, err := cmd.CombinedOutput()
@@ -1057,14 +1120,17 @@ func (a *App) OpenURL(path string) error {
 	return nil
 }
 
+// Parent returns parent path to an entry path.
 func (a *App) Parent(pth string) string {
 	return path.Dir(pth)
 }
 
+// TODO: unused
 func (a *App) Thumbnail(path string) string {
 	return a.config.Host + "/thumbnail" + path + "?session=" + url.QueryEscape(a.session)
 }
 
+// Session returns session info of logged in user.
 func (a *App) Session() string {
 	return a.session
 }
