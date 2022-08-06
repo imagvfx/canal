@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // App struct
@@ -27,6 +28,8 @@ type App struct {
 	ctx         context.Context
 	config      *Config
 	currentPath string
+	cacheLock   sync.Mutex
+	cachedEnvs  map[string][]string
 	history     []string
 	historyIdx  int
 	assigned    []*Entry
@@ -162,6 +165,7 @@ func (a *App) GoTo(pth string) {
 	a.history = append(a.history, pth)
 	a.historyIdx = len(a.history) - 1
 	a.currentPath = a.history[a.historyIdx]
+	a.cachedEnvs = make(map[string][]string)
 }
 
 // GoBack goes back to the previous path in history.
@@ -859,6 +863,14 @@ func evalEnvString(v string, env []string) string {
 
 // EntryEnvirons gets environs from an entry.
 func (a *App) EntryEnvirons(path string) ([]string, error) {
+	// check cached environs first to make only one query per path.
+	// The cache is remained until user reloaded or moved to other entry.
+	a.cacheLock.Lock()
+	defer a.cacheLock.Unlock()
+	env := a.cachedEnvs[path]
+	if env != nil {
+		return env, nil
+	}
 	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
 		"session": {a.session},
 		"path":    {path},
@@ -875,13 +887,14 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 	if r.Err != "" {
 		return nil, fmt.Errorf(r.Err)
 	}
-	env := os.Environ()
+	env = os.Environ()
 	for _, e := range a.config.Envs {
 		env = append(env, e)
 	}
 	for _, e := range r.Msg {
 		env = append(env, e.Name+"="+e.Eval)
 	}
+	a.cachedEnvs[path] = env
 	return env, nil
 }
 
