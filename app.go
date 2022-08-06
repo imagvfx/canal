@@ -926,6 +926,7 @@ func (a *App) NewElement(path, name, prog string) error {
 }
 
 // Elem is an element of a part.
+// Elem in the app represents a bunch of files in a part directory which can be grouped by a naming rule.
 type Elem struct {
 	Name     string
 	Program  string
@@ -933,6 +934,7 @@ type Elem struct {
 }
 
 // Version is a version of an element.
+// Version in the app represents a file in a part directory that is in an element group.
 type Version struct {
 	Name  string
 	Scene string
