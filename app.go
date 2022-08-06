@@ -950,8 +950,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	env = append(env, `VER=(?P<VER>[vV]\d+)`)
 	env = append(env, `EXT=(?P<EXT>\w+)`)
 	scene := evalEnvString(a.config.Scene, env)
-	sceneDir := filepath.Dir(scene)
-	sceneName := filepath.Base(scene)
+	sceneDir, sceneName := filepath.Split(scene)
 	reName, err := regexp.Compile("^" + sceneName + "$") // match as a whole
 	if err != nil {
 		return nil, err
