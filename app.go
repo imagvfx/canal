@@ -661,6 +661,24 @@ type Program struct {
 	OpenCmd   []string
 }
 
+// Program returns a Program of given name.
+// It will return error when not found the program or it is incompleted.
+func (a *App) Program(prog string) (*Program, error) {
+	for _, pg := range a.config.Programs {
+		if pg.Name != prog {
+			continue
+		}
+		if len(pg.CreateCmd) == 0 {
+			return nil, fmt.Errorf("incomplete program: creation command is not defined: %s", prog)
+		}
+		if len(pg.OpenCmd) == 0 {
+			return nil, fmt.Errorf("incomplete program: open command is not defined: %s", prog)
+		}
+		return pg, nil
+	}
+	return nil, fmt.Errorf("not found program: %s", prog)
+}
+
 // Programs returns programs in config, and legacy programs
 // which user registred earlier when they were existed in previous config.
 func (a *App) Programs() []string {
@@ -727,6 +745,7 @@ func (a *App) GetUserSetting() error {
 }
 
 // ProgramsInUse returns programs what user marked as in use.
+// Note that it may have invalid programs.
 func (a *App) ProgramsInUse() []string {
 	if a.userSetting == nil {
 		return []string{}
@@ -872,18 +891,9 @@ func (a *App) NewElement(path, name, prog string) error {
 	if err != nil {
 		return err
 	}
-	var pg *Program
-	for _, p := range a.config.Programs {
-		if p.Name == prog {
-			pg = p
-			break
-		}
-	}
-	if pg == nil {
-		return fmt.Errorf("not found program: %v", prog)
-	}
-	if len(pg.CreateCmd) == 0 {
-		return fmt.Errorf("CreateCmd is not defined for program: %s", prog)
+	pg, err := a.Program(prog)
+	if err != nil {
+		return err
 	}
 	env = append(env, "ELEM="+name)
 	env = append(env, "VER="+getEnv("NEW_VER", env))
@@ -997,18 +1007,9 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 
 // OpenScene opens a scene that corresponds to the args (path, elem, ver, prog).
 func (a *App) OpenScene(path, elem, ver, prog string) error {
-	var pg *Program
-	for _, p := range a.config.Programs {
-		if p.Name == prog {
-			pg = p
-			break
-		}
-	}
-	if pg == nil {
-		return fmt.Errorf("program not found: %v", prog)
-	}
-	if len(pg.OpenCmd) == 0 {
-		return fmt.Errorf("OpenCmd is not defined for program: %v", prog)
+	pg, err := a.Program(prog)
+	if err != nil {
+		return err
 	}
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
