@@ -193,7 +193,7 @@ window.onclick = async function(ev) {
 
 let entryList = querySelector("#entryList");
 
-entryList.oncontextmenu = function(ev) {
+entryList.oncontextmenu = async function(ev) {
 	ev.preventDefault();
 	let menu = querySelector("#contextMenu");
 	menu.style.left = ev.pageX + "px";
@@ -206,8 +206,13 @@ entryList.oncontextmenu = function(ev) {
 		return;
 	}
 	menu.style.display = "flex";
+	let path = await App.CurrentPath();
 	let elem = entItem.dataset.elem as string;
+	let prog = entItem.dataset.prog as string;
 	let ver = entItem.dataset.ver as string;
+	if (ver == "") {
+		ver = await App.LastVersionOfElement(path, elem, prog)
+	}
 	let label = document.createElement("div");
 	label.classList.add("contextMenuLabel");
 	label.innerText = elem + " / " + ver;
@@ -498,8 +503,7 @@ async function redrawEntryList() {
 					scene.classList.add("latest");
 					scene.dataset.elem = e.Name;
 					scene.dataset.prog = e.Program;
-					let v = e.Versions[e.Versions.length - 1];
-					scene.dataset.ver = v.Name;
+					scene.dataset.ver = "";
 					elem.append(scene);
 					let expander = document.createElement("div");
 					expander.classList.add("sceneListExpander");

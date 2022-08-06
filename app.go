@@ -1006,8 +1006,61 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	return elems, nil
 }
 
+func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
+	pg, err := a.Program(prog)
+	if err != nil {
+		return "", err
+	}
+	env, err := a.EntryEnvirons(path)
+	if err != nil {
+		return "", err
+	}
+	env = append(env, "ELEM="+elem)
+	env = append(env, `VER=(?P<VER>[vV]\d+)`)
+	env = append(env, "EXT="+pg.Ext)
+	scene := evalEnvString(a.config.Scene, env)
+	sceneDir, sceneName := filepath.Split(scene)
+	reName, err := regexp.Compile("^" + sceneName + "$") // match as a whole
+	if err != nil {
+		return "", err
+	}
+	files, err := os.ReadDir(sceneDir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+		return "", fmt.Errorf("not found scene directory: %v", sceneDir)
+	}
+	vers := make([]string, 0)
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		name := f.Name()
+		idxs := reName.FindStringSubmatchIndex(name)
+		if idxs == nil {
+			continue
+		}
+		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
+		vers = append(vers, ver)
+	}
+	sort.Slice(vers, func(i, j int) bool {
+		a, _ := strconv.Atoi(vers[i][1:])
+		b, _ := strconv.Atoi(vers[j][1:])
+		return a > b
+	})
+	return vers[0], nil
+}
+
 // SceneFile returns scene filepath for given arguments combination.
 func (a *App) SceneFile(path, elem, ver, prog string) (string, error) {
+	if ver == "" {
+		last, err := a.LastVersionOfElement(path, elem, prog)
+		if err != nil {
+			return "", err
+		}
+		ver = last
+	}
 	pg, err := a.Program(prog)
 	if err != nil {
 		return "", err
@@ -1025,6 +1078,13 @@ func (a *App) SceneFile(path, elem, ver, prog string) (string, error) {
 
 // OpenScene opens a scene that corresponds to the args (path, elem, ver, prog).
 func (a *App) OpenScene(path, elem, ver, prog string) error {
+	if ver == "" {
+		last, err := a.LastVersionOfElement(path, elem, prog)
+		if err != nil {
+			return err
+		}
+		ver = last
+	}
 	pg, err := a.Program(prog)
 	if err != nil {
 		return err
