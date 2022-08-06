@@ -337,6 +337,7 @@ body {
 
 #statusBar {
     height: 1rem;
+    font-size: 0.9rem;
 }
 
 #statusBar.error {
