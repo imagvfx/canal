@@ -772,12 +772,12 @@ func (a *App) RemoveProgramInUse(prog string) error {
 }
 
 type entryEnvironsResponse struct {
-	Msg []Environ
+	Msg []forgeEnviron
 	Err string
 }
 
-// Environ indicates a environment variable that is a key value pair.
-type Environ struct {
+// forgeEnviron an environ defined for an entry retrieved from host.
+type forgeEnviron struct {
 	Name string
 	Eval string
 }
@@ -839,7 +839,7 @@ func evalEnvString(v string, env []string) string {
 }
 
 // EntryEnvirons gets environs from an entry.
-func (a *App) EntryEnvirons(path string) ([]Environ, error) {
+func (a *App) EntryEnvirons(path string) ([]string, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
 		"session": {a.session},
 		"path":    {path},
@@ -856,7 +856,11 @@ func (a *App) EntryEnvirons(path string) ([]Environ, error) {
 	if r.Err != "" {
 		return nil, fmt.Errorf(r.Err)
 	}
-	return r.Msg, nil
+	env := make([]string, 0, len(r.Msg))
+	for _, e := range r.Msg {
+		env = append(env, e.Name+"="+e.Eval)
+	}
+	return env, nil
 }
 
 // NewElement creates a new element by creating a scene file.
@@ -870,7 +874,7 @@ func (a *App) NewElement(path, name, prog string) error {
 		return err
 	}
 	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
+		env = append(env, e)
 	}
 	var pg *Program
 	for _, p := range a.config.Programs {
@@ -939,7 +943,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 		return nil, err
 	}
 	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
+		env = append(env, e)
 	}
 	env = append(env, `ELEM=(?P<ELEM>\w+)`)
 	env = append(env, `VER=(?P<VER>[vV]\d+)`)
@@ -1026,7 +1030,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 		return err
 	}
 	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
+		env = append(env, e)
 	}
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
@@ -1072,7 +1076,7 @@ func (a *App) Dir(path string) (string, error) {
 		return "", err
 	}
 	for _, e := range envs {
-		env = append(env, e.Name+"="+e.Eval)
+		env = append(env, e)
 	}
 	dir := evalEnvString(dirTmpl, env)
 	return dir, nil
