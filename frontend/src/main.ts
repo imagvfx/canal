@@ -267,7 +267,11 @@ window.onkeydown = async function(ev) {
 			if (!sel) {
 				return;
 			}
-			let scene = sel.dataset.scene as string;
+			let path = await App.CurrentPath();
+			let elem = sel.dataset.elem as string;
+			let ver = sel.dataset.ver as string;
+			let prog = sel.dataset.prog as string;
+			let scene = await App.SceneFile(path, elem, ver, prog);
 			copyToClipboard(scene);
 			log("path copied: " + scene);
 		}
@@ -492,11 +496,10 @@ async function redrawEntryList() {
 					scene.classList.add("scene");
 					scene.classList.add("item");
 					scene.classList.add("latest");
-					scene.dataset.name = e.Name;
-					scene.dataset.program = e.Program;
+					scene.dataset.elem = e.Name;
+					scene.dataset.prog = e.Program;
 					let v = e.Versions[e.Versions.length - 1];
 					scene.dataset.ver = v.Name;
-					scene.dataset.scene = v.Scene;
 					elem.append(scene);
 					let expander = document.createElement("div");
 					expander.classList.add("sceneListExpander");
@@ -508,10 +511,9 @@ async function redrawEntryList() {
 						scene.classList.add("scene");
 						scene.classList.add("item");
 						scene.classList.add("hidden");
-						scene.dataset.name = e.Name;
-						scene.dataset.program = e.Program;
+						scene.dataset.elem = e.Name;
+						scene.dataset.prog = e.Program;
 						scene.dataset.ver = v.Name;
-						scene.dataset.scene = v.Scene;
 						scene.innerText = v.Name;
 						elem.append(scene);
 					}

@@ -1006,6 +1006,23 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	return elems, nil
 }
 
+// SceneFile returns scene filepath for given arguments combination.
+func (a *App) SceneFile(path, elem, ver, prog string) (string, error) {
+	pg, err := a.Program(prog)
+	if err != nil {
+		return "", err
+	}
+	env, err := a.EntryEnvirons(path)
+	if err != nil {
+		return "", err
+	}
+	env = append(env, "ELEM="+elem)
+	env = append(env, "VER="+ver)
+	env = append(env, "EXT="+pg.Ext)
+	scene := evalEnvString(a.config.Scene, env)
+	return scene, nil
+}
+
 // OpenScene opens a scene that corresponds to the args (path, elem, ver, prog).
 func (a *App) OpenScene(path, elem, ver, prog string) error {
 	pg, err := a.Program(prog)
