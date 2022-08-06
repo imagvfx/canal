@@ -126,10 +126,10 @@ window.onclick = async function(ev) {
 				if (ellapsed < 300) {
 					try {
 						let path = await App.CurrentPath();
-						let name = scene.dataset.name as string;
+						let elem = scene.dataset.elem as string;
 						let ver = scene.dataset.ver as string;
-						let program = scene.dataset.program as string;
-						await App.OpenScene(path, name, ver, program);
+						let prog = scene.dataset.prog as string;
+						await App.OpenScene(path, elem, ver, prog);
 						redrawRecentPaths();
 					} catch(err) {
 						logError(err);
@@ -169,7 +169,7 @@ window.onclick = async function(ev) {
 	let newElementButton = closest(target, ".newElementButton");
 	if (newElementButton) {
 		if (!newElementButton.classList.contains("invalid")) {
-			let prog = newElementButton.dataset.program as string;
+			let prog = newElementButton.dataset.prog as string;
 			addNewElementField(prog);
 		}
 	} else {
@@ -206,7 +206,7 @@ entryList.oncontextmenu = function(ev) {
 		return;
 	}
 	menu.style.display = "flex";
-	let elem = entItem.dataset.name as string;
+	let elem = entItem.dataset.elem as string;
 	let ver = entItem.dataset.ver as string;
 	let label = document.createElement("div");
 	label.classList.add("contextMenuLabel");
@@ -297,7 +297,7 @@ window.onkeydown = async function(ev) {
 				return;
 			}
 			let field = closest(input, ".newElementField");
-			let prog = field.dataset.program as string;
+			let prog = field.dataset.prog as string;
 			App.CurrentPath().then(function(path: string) {
 				let name = input.value as string;
 				if (name == "") {
@@ -553,7 +553,7 @@ function redrawNewElementButtons() {
 			let btn = document.createElement("div");
 			btn.classList.add("newElementButton");
 			btn.classList.add("button");
-			btn.dataset.program = prog;
+			btn.dataset.prog = prog;
 			btn.innerText = "+" + prog;
 			btns.append(btn);
 			App.IsValidProgram(prog).then(function(ok: boolean) {
@@ -714,7 +714,7 @@ async function toggleNewElementButton(prog: string) {
 			let btn = document.createElement("div");
 			btn.classList.add("newElementButton");
 			btn.classList.add("button");
-			btn.dataset.program = prog;
+			btn.dataset.prog = prog;
 			btn.innerText = "+" + prog;
 			btns.append(btn);
 		} catch (err) {
@@ -728,7 +728,7 @@ function addNewElementField(prog: string) {
 	removeNewElementField();
 	let field = document.createElement("div");
 	field.classList.add("newElementField");
-	field.dataset.program = prog;
+	field.dataset.prog = prog;
 	let list = querySelector("#entryList");
 	list.append(field);
 	let input = document.createElement("input");
