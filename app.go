@@ -856,7 +856,10 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 	if r.Err != "" {
 		return nil, fmt.Errorf(r.Err)
 	}
-	env := make([]string, 0, len(r.Msg))
+	env := os.Environ()
+	for _, e := range a.config.Envs {
+		env = append(env, e)
+	}
 	for _, e := range r.Msg {
 		env = append(env, e.Name+"="+e.Eval)
 	}
@@ -865,16 +868,9 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 
 // NewElement creates a new element by creating a scene file.
 func (a *App) NewElement(path, name, prog string) error {
-	env := os.Environ()
-	for _, e := range a.config.Envs {
-		env = append(env, e)
-	}
-	envs, err := a.EntryEnvirons(path)
+	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
-	}
-	for _, e := range envs {
-		env = append(env, e)
 	}
 	var pg *Program
 	for _, p := range a.config.Programs {
@@ -934,16 +930,9 @@ type Version struct {
 
 // ListElements returns elements of a part entry each of which holds versions as well.
 func (a *App) ListElements(path string) ([]*Elem, error) {
-	env := os.Environ()
-	for _, e := range a.config.Envs {
-		env = append(env, e)
-	}
-	envs, err := a.EntryEnvirons(path)
+	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return nil, err
-	}
-	for _, e := range envs {
-		env = append(env, e)
 	}
 	env = append(env, `ELEM=(?P<ELEM>\w+)`)
 	env = append(env, `VER=(?P<VER>[vV]\d+)`)
@@ -1021,16 +1010,9 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	if len(pg.OpenCmd) == 0 {
 		return fmt.Errorf("OpenCmd is not defined for program: %v", prog)
 	}
-	env := os.Environ()
-	for _, e := range a.config.Envs {
-		env = append(env, e)
-	}
-	envs, err := a.EntryEnvirons(path)
+	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
-	}
-	for _, e := range envs {
-		env = append(env, e)
 	}
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
@@ -1067,16 +1049,9 @@ func (a *App) Dir(path string) (string, error) {
 	if !ok {
 		return "", nil
 	}
-	env := os.Environ()
-	for _, e := range a.config.Envs {
-		env = append(env, e)
-	}
-	envs, err := a.EntryEnvirons(path)
+	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return "", err
-	}
-	for _, e := range envs {
-		env = append(env, e)
 	}
 	dir := evalEnvString(dirTmpl, env)
 	return dir, nil
