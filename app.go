@@ -1107,11 +1107,6 @@ func (a *App) Parent(pth string) string {
 	return path.Dir(pth)
 }
 
-// TODO: unused
-func (a *App) Thumbnail(path string) string {
-	return a.config.Host + "/thumbnail" + path + "?session=" + url.QueryEscape(a.session)
-}
-
 // Session returns session info of logged in user.
 func (a *App) Session() string {
 	return a.session
