@@ -961,7 +961,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
-		files = []os.DirEntry{}
+		return []*Elem{}, nil
 	}
 	programOf := make(map[string]*Program)
 	for _, p := range a.config.Programs {
