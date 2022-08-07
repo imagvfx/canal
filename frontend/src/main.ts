@@ -293,6 +293,11 @@ window.onkeydown = async function(ev) {
 			return;
 		}
 	}
+	if (ev.key == "F5") {
+		ev.preventDefault();
+		redrawAll();
+		return;
+	}
 	let target = (<HTMLElement> ev.target);
 	let newElementFieldInput = closest(target, ".newElementFieldInput");
 	if (newElementFieldInput) {
