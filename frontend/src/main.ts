@@ -385,7 +385,14 @@ function redrawLoginArea() {
 			loginButton.classList.add("hidden");
 			currentUser.classList.remove("hidden");
 			logoutButton.classList.remove("hidden");
-			currentUser.innerText = user;
+			let toks = user.split("@")
+			App.Host().then(function(host) {
+				if (toks.length == 2 && toks[1] == host) {
+					currentUser.innerText = toks[0];
+				} else {
+					currentUser.innerText = user;
+				}
+			})
 		}
 	});
 }
