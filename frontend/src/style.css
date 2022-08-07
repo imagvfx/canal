@@ -272,6 +272,56 @@ body {
     filter: invert() brightness(0.8);
 }
 
+#loginButton {
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+#loginButton:hover {
+    background: #46a;
+}
+
+#loginButton .image {
+    background-image: url("/src/assets/login.svg");
+    background-repeat: no-repeat;
+    background-size: 18px;
+    background-origin: content-box;
+    background-position: center;
+    width: 1rem;
+    height: 0.8rem;
+    filter: invert();
+}
+
+#logoutButton {
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+#logoutButton:hover {
+    background: #46a;
+}
+
+#logoutButton .image {
+    background-image: url("/src/assets/logout.svg");
+    background-repeat: no-repeat;
+    background-size: 18px;
+    background-origin: content-box;
+    background-position: center;
+    width: 1rem;
+    height: 0.8rem;
+    filter: invert();
+}
+
 #tabSwitchButtons {
     display: flex;
     align-items: center;
