@@ -21,7 +21,11 @@ body {
     display: flex;
     border-bottom: 1px solid #888888;
     align-items: center;
-    gap: 0.5rem;
+}
+
+#navBar .spacer {
+    width: 4rem;
+    max-width: 4rem;
 }
 
 #optionBar {
@@ -160,7 +164,6 @@ body {
 }
 
 #navButtons {
-    width: 16rem;
     display: flex;
     user-select: none;
 }
@@ -270,6 +273,13 @@ body {
 
 #urlLink:hover {
     filter: invert() brightness(0.8);
+}
+
+#userInfo {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #loginButton {
