@@ -162,7 +162,85 @@ body {
 #navButtons {
     width: 16rem;
     display: flex;
-    gap: 0.5rem;
+    user-select: none;
+}
+
+#backButton {
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-right: 0.4rem;
+}
+
+#backButton:hover {
+    background: #46a;
+}
+
+#backButton .image {
+    background-image: url("/src/assets/back.svg");
+    background-repeat: no-repeat;
+    background-size: 16px;
+    background-origin: content-box;
+    background-position: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    filter: invert();
+}
+
+#forwardButton {
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-right: 0.3rem;
+}
+
+#forwardButton:hover {
+    background: #46a;
+}
+
+#forwardButton .image {
+    background-image: url("/src/assets/back.svg");
+    rotate: 180deg;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    background-origin: content-box;
+    background-position: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    filter: invert();
+}
+
+#reloadButton {
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+#reloadButton:hover {
+    background: #46a;
+}
+
+#reloadButton .image {
+    background-image: url("/src/assets/reload.svg");
+    background-repeat: no-repeat;
+    background-size: 15px;
+    background-origin: content-box;
+    background-position: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    filter: invert();
 }
 
 #currentPath {
