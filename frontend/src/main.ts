@@ -716,7 +716,7 @@ async function fillAddProgramLinkPopup() {
 
 async function toggleNewElementButton(prog: string) {
 	let btns = querySelector("#newElementButtons");
-	let btn = btns.querySelector(`.newElementButton[data-program=${prog}]`);
+	let btn = btns.querySelector(`.newElementButton[data-prog=${prog}]`);
 	if (btn) {
 		try {
 			await App.RemoveProgramInUse(prog);
