@@ -1057,6 +1057,9 @@ func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
 		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
 		vers = append(vers, ver)
 	}
+	if len(vers) == 0 {
+		return "", fmt.Errorf("element not exists: %s", elem)
+	}
 	sort.Slice(vers, func(i, j int) bool {
 		a, _ := strconv.Atoi(vers[i][1:])
 		b, _ := strconv.Atoi(vers[j][1:])
