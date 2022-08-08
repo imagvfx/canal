@@ -993,7 +993,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 		if p == nil {
 			continue
 		}
-		e := elem[el]
+		e := elem[el+"/"+p.Name]
 		if e == nil {
 			e = &Elem{
 				Name:    el,
@@ -1002,7 +1002,7 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 		}
 		v := Version{Name: ver, Scene: sceneDir + "/" + name}
 		e.Versions = append(e.Versions, v)
-		elem[el] = e
+		elem[el+"/"+p.Name] = e
 	}
 	elems := make([]*Elem, 0, len(elem))
 	for _, el := range elem {
