@@ -562,31 +562,28 @@ async function redrawEntryList() {
 
 }
 
-function redrawNewElementButtons() {
-	App.ProgramsInUse().then(function(progs: string[]) {
-		let btns = querySelector("#newElementButtons");
-		btns.replaceChildren();
-		for (let prog of progs) {
-			let btn = document.createElement("div");
-			btn.classList.add("newElementButton");
-			btn.classList.add("button");
-			btn.dataset.prog = prog;
-			btn.innerText = "+" + prog;
-			btns.append(btn);
-			App.IsValidProgram(prog).then(function(ok: boolean) {
-				if (!ok) {
-					btn.classList.add("invalid");
-				}
-			});
-			App.CurrentPath().then(function(path) {
-				App.IsLeaf(path).then(function(leaf) {
-					if (!leaf) {
-						btn.classList.add("invalid");
-					}
-				})
-			});
+async function redrawNewElementButtons() {
+	let btns = [];
+	let progs = await App.ProgramsInUse();
+	for (let prog of progs) {
+		let btn = document.createElement("div");
+		btn.classList.add("newElementButton");
+		btn.classList.add("button");
+		btn.dataset.prog = prog;
+		btn.innerText = "+" + prog;
+		let ok = await App.IsValidProgram(prog);
+		if (!ok) {
+			btn.classList.add("invalid");
 		}
-	});
+		let path = await App.CurrentPath();
+		let leaf = await App.IsLeaf(path);
+		if (!leaf) {
+			btn.classList.add("invalid");
+		}
+		btns.push(btn);
+	}
+	let elemBtns = querySelector("#newElementButtons");
+	elemBtns.replaceChildren(...btns);
 }
 
 async function redrawRecentPaths() {
