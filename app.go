@@ -924,16 +924,14 @@ func (a *App) NewElement(path, name, prog string) error {
 	for i, c := range createCmd {
 		createCmd[i] = evalEnvString(c, env)
 	}
-	go func() {
-		cmd := exec.Command(createCmd[0], createCmd[1:]...)
-		cmd.Env = env
-		b, err := cmd.CombinedOutput()
-		out := string(b)
-		fmt.Println(out)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	cmd := exec.Command(createCmd[0], createCmd[1:]...)
+	cmd.Env = env
+	b, err := cmd.CombinedOutput()
+	out := string(b)
+	fmt.Println(out)
+	if err != nil {
+		fmt.Println(err)
+	}
 	err = a.addRecentPath(path)
 	if err != nil {
 		return err

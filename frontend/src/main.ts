@@ -313,6 +313,7 @@ window.onkeydown = async function(ev) {
 				if (name == "") {
 					name = "main";
 				}
+				field.classList.add("hidden");
 				App.NewElement(path, name, prog).then(redrawAll).catch(logError);
 			});
 		}
