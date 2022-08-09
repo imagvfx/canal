@@ -717,28 +717,17 @@ async function fillAddProgramLinkPopup() {
 
 async function toggleNewElementButton(prog: string) {
 	let btns = querySelector("#newElementButtons");
-	let btn = btns.querySelector(`.newElementButton[data-prog=${prog}]`);
-	if (btn) {
-		try {
+	try {
+		let btn = btns.querySelector(`.newElementButton[data-prog=${prog}]`);
+		if (btn) {
 			await App.RemoveProgramInUse(prog);
-		} catch (err) {
-			logError(err);
-		}
-		btn.remove();
-	} else {
-		try {
+		} else {
 			await App.AddProgramInUse(prog, btns.children.length);
-			let btn = document.createElement("div");
-			btn.classList.add("newElementButton");
-			btn.classList.add("button");
-			btn.dataset.prog = prog;
-			btn.innerText = "+" + prog;
-			btns.append(btn);
-		} catch (err) {
-			logError(err);
 		}
+		App.GetUserSetting().then(redrawNewElementButtons);
+	} catch (err) {
+		logError(err);
 	}
-	App.GetUserSetting();
 }
 
 function addNewElementField(prog: string) {
