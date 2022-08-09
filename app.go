@@ -28,6 +28,7 @@ type App struct {
 	ctx         context.Context
 	config      *Config
 	currentPath string
+	// hold cacheLock before modify cachedEnvs
 	cacheLock   sync.Mutex
 	cachedEnvs  map[string][]string
 	history     []string
@@ -165,6 +166,8 @@ func (a *App) GoTo(pth string) {
 	a.history = append(a.history, pth)
 	a.historyIdx = len(a.history) - 1
 	a.currentPath = a.history[a.historyIdx]
+	a.cacheLock.Lock()
+	defer a.cacheLock.Unlock()
 	a.cachedEnvs = make(map[string][]string)
 }
 
