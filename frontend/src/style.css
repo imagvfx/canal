@@ -52,10 +52,15 @@ body {
     background-position: center;
 }
 
-#reloadAssignedButton:hover {
+#reloadAssignedButton:not(.disabled):hover {
     border: 1px solid #cde;
     background-color: #cde8;
     filter: none;
+}
+
+#reloadAssignedButton.disabled {
+    cursor: default;
+    filter: invert() brightness(0.5);
 }
 
 #openDirButton {
