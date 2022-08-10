@@ -677,10 +677,7 @@ async function redrawInfoArea() {
 			}
 		}
 	}
-	area.replaceChildren();
-	for (let div of entDivs) {
-		area.append(div);
-	}
+	area.replaceChildren(...entDivs);
 }
 
 function toggleAddProgramLinkPopup() {
