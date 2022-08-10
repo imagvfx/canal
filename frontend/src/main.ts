@@ -606,6 +606,11 @@ async function redrawRecentPaths() {
 
 async function redrawInfoArea() {
 	let area = querySelector("#infoArea");
+	let user = await App.SessionUser();
+	if (!user) {
+		area.replaceChildren();
+		return;
+	}
 	let path = await App.CurrentPath();
 	let ents = null;
 	let ent = null;
