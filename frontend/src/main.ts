@@ -364,7 +364,7 @@ async function redrawAll(): Promise<void> {
 		redrawOptionBar();
 		App.CurrentPath().then(function(path) {
 			setCurrentPath(path);
-			checkLeaf(path);
+			checkLeaf(path).catch(logError);
 		});
 		redrawEntryList();
 		redrawInfoArea();
@@ -483,15 +483,20 @@ function setCurrentPath(path: string) {
 	currentPath.append(link)
 }
 
-function checkLeaf(path: string) {
+async function checkLeaf(path: string) {
+	let area = querySelector("#entryArea");
+	let user = await App.SessionUser();
+	if (!user) {
+		area.classList.remove("leaf");
+		return;
+	}
 	App.IsLeaf(path).then(function(ok) {
-		let area = querySelector("#entryArea");
 		if (ok) {
 			area.classList.add("leaf");
 		} else {
 			area.classList.remove("leaf");
 		}
-	});
+	}).catch(logError);
 }
 
 async function redrawEntryList() {
