@@ -403,34 +403,34 @@ function redrawLoginArea() {
 	});
 }
 
-function redrawOptionBar() {
-	App.SessionUser().then(function(user) {
-		let assignedCheckBox = querySelector("#assignedCheckBox") as HTMLInputElement;
-		if (user == "") {
-			assignedCheckBox.disabled = true;
-		} else {
-			assignedCheckBox.disabled = false;
-			App.AssignedOnly().then(function(ok) {
-				assignedCheckBox.checked = ok;
-			});
-		}
-	})
-	App.CurrentPath().then(function(path) {
-		App.Dir(path).then(function(dir) {
-			let openDirButton = querySelector("#openDirButton");
-			if (dir == "") {
-				openDirButton.dataset.type = "disabled";
-				return;
-			}
-			App.DirExists(dir).then(function(ok) {
-				if (ok) {
-					openDirButton.dataset.type = "";
-				} else {
-					openDirButton.dataset.type = "new";
-				}
-			});
-		});
-	}).catch(logError);
+async function redrawOptionBar() {
+	let assignedCheckBox = querySelector("#assignedCheckBox") as HTMLInputElement;
+	let reloadAssignedButton = querySelector("#reloadAssignedButton");
+	let openDirButton = querySelector("#openDirButton");
+	let user = await App.SessionUser();
+	if (user == "") {
+		assignedCheckBox.disabled = true;
+		assignedCheckBox.checked = false;
+		reloadAssignedButton.classList.add("disabled");
+		openDirButton.dataset.type = "disabled";
+		return;
+	}
+	assignedCheckBox.disabled = false;
+	assignedCheckBox.checked = await App.AssignedOnly();
+	reloadAssignedButton.classList.remove("disabled");
+	openDirButton.dataset.type = "";
+	let path = await App.CurrentPath();
+	let dir = await App.Dir(path);
+	if (dir == "") {
+		openDirButton.dataset.type = "disabled";
+		return;
+	}
+	let exists = await App.DirExists(dir);
+	if (exists) {
+		openDirButton.dataset.type = "";
+	} else {
+		openDirButton.dataset.type = "new";
+	}
 }
 
 function setCurrentPath(path: string) {
