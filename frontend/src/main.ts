@@ -636,6 +636,9 @@ async function redrawInfoArea() {
 		div.dataset.type = ent.Type;
 		let title = document.createElement("div");
 		title.classList.add("title");
+		let dot = document.createElement("div");
+		dot.classList.add("statusDot", "hidden");
+		title.append(dot);
 		let name = document.createElement("div");
 		name.classList.add("titleName", "pathLink", "link");
 		name.dataset.path = ent.Path;
@@ -659,6 +662,22 @@ async function redrawInfoArea() {
 			entDivs.push(entDiv);
 		} else if (ent.Type == "shot" || ent.Type == "asset") {
 			let entDiv = addEntryInfoDiv(ent);
+			let statusProp = ent.Property["status"];
+			if (statusProp) {
+				let status = statusProp.Eval;
+				let color = await App.StatusColor(ent.Type, status);
+				if (!color) {
+					color = "#dddddd"
+				}
+				let dot = entDiv.querySelector(".statusDot") as HTMLElement;
+				dot.title = status;
+				if (!status) {
+					dot.title = "(none)";
+				}
+				dot.style.backgroundColor = color;
+				dot.style.border = "1px solid " + color + "bb";
+				dot.classList.remove("hidden");
+			}
 			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 			let due = ent.Property["due"].Eval;
 			if (due != "") {
@@ -677,6 +696,22 @@ async function redrawInfoArea() {
 				entDiv.classList.add("sub");
 				if (ent.Path == path) {
 					entDiv.classList.add("current");
+				}
+				let statusProp = ent.Property["status"];
+				if (statusProp) {
+					let status = statusProp.Eval;
+					let color = await App.StatusColor(ent.Type, status);
+					if (!color) {
+						color = "#dddddd"
+					}
+					let dot = entDiv.querySelector(".statusDot") as HTMLElement;
+					dot.title = status;
+					if (!status) {
+						dot.title = "(none)";
+					}
+					dot.style.backgroundColor = color+"dd";
+					dot.style.border = "1px solid " + color;
+					dot.classList.remove("hidden");
 				}
 				let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 				info.innerText = ent.Property["assignee"].Eval;

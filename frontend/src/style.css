@@ -558,6 +558,7 @@ body {
 
 .title {
     display: flex;
+    align-items: center;
     font-size: 1rem;
 }
 
@@ -577,4 +578,11 @@ body {
 
 .titleInfo {
     font-size: 0.85em;
+}
+
+.statusDot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 1rem;
+    margin-right: 0.4rem;
 }

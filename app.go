@@ -31,6 +31,8 @@ type App struct {
 	// hold cacheLock before modify cachedEnvs
 	cacheLock   sync.Mutex
 	cachedEnvs  map[string][]string
+	globalLock  sync.Mutex
+	global      map[string]map[string]*Global
 	history     []string
 	historyIdx  int
 	assigned    []*Entry
@@ -76,6 +78,10 @@ func (a *App) Prepare() error {
 	}
 	if a.session == "" {
 		return nil
+	}
+	err = a.getHostInfo()
+	if err != nil {
+		return fmt.Errorf("get host info: %v", err)
 	}
 	err = a.getUserInfo()
 	if err != nil {
@@ -144,6 +150,113 @@ func (a *App) IsLeaf(path string) (bool, error) {
 		return false, err
 	}
 	return e.Type == a.config.LeafEntryType, nil
+}
+
+type EntryTypesResponse struct {
+	Msg []string
+	Err string
+}
+
+func (a *App) getBaseEntryTypes() ([]string, error) {
+	resp, err := http.PostForm(a.config.Host+"/api/get-base-entry-types", url.Values{
+		"session": {a.session},
+	})
+	if err != nil {
+		return nil, err
+	}
+	r := EntryTypesResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+	if r.Err != "" {
+		return nil, fmt.Errorf(r.Err)
+	}
+	return r.Msg, nil
+}
+
+type GlobalResponse struct {
+	Msg []*Global
+	Err string
+}
+
+type Global struct {
+	Name  string
+	Type  string
+	Value string
+}
+
+func (a *App) getGlobals(entType string) ([]*Global, error) {
+	resp, err := http.PostForm(a.config.Host+"/api/get-globals", url.Values{
+		"session":    {a.session},
+		"entry_type": {entType},
+	})
+	if err != nil {
+		return nil, err
+	}
+	r := GlobalResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+	if r.Err != "" {
+		return nil, fmt.Errorf(r.Err)
+	}
+	return r.Msg, nil
+}
+
+func (a *App) CacheGlobal() error {
+	types, err := a.getBaseEntryTypes()
+	if err != nil {
+		return fmt.Errorf("get entry types: %v", err)
+	}
+	a.globalLock.Lock()
+	defer a.globalLock.Unlock()
+	a.global = make(map[string]map[string]*Global)
+	for _, t := range types {
+		globals, err := a.getGlobals(t)
+		if err != nil {
+			return fmt.Errorf("get globals: %v", err)
+		}
+		global := make(map[string]*Global)
+		for _, g := range globals {
+			global[g.Name] = g
+		}
+		a.global[t] = global
+	}
+	return nil
+}
+
+func (a *App) Global(entType, name string) *Global {
+	a.globalLock.Lock()
+	defer a.globalLock.Unlock()
+	global := a.global[entType]
+	if global == nil {
+		return nil
+	}
+	return global[name]
+}
+
+func (a *App) StatusColor(entType, stat string) string {
+	possibleStatus := a.Global(entType, "possible_status")
+	if possibleStatus == nil {
+		return ""
+	}
+	stats := strings.Split(possibleStatus.Value, " ")
+	for _, s := range stats {
+		toks := strings.Split(s, ":")
+		if len(toks) != 2 {
+			continue
+		}
+		name := strings.TrimSpace(toks[0])
+		color := strings.TrimSpace(toks[1])
+		if name == stat {
+			return color
+		}
+	}
+	return ""
 }
 
 // GoTo goes to a path.
@@ -219,6 +332,7 @@ type Entry struct {
 
 // Property is a property an entry is holding.
 type Property struct {
+	Name  string
 	Value string
 	Eval  string
 }
@@ -389,12 +503,24 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = a.getHostInfo()
+	if err != nil {
+		return "", err
+	}
 	err = a.getUserInfo()
 	if err != nil {
 		return "", err
 	}
 	fmt.Println("login done")
 	return a.user, nil
+}
+
+func (a *App) getHostInfo() error {
+	err := a.CacheGlobal()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // getUserInfo gets user info from host.
