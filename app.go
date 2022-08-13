@@ -333,6 +333,7 @@ type Entry struct {
 // Property is a property an entry is holding.
 type Property struct {
 	Name  string
+	Type  string
 	Value string
 	Eval  string
 }
@@ -365,9 +366,6 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 		}
 		ents = append(ents, e)
 	}
-	sort.Slice(ents, func(i, j int) bool {
-		return ents[i].Name < ents[j].Name
-	})
 	return ents, nil
 }
 
@@ -377,9 +375,6 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Slice(ents, func(i, j int) bool {
-		return ents[i].Name < ents[j].Name
-	})
 	return ents, nil
 }
 
@@ -401,7 +396,86 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 	if r.Err != "" {
 		return nil, fmt.Errorf(r.Err)
 	}
-	return r.Msg, nil
+	ents := r.Msg
+	sorters := a.entrySorters()
+	sort.Slice(ents, func(i, j int) bool {
+		cmp := strings.Compare(ents[i].Type, ents[j].Type)
+		if cmp != 0 {
+			return cmp < 0
+		}
+		sorter := sorters[ents[i].Type]
+		cmp = func() int {
+			prop := sorter.Property
+			if prop == "" {
+				return 0
+			}
+			ip := ents[i].Property[prop]
+			jp := ents[j].Property[prop]
+			if ip == nil {
+				return -1
+			}
+			if jp == nil {
+				return 1
+			}
+			cmp = strings.Compare(ip.Type, jp.Type)
+			if cmp != 0 {
+				return cmp
+			}
+			if ip.Type == "int" {
+				iv, _ := strconv.Atoi(ip.Value)
+				jv, _ := strconv.Atoi(jp.Value)
+				if iv < jv {
+					return -1
+				}
+				if iv > jv {
+					return 1
+				}
+				return 0
+			}
+			return strings.Compare(ip.Value, jp.Value)
+		}()
+		k := 1
+		if sorter.Descending {
+			k = -1
+		}
+		if cmp != 0 {
+			return k*cmp < 0
+		}
+		cmp = strings.Compare(ents[i].Name, ents[j].Name)
+		if cmp != 0 {
+			return k*cmp < 0
+		}
+		return true
+	})
+	return ents, nil
+}
+
+type Sorter struct {
+	Property   string
+	Descending bool
+}
+
+func (a *App) entrySorters() map[string]Sorter {
+	sorters := make(map[string]Sorter)
+	if a.userSetting == nil {
+		return sorters
+	}
+	for typ, prop := range a.userSetting.EntryPageSortProperty {
+		if prop == "" {
+			continue
+		}
+		desc := false
+		prefix := string(prop[0])
+		if prefix == "+" {
+		} else if prefix == "-" {
+			desc = true
+		} else {
+			continue
+		}
+		prop = prop[1:]
+		sorters[typ] = Sorter{Property: prop, Descending: desc}
+	}
+	return sorters
 }
 
 // subAssigned returns sub entry paths to assigned entries only.
@@ -846,8 +920,9 @@ func (a *App) IsValidProgram(prog string) bool {
 
 // userSetting is user setting saved in host that is related with this app.
 type userSetting struct {
-	ProgramsInUse []string
-	RecentPaths   []string
+	ProgramsInUse         []string
+	RecentPaths           []string
+	EntryPageSortProperty map[string]string
 }
 
 type forgeUserSettingResponse struct {
