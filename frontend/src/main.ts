@@ -51,7 +51,7 @@ window.onclick = async function(ev) {
 	}
 	let reloadButton = closest(target, "#reloadButton");
 	if (reloadButton) {
-		redrawAll();
+		App.Reload().then(redrawAll).catch(logError);
 	}
 	let loginButton = closest(target, "#loginButton");
 	if (loginButton) {
@@ -267,7 +267,7 @@ window.onkeydown = async function(ev) {
 	if (ctrlLike) {
 		ev.preventDefault();
 		if (ev.key == "r") {
-			redrawAll();
+			App.Reload().then(redrawAll).catch(logError);
 		}
 		if (ev.key == "c") {
 			let sel = document.querySelector<HTMLElement>(".item.selected");
@@ -297,7 +297,7 @@ window.onkeydown = async function(ev) {
 	}
 	if (ev.key == "F5") {
 		ev.preventDefault();
-		redrawAll();
+		App.Reload().then(redrawAll).catch(logError);
 		return;
 	}
 	let target = (<HTMLElement> ev.target);

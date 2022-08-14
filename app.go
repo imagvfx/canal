@@ -79,13 +79,9 @@ func (a *App) Prepare() error {
 	if a.session == "" {
 		return nil
 	}
-	err = a.getHostInfo()
+	err = a.Reload()
 	if err != nil {
-		return fmt.Errorf("get host info: %v", err)
-	}
-	err = a.getUserInfo()
-	if err != nil {
-		return fmt.Errorf("get user info: %v", err)
+		return err
 	}
 	err = a.readOptions()
 	if err != nil {
@@ -577,16 +573,24 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = a.getHostInfo()
-	if err != nil {
-		return "", err
-	}
-	err = a.getUserInfo()
+	err = a.Reload()
 	if err != nil {
 		return "", err
 	}
 	fmt.Println("login done")
 	return a.user, nil
+}
+
+func (a *App) Reload() error {
+	err := a.getHostInfo()
+	if err != nil {
+		return fmt.Errorf("get host info: %v", err)
+	}
+	err = a.getUserInfo()
+	if err != nil {
+		return fmt.Errorf("get user info: %v", err)
+	}
+	return nil
 }
 
 func (a *App) getHostInfo() error {
