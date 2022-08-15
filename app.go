@@ -255,6 +255,83 @@ func (a *App) StatusColor(entType, stat string) string {
 	return ""
 }
 
+type State struct {
+	Host          string
+	User          string
+	Programs      []*Program
+	ProgramsInUse []*Program
+	RecentPaths   []string
+	Path          string
+	IsLeaf        bool
+	Entries       []*Entry
+	Elements      []*Elem
+	Entry         *Entry
+	ParentEntries []*Entry
+	Dir           string
+	DirExists     bool
+	AssignedOnly  bool
+}
+
+func (a *App) State() (*State, error) {
+	host := a.Host()
+	user := a.SessionUser()
+	programs := a.Programs()
+	programsInUse := a.ProgramsInUse()
+	recentPaths := a.RecentPaths()
+	path := a.CurrentPath()
+	leaf, err := a.IsLeaf(path)
+	if err != nil {
+		return nil, err
+	}
+	entry, err := a.GetEntry(path)
+	if err != nil {
+		return nil, err
+	}
+	parents, err := a.ParentEntries(path)
+	if err != nil {
+		return nil, err
+	}
+	// we only can have either entries or elements by design.
+	entries := []*Entry{}
+	elements := []*Elem{}
+	if leaf {
+		elements, err = a.ListElements(path)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		entries, err = a.ListEntries(path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	dir, err := a.Dir(path)
+	if err != nil {
+		return nil, err
+	}
+	dirExists, err := a.DirExists(path)
+	if err != nil {
+		return nil, err
+	}
+	assignedOnly := a.AssignedOnly()
+	return &State{
+		Host:          host,
+		User:          user,
+		Programs:      programs,
+		ProgramsInUse: programsInUse,
+		RecentPaths:   recentPaths,
+		Path:          path,
+		IsLeaf:        leaf,
+		Entry:         entry,
+		ParentEntries: parents,
+		Entries:       entries,
+		Elements:      elements,
+		Dir:           dir,
+		DirExists:     dirExists,
+		AssignedOnly:  assignedOnly,
+	}, nil
+}
+
 // GoTo goes to a path.
 func (a *App) GoTo(pth string) {
 	if pth == "" {
@@ -867,6 +944,7 @@ func GenerateRandomString(n int) (string, error) {
 // Program is a program info.
 type Program struct {
 	Name      string
+	NotFound  bool
 	Ext       string
 	CreateCmd []string
 	OpenCmd   []string
@@ -892,34 +970,47 @@ func (a *App) Program(prog string) (*Program, error) {
 
 // Programs returns programs in config, and legacy programs
 // which user registred earlier when they were existed in previous config.
-func (a *App) Programs() []string {
-	prog := make(map[string]bool, 0)
+func (a *App) Programs() []*Program {
+	prog := make(map[string]*Program, 0)
 	for _, p := range a.config.Programs {
-		prog[p.Name] = true
+		prog[p.Name] = p
 	}
 	if a.userSetting != nil {
 		// User might have programs currently not defined for some reason.
 		// Let's add those so user can remove if they want.
 		for _, name := range a.userSetting.ProgramsInUse {
-			prog[name] = true
+			if _, ok := prog[name]; !ok {
+				prog[name] = &Program{Name: name, NotFound: true}
+			}
 		}
 	}
-	progs := make([]string, 0, len(prog))
-	for name := range prog {
-		progs = append(progs, name)
+	progs := make([]*Program, 0, len(prog))
+	for _, p := range prog {
+		progs = append(progs, p)
 	}
-	sort.Strings(progs)
+	sort.Slice(progs, func(i, j int) bool { return progs[i].Name < progs[j].Name })
 	return progs
 }
 
-// IsValidProgram returns true if the program is defined in current config.
-func (a *App) IsValidProgram(prog string) bool {
+// ProgramsInUse returns programs what user marked as in use.
+// Note that it may have invalid programs.
+func (a *App) ProgramsInUse() []*Program {
+	if a.userSetting == nil {
+		return []*Program{}
+	}
+	prog := make(map[string]*Program, 0)
 	for _, p := range a.config.Programs {
-		if p.Name == prog {
-			return true
+		prog[p.Name] = p
+	}
+	progs := make([]*Program, 0, len(prog))
+	for _, name := range a.userSetting.ProgramsInUse {
+		if _, ok := prog[name]; !ok {
+			progs = append(progs, &Program{Name: name, NotFound: true})
+		} else {
+			progs = append(progs, prog[name])
 		}
 	}
-	return false
+	return progs
 }
 
 // userSetting is user setting saved in host that is related with this app.
@@ -954,15 +1045,6 @@ func (a *App) GetUserSetting() error {
 	}
 	a.userSetting = r.Msg
 	return nil
-}
-
-// ProgramsInUse returns programs what user marked as in use.
-// Note that it may have invalid programs.
-func (a *App) ProgramsInUse() []string {
-	if a.userSetting == nil {
-		return []string{}
-	}
-	return a.userSetting.ProgramsInUse
 }
 
 type forgeAPIErrorResponse struct {

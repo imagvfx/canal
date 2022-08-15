@@ -132,7 +132,7 @@ window.onclick = async function(ev) {
 						let ver = scene.dataset.ver as string;
 						let prog = scene.dataset.prog as string;
 						await App.OpenScene(path, elem, ver, prog);
-						redrawRecentPaths();
+						redrawAll();
 					} catch(err) {
 						logError(err);
 					}
@@ -160,9 +160,10 @@ window.onclick = async function(ev) {
 	if (addProgramLinkPopup) {
 		let item = closest(target, ".addProgramLinkPopupItem");
 		if (item) {
-			let v = item.dataset.value as string;
-			toggleNewElementButton(v);
 			toggleAddProgramLinkPopup();
+			let prog = item.dataset.value as string;
+			await toggleNewElementButton(prog);
+			App.Reload().then(redrawAll).catch(logError);
 		}
 	}
 	if (!addProgramLink && !addProgramLinkPopup) {
@@ -358,59 +359,58 @@ function logError(err: any) {
 }
 
 async function redrawAll(): Promise<void> {
+	let app: any;
+	try {
+		app = await App.State();
+	} catch (err) {
+		logError(err);
+	}
+	console.log(app);
 	try {
 		clearLog();
-		redrawLoginArea();
-		redrawOptionBar();
-		App.CurrentPath().then(function(path) {
-			setCurrentPath(path);
-			checkLeaf(path).catch(logError);
-		});
-		redrawEntryList();
-		redrawInfoArea();
-		redrawProgramsBar();
-		redrawRecentPaths();
+		redrawLoginArea(app);
+		redrawOptionBar(app);
+		setCurrentPath(app);
+		redrawEntryList(app);
+		redrawInfoArea(app).catch(logError);
+		redrawProgramsBar(app);
+		redrawRecentPaths(app);
 	} catch (err) {
 		logError(err);
 	}
 }
 
-function redrawProgramsBar() {
-	fillAddProgramLinkPopup();
-	redrawNewElementButtons();
+function redrawProgramsBar(app: any) {
+	fillAddProgramLinkPopup(app);
+	redrawNewElementButtons(app);
 }
 
-function redrawLoginArea() {
-	App.SessionUser().then(function(user) {
-		let loginButton = querySelector("#loginButton");
-		let logoutButton = querySelector("#logoutButton");
-		let currentUser = querySelector("#currentUser");
-		if (user == "") {
-			currentUser.classList.add("hidden");
-			logoutButton.classList.add("hidden");
-			loginButton.classList.remove("hidden");
+function redrawLoginArea(app: any) {
+	let loginButton = querySelector("#loginButton");
+	let logoutButton = querySelector("#logoutButton");
+	let currentUser = querySelector("#currentUser");
+	if (app.User == "") {
+		currentUser.classList.add("hidden");
+		logoutButton.classList.add("hidden");
+		loginButton.classList.remove("hidden");
+	} else {
+		loginButton.classList.add("hidden");
+		currentUser.classList.remove("hidden");
+		logoutButton.classList.remove("hidden");
+		let toks = app.User.split("@")
+		if (toks.length == 2 && toks[1] == app.Host) {
+			currentUser.innerText = toks[0];
 		} else {
-			loginButton.classList.add("hidden");
-			currentUser.classList.remove("hidden");
-			logoutButton.classList.remove("hidden");
-			let toks = user.split("@")
-			App.Host().then(function(host) {
-				if (toks.length == 2 && toks[1] == host) {
-					currentUser.innerText = toks[0];
-				} else {
-					currentUser.innerText = user;
-				}
-			})
+			currentUser.innerText = app.User;
 		}
-	});
+	}
 }
 
-async function redrawOptionBar() {
+function redrawOptionBar(app: any) {
 	let assignedCheckBox = querySelector("#assignedCheckBox") as HTMLInputElement;
 	let reloadAssignedButton = querySelector("#reloadAssignedButton");
 	let openDirButton = querySelector("#openDirButton");
-	let user = await App.SessionUser();
-	if (user == "") {
+	if (app.User == "") {
 		assignedCheckBox.disabled = true;
 		assignedCheckBox.checked = false;
 		reloadAssignedButton.classList.add("disabled");
@@ -418,33 +418,28 @@ async function redrawOptionBar() {
 		return;
 	}
 	assignedCheckBox.disabled = false;
-	assignedCheckBox.checked = await App.AssignedOnly();
+	assignedCheckBox.checked = app.AssignedOnly;
 	reloadAssignedButton.classList.remove("disabled");
 	openDirButton.dataset.type = "";
-	let path = await App.CurrentPath();
-	let dir = await App.Dir(path);
-	if (dir == "") {
+	if (app.Dir == "") {
 		openDirButton.dataset.type = "disabled";
 		return;
 	}
-	let exists = await App.DirExists(dir);
-	if (exists) {
+	if (app.DirExists) {
 		openDirButton.dataset.type = "";
 	} else {
 		openDirButton.dataset.type = "new";
 	}
 }
 
-function setCurrentPath(path: string) {
+function setCurrentPath(app: any) {
 	let currentPath = querySelector("#currentPath");
 	currentPath.replaceChildren();
 	let goto = ""
-	let toks = path.split("/").slice(1);
+	let toks = app.Path.split("/").slice(1);
 	let root = document.createElement("span");
 	root.id = "forgeRoot";
-	App.Host().then(function(host) {
-		root.innerText = host;
-	})
+	root.innerText = app.Host;
 	root.classList.add("link");
 	root.onclick = async function() {
 		await App.GoTo("/");
@@ -483,108 +478,75 @@ function setCurrentPath(path: string) {
 	currentPath.append(link)
 }
 
-async function checkLeaf(path: string) {
-	let area = querySelector("#entryArea");
-	let user = await App.SessionUser();
-	if (!user) {
-		area.classList.remove("leaf");
-		return;
-	}
-	App.IsLeaf(path).then(function(ok) {
-		if (ok) {
-			area.classList.add("leaf");
-		} else {
-			area.classList.remove("leaf");
-		}
-	}).catch(logError);
-}
-
-async function redrawEntryList() {
+function redrawEntryList(app: any) {
 	let entryList = querySelector("#entryList");
-	let user = await App.SessionUser();
-	if (user == "") {
+	if (app.User == "") {
 		entryList.replaceChildren();
 		return;
 	}
-	try {
-		let path = await App.CurrentPath();
-		let leaf = await App.IsLeaf(path) as boolean;
-		if (leaf) {
-			App.ListElements(path).then(function(args) {
-				entryList.replaceChildren();
-				let elems = args as any[];
-				for (let e of elems) {
-					let elem = document.createElement("div");
-					elem.classList.add("element");
-					entryList.append(elem);
-					let scene = document.createElement("div");
-					scene.classList.add("scene");
-					scene.classList.add("item");
-					scene.classList.add("latest");
-					scene.dataset.elem = e.Name;
-					scene.dataset.prog = e.Program;
-					scene.dataset.ver = "";
-					elem.append(scene);
-					let expander = document.createElement("div");
-					expander.classList.add("sceneListExpander");
-					scene.append(expander);
-					scene.innerHTML += e.Name + " (" + e.Program + ")";
-					let vers = e.Versions.reverse();
-					for (let v of vers) {
-						let scene = document.createElement("div");
-						scene.classList.add("scene");
-						scene.classList.add("item");
-						scene.classList.add("hidden");
-						scene.dataset.elem = e.Name;
-						scene.dataset.prog = e.Program;
-						scene.dataset.ver = v.Name;
-						scene.innerText = v.Name;
-						elem.append(scene);
-					}
-				}
-			}).catch(logError);
-		} else {
-			App.ListEntries(path).then(function(ents) {
-				entryList.replaceChildren();
-				for (let ent of ents) {
-					let div = document.createElement("div");
-					div.classList.add("entry");
-					div.classList.add("item");
-					div.innerText = ent.Name;
-					div.onclick = async function() {
-						await App.GoTo(ent.Path);
-						try {
-							redrawAll();
-						} catch (err) {
-							logError(err);
-						}
-					}
-					entryList.append(div);
-				}
-			}).catch(logError);
+	if (app.IsLeaf) {
+		entryList.replaceChildren();
+		for (let e of app.Elements) {
+			let elem = document.createElement("div");
+			elem.classList.add("element");
+			entryList.append(elem);
+			let scene = document.createElement("div");
+			scene.classList.add("scene");
+			scene.classList.add("item");
+			scene.classList.add("latest");
+			scene.dataset.elem = e.Name;
+			scene.dataset.prog = e.Program;
+			scene.dataset.ver = "";
+			elem.append(scene);
+			let expander = document.createElement("div");
+			expander.classList.add("sceneListExpander");
+			scene.append(expander);
+			scene.innerHTML += e.Name + " (" + e.Program + ")";
+			let vers = e.Versions.reverse();
+			for (let v of vers) {
+				let scene = document.createElement("div");
+				scene.classList.add("scene");
+				scene.classList.add("item");
+				scene.classList.add("hidden");
+				scene.dataset.elem = e.Name;
+				scene.dataset.prog = e.Program;
+				scene.dataset.ver = v.Name;
+				scene.innerText = v.Name;
+				elem.append(scene);
+			}
 		}
-	} catch (err) {
-		logError(err);
+	} else {
+		entryList.replaceChildren();
+		for (let ent of app.Entries) {
+			let div = document.createElement("div");
+			div.classList.add("entry");
+			div.classList.add("item");
+			div.innerText = ent.Name;
+			div.onclick = async function() {
+				await App.GoTo(ent.Path);
+				try {
+					redrawAll();
+				} catch (err) {
+					logError(err);
+				}
+			}
+			entryList.append(div);
+		}
 	}
-
 }
 
-async function redrawNewElementButtons() {
+function redrawNewElementButtons(app: any) {
 	let btns = [];
-	let progs = await App.ProgramsInUse();
-	for (let prog of progs) {
+	for (let prog of app.ProgramsInUse) {
 		let btn = document.createElement("div");
 		btn.classList.add("newElementButton");
 		btn.classList.add("button");
-		btn.dataset.prog = prog;
-		btn.innerText = "+" + prog;
-		let ok = await App.IsValidProgram(prog);
-		if (!ok) {
+		btn.dataset.prog = prog.Name;
+		btn.innerText = "+" + prog.Name;
+		if (prog.NotDefined) {
 			btn.classList.add("invalid");
 		}
-		let path = await App.CurrentPath();
-		let leaf = await App.IsLeaf(path);
-		if (!leaf) {
+		if (!app.IsLeaf) {
 			btn.classList.add("invalid");
 		}
 		btns.push(btn);
@@ -593,42 +555,27 @@ async function redrawNewElementButtons() {
 	elemBtns.replaceChildren(...btns);
 }
 
-async function redrawRecentPaths() {
-	App.RecentPaths().then(function(paths) {
-		if (!paths) {
-			paths = [];
-		}
-		let cnt = querySelector("#recentPaths");
-		cnt.replaceChildren();
-		for (let path of paths) {
-			let div = document.createElement("div");
-			div.classList.add("recentPath");
-			div.classList.add("link");
-			div.dataset.path = path;
-			div.innerText = path;
-			cnt.append(div);
-		}
-	}).catch(logError);
+function redrawRecentPaths(app: any) {
+	let cnt = querySelector("#recentPaths");
+	cnt.replaceChildren();
+	for (let path of app.RecentPaths) {
+		let div = document.createElement("div");
+		div.classList.add("recentPath");
+		div.classList.add("link");
+		div.dataset.path = path;
+		div.innerText = path;
+		cnt.append(div);
+	}
 }
 
-async function redrawInfoArea() {
+async function redrawInfoArea(app: any) {
 	let area = querySelector("#infoArea");
-	let user = await App.SessionUser();
-	if (!user) {
+	if (!app.User) {
 		area.replaceChildren();
 		return;
 	}
-	let path = await App.CurrentPath();
-	let ents = null;
-	let ent = null;
-	try {
-		ents = await App.ParentEntries(path);
-		ent = await App.GetEntry(path);
-	} catch(err) {
-		logError(err);
-		return;
-	}
-	ents.push(ent);
+	let ents = [...app.ParentEntries];
+	ents.push(app.Entry)
 	let addEntryInfoDiv = function(ent: any) {
 		let div = document.createElement("div");
 		div.classList.add("entryInfo");
@@ -694,7 +641,7 @@ async function redrawInfoArea() {
 			for (let ent of parts) {
 				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
-				if (ent.Path == path) {
+				if (ent.Path == app.Path) {
 					entDiv.classList.add("current");
 				}
 				let statusProp = ent.Property["status"];
@@ -741,31 +688,34 @@ function hideAddProgramLinkPopup() {
 	popup.classList.add("hidden");
 }
 
-async function fillAddProgramLinkPopup() {
+function fillAddProgramLinkPopup(app: any) {
 	let popup = querySelector("#addProgramLinkPopup");
 	popup.replaceChildren();
-	App.Programs().then(function(progs) {
-		for (let prog of progs) {
-			let div = document.createElement("div");
-			div.classList.add("addProgramLinkPopupItem");
-			div.classList.add("button");
-			div.dataset.value = prog;
-			div.innerText = prog;
-			popup.append(div);
-		}
-	}).catch(logError);
+	for (let prog of app.Programs) {
+		let div = document.createElement("div");
+		div.classList.add("addProgramLinkPopupItem");
+		div.classList.add("button");
+		div.dataset.value = prog.Name;
+		div.innerText = prog.Name;
+		popup.append(div);
+	}
 }
 
 async function toggleNewElementButton(prog: string) {
-	let btns = querySelector("#newElementButtons");
 	try {
-		let btn = btns.querySelector(`.newElementButton[data-prog=${prog}]`);
-		if (btn) {
+		let found = false;
+		let progs = await App.ProgramsInUse();
+		for (let p of progs) {
+			if (p.Name == prog) {
+				found = true;
+				break;
+			}
+		}
+		if (found) {
 			await App.RemoveProgramInUse(prog);
 		} else {
-			await App.AddProgramInUse(prog, btns.children.length);
+			await App.AddProgramInUse(prog, progs.length);
 		}
-		App.GetUserSetting().then(redrawNewElementButtons);
 	} catch (err) {
 		logError(err);
 	}
