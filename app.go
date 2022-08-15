@@ -477,6 +477,10 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 			return cmp < 0
 		}
 		sorter := sorters[ents[i].Type]
+		dir := 1
+		if sorter.Descending {
+			dir = -1
+		}
 		cmp = func() int {
 			prop := sorter.Property
 			if prop == "" {
@@ -494,6 +498,17 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 			if cmp != 0 {
 				return cmp
 			}
+			if ip.Value == "" {
+				cmp++
+			}
+			if jp.Value == "" {
+				cmp--
+			}
+			if cmp != 0 {
+				// non-existing value shouldn't take priority over existing value.
+				dir = 1
+				return cmp
+			}
 			if ip.Type == "int" {
 				iv, _ := strconv.Atoi(ip.Value)
 				jv, _ := strconv.Atoi(jp.Value)
@@ -507,16 +522,12 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 			}
 			return strings.Compare(ip.Value, jp.Value)
 		}()
-		k := 1
-		if sorter.Descending {
-			k = -1
-		}
 		if cmp != 0 {
-			return k*cmp < 0
+			return dir*cmp < 0
 		}
 		cmp = strings.Compare(ents[i].Name, ents[j].Name)
 		if cmp != 0 {
-			return k*cmp < 0
+			return dir*cmp < 0
 		}
 		return true
 	})
