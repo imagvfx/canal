@@ -309,7 +309,7 @@ func (a *App) State() (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-	dirExists, err := a.DirExists(path)
+	dirExists, err := a.DirExists(dir)
 	if err != nil {
 		return nil, err
 	}
