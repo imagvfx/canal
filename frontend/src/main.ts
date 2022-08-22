@@ -82,7 +82,7 @@ window.onclick = async function(ev) {
 	let reloadAssignedButton = closest(target, "#reloadAssignedButton");
 	if (reloadAssignedButton) {
 		if (!reloadAssignedButton.classList.contains("disabled")) {
-			App.SearchAssigned().then(redrawAll).catch(logError);
+			App.ReloadAssigned().then(redrawAll).catch(logError);
 		}
 	}
 	let openDirButton = closest(target, "#openDirButton");

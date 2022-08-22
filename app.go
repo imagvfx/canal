@@ -203,7 +203,7 @@ func (a *App) getGlobals(entType string) ([]*Global, error) {
 	return r.Msg, nil
 }
 
-func (a *App) CacheGlobal() error {
+func (a *App) ReloadGlobals() error {
 	types, err := a.getBaseEntryTypes()
 	if err != nil {
 		return fmt.Errorf("get entry types: %v", err)
@@ -608,8 +608,8 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 	return r.Msg, nil
 }
 
-// SearchAssigned searches entries from host those have logged in user as assignee.
-func (a *App) SearchAssigned() error {
+// ReloadAssigned searches entries from host those have logged in user as assignee.
+func (a *App) ReloadAssigned() error {
 	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
 		"session": {a.session},
 		"from":    {"/"},
@@ -661,6 +661,10 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = a.writeSession()
+	if err != nil {
+		return "", fmt.Errorf("write session: %v", err)
+	}
 	err = a.Reload()
 	if err != nil {
 		return "", err
@@ -670,36 +674,15 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) Reload() error {
-	err := a.getHostInfo()
+	err := a.ReloadGlobals()
 	if err != nil {
-		return fmt.Errorf("get host info: %v", err)
+		return fmt.Errorf("globals: %v", err)
 	}
-	err = a.getUserInfo()
-	if err != nil {
-		return fmt.Errorf("get user info: %v", err)
-	}
-	return nil
-}
-
-func (a *App) getHostInfo() error {
-	err := a.CacheGlobal()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// getUserInfo gets user info from host.
-func (a *App) getUserInfo() error {
-	err := a.writeSession()
-	if err != nil {
-		return fmt.Errorf("write session: %v", err)
-	}
-	err = a.GetUserSetting()
+	err = a.ReloadUserSetting()
 	if err != nil {
 		return fmt.Errorf("user setting: %v", err)
 	}
-	err = a.SearchAssigned()
+	err = a.ReloadAssigned()
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
 	}
@@ -1036,8 +1019,8 @@ type forgeUserSettingResponse struct {
 	Err string
 }
 
-// GetUserSetting get user setting from host, and remember it.
-func (a *App) GetUserSetting() error {
+// ReloadUserSetting get user setting from host, and remember it.
+func (a *App) ReloadUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
 		"user":    {a.user},
