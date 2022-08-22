@@ -27,6 +27,7 @@ import (
 type App struct {
 	ctx         context.Context
 	config      *Config
+	state       *State
 	currentPath string
 	// hold cacheLock before modify cachedEnvs
 	cacheLock   sync.Mutex
@@ -47,6 +48,7 @@ type App struct {
 func NewApp(cfg *Config) *App {
 	return &App{
 		config: cfg,
+		state:  &State{},
 	}
 }
 
@@ -273,34 +275,38 @@ type State struct {
 }
 
 func (a *App) State() (*State, error) {
-	host := a.Host()
-	user := a.SessionUser()
-	programs := a.Programs()
-	programsInUse := a.ProgramsInUse()
-	recentPaths := a.RecentPaths()
+	a.state.Host = a.Host()
+	a.state.User = a.SessionUser()
+	a.state.Programs = a.Programs()
+	a.state.ProgramsInUse = a.ProgramsInUse()
+	a.state.RecentPaths = a.RecentPaths()
 	path := a.CurrentPath()
+	a.state.Path = path
 	leaf, err := a.IsLeaf(path)
 	if err != nil {
 		return nil, err
 	}
+	a.state.IsLeaf = leaf
 	entry, err := a.GetEntry(path)
 	if err != nil {
 		return nil, err
 	}
+	a.state.Entry = entry
 	parents, err := a.ParentEntries(path)
 	if err != nil {
 		return nil, err
 	}
+	a.state.ParentEntries = parents
 	// we only can have either entries or elements by design.
-	entries := []*Entry{}
-	elements := []*Elem{}
+	a.state.Entries = []*Entry{}
+	a.state.Elements = []*Elem{}
 	if leaf {
-		elements, err = a.ListElements(path)
+		a.state.Elements, err = a.ListElements(path)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		entries, err = a.ListEntries(path)
+		a.state.Entries, err = a.ListEntries(path)
 		if err != nil {
 			return nil, err
 		}
@@ -309,27 +315,14 @@ func (a *App) State() (*State, error) {
 	if err != nil {
 		return nil, err
 	}
+	a.state.Dir = dir
 	dirExists, err := a.DirExists(dir)
 	if err != nil {
 		return nil, err
 	}
-	assignedOnly := a.AssignedOnly()
-	return &State{
-		Host:          host,
-		User:          user,
-		Programs:      programs,
-		ProgramsInUse: programsInUse,
-		RecentPaths:   recentPaths,
-		Path:          path,
-		IsLeaf:        leaf,
-		Entry:         entry,
-		ParentEntries: parents,
-		Entries:       entries,
-		Elements:      elements,
-		Dir:           dir,
-		DirExists:     dirExists,
-		AssignedOnly:  assignedOnly,
-	}, nil
+	a.state.DirExists = dirExists
+	a.state.AssignedOnly = a.AssignedOnly()
+	return a.state, nil
 }
 
 // GoTo goes to a path.
