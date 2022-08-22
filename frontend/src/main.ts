@@ -359,12 +359,12 @@ function logError(err: any) {
 }
 
 async function redrawAll(): Promise<void> {
-	let app: any;
 	try {
-		app = await App.State();
+		await App.ReloadEntry();
 	} catch (err) {
 		logError(err);
 	}
+	let app = await App.State();
 	console.log(app);
 	try {
 		clearLog();

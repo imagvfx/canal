@@ -274,55 +274,14 @@ type State struct {
 	AssignedOnly  bool
 }
 
-func (a *App) State() (*State, error) {
+func (a *App) State() *State {
 	a.state.Host = a.Host()
 	a.state.User = a.SessionUser()
 	a.state.Programs = a.Programs()
 	a.state.ProgramsInUse = a.ProgramsInUse()
 	a.state.RecentPaths = a.RecentPaths()
-	path := a.CurrentPath()
-	a.state.Path = path
-	leaf, err := a.IsLeaf(path)
-	if err != nil {
-		return nil, err
-	}
-	a.state.IsLeaf = leaf
-	entry, err := a.GetEntry(path)
-	if err != nil {
-		return nil, err
-	}
-	a.state.Entry = entry
-	parents, err := a.ParentEntries(path)
-	if err != nil {
-		return nil, err
-	}
-	a.state.ParentEntries = parents
-	// we only can have either entries or elements by design.
-	a.state.Entries = []*Entry{}
-	a.state.Elements = []*Elem{}
-	if leaf {
-		a.state.Elements, err = a.ListElements(path)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		a.state.Entries, err = a.ListEntries(path)
-		if err != nil {
-			return nil, err
-		}
-	}
-	dir, err := a.Dir(path)
-	if err != nil {
-		return nil, err
-	}
-	a.state.Dir = dir
-	dirExists, err := a.DirExists(dir)
-	if err != nil {
-		return nil, err
-	}
-	a.state.DirExists = dirExists
 	a.state.AssignedOnly = a.AssignedOnly()
-	return a.state, nil
+	return a.state
 }
 
 // GoTo goes to a path.
@@ -679,6 +638,51 @@ func (a *App) Reload() error {
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
 	}
+	return nil
+}
+
+func (a *App) ReloadEntry() error {
+	path := a.CurrentPath()
+	a.state.Path = path
+	leaf, err := a.IsLeaf(path)
+	if err != nil {
+		return err
+	}
+	a.state.IsLeaf = leaf
+	entry, err := a.GetEntry(path)
+	if err != nil {
+		return err
+	}
+	a.state.Entry = entry
+	parents, err := a.ParentEntries(path)
+	if err != nil {
+		return err
+	}
+	a.state.ParentEntries = parents
+	// we only can have either entries or elements by design.
+	a.state.Entries = []*Entry{}
+	a.state.Elements = []*Elem{}
+	if leaf {
+		a.state.Elements, err = a.ListElements(path)
+		if err != nil {
+			return err
+		}
+	} else {
+		a.state.Entries, err = a.ListEntries(path)
+		if err != nil {
+			return err
+		}
+	}
+	dir, err := a.Dir(path)
+	if err != nil {
+		return err
+	}
+	a.state.Dir = dir
+	dirExists, err := a.DirExists(path)
+	if err != nil {
+		return err
+	}
+	a.state.DirExists = dirExists
 	return nil
 }
 
