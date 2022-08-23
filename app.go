@@ -74,6 +74,11 @@ func (a *App) startup(ctx context.Context) {
 // It is similar to startup, but I need separate method for functions
 // those return error.
 func (a *App) Prepare() error {
+	toks := strings.Split(a.config.Host, "://")
+	if len(toks) != 2 {
+		return fmt.Errorf("invalid host: %v", a.config.Host)
+	}
+	a.state.Host = toks[1]
 	err := a.readSession()
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
@@ -90,15 +95,6 @@ func (a *App) Prepare() error {
 		return fmt.Errorf("read options: %v", err)
 	}
 	return nil
-}
-
-// Host returns hostname which excludes protocol specifier.
-func (a *App) Host() string {
-	toks := strings.Split(a.config.Host, "://")
-	if len(toks) == 1 {
-		return toks[0]
-	}
-	return toks[1]
 }
 
 // CurrentPath is the path, the app currently stands.
@@ -275,7 +271,6 @@ type State struct {
 }
 
 func (a *App) State() *State {
-	a.state.Host = a.Host()
 	a.state.User = a.SessionUser()
 	a.state.Programs = a.Programs()
 	a.state.ProgramsInUse = a.ProgramsInUse()
