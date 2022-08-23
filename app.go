@@ -37,7 +37,6 @@ type App struct {
 	historyIdx  int
 	assigned    []*Entry
 	userSetting *userSetting
-	session     string
 	options     Options
 	openCmd     string
 }
@@ -80,7 +79,7 @@ func (a *App) Prepare() error {
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
 	}
-	if a.session == "" {
+	if a.state.Session == "" {
 		return nil
 	}
 	err = a.Reload()
@@ -103,7 +102,7 @@ type EntryResponse struct {
 // getEntry gets entry info from host.
 func (a *App) getEntry(path string) (*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-entry", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"path":    {path},
 	})
 	if err != nil {
@@ -146,7 +145,7 @@ type EntryTypesResponse struct {
 
 func (a *App) getBaseEntryTypes() ([]string, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-base-entry-types", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 	})
 	if err != nil {
 		return nil, err
@@ -176,7 +175,7 @@ type Global struct {
 
 func (a *App) getGlobals(entType string) ([]*Global, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-globals", url.Values{
-		"session":    {a.session},
+		"session":    {a.state.Session},
 		"entry_type": {entType},
 	})
 	if err != nil {
@@ -249,6 +248,7 @@ func (a *App) StatusColor(entType, stat string) string {
 type State struct {
 	Host          string
 	User          string
+	Session       string
 	Programs      []*Program
 	ProgramsInUse []*Program
 	RecentPaths   []string
@@ -406,7 +406,7 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 // subEntries get all sub entries of an entry from host.
 func (a *App) subEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/sub-entries", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"path":    {path},
 	})
 	if err != nil {
@@ -542,7 +542,7 @@ func (a *App) subAssigned(path string) []string {
 // ParentEntries get parent entries of an entry.
 func (a *App) ParentEntries(path string) ([]*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/parent-entries", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"path":    {path},
 	})
 	if err != nil {
@@ -563,7 +563,7 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 // ReloadAssigned searches entries from host those have logged in user as assignee.
 func (a *App) ReloadAssigned() error {
 	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"from":    {"/"},
 		"q":       {"assignee=" + a.state.User},
 	})
@@ -713,7 +713,7 @@ func (a *App) WaitLogin(key string) error {
 		return fmt.Errorf(r.Err)
 	}
 	a.state.User = r.Msg.User
-	a.session = r.Msg.Session
+	a.state.Session = r.Msg.Session
 	return nil
 }
 
@@ -787,13 +787,13 @@ func (a *App) readSession() error {
 		return fmt.Errorf("invalid session")
 	}
 	a.state.User = toks[0]
-	a.session = toks[1]
+	a.state.Session = toks[1]
 	return nil
 }
 
 // writeSession writes session to a config file.
 func (a *App) writeSession() error {
-	data := []byte(a.state.User + " " + a.session)
+	data := []byte(a.state.User + " " + a.state.Session)
 	err := writeConfigData("session", data)
 	if err != nil {
 		return err
@@ -804,7 +804,7 @@ func (a *App) writeSession() error {
 // removeSession removes sesson config file.
 func (a *App) removeSession() error {
 	a.state.User = ""
-	a.session = ""
+	a.state.Session = ""
 	err := removeConfigFile("session")
 	if err != nil {
 		return err
@@ -856,7 +856,7 @@ func (a *App) writeOptions() error {
 // arrangeRecentPaths insert/move/remove recent paths where user want.
 func (a *App) arrangeRecentPaths(path string, at int) error {
 	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
-		"session":             {a.session},
+		"session":             {a.state.Session},
 		"update_recent_paths": {"1"},
 		"path":                {path},
 		"path_at":             {strconv.Itoa(at)},
@@ -1013,7 +1013,7 @@ type forgeUserSettingResponse struct {
 // ReloadUserSetting get user setting from host, and remember it.
 func (a *App) ReloadUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"user":    {a.state.User},
 	})
 	if err != nil {
@@ -1039,7 +1039,7 @@ type forgeAPIErrorResponse struct {
 // arrangeProgramInUse insert/move/remove a in-use program to where user wants.
 func (a *App) arrangeProgramInUse(prog string, at int) error {
 	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
-		"session":                {a.session},
+		"session":                {a.state.Session},
 		"update_programs_in_use": {"1"},
 		"program":                {prog},
 		"program_at":             {strconv.Itoa(at)},
@@ -1147,7 +1147,7 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 		return env, nil
 	}
 	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
-		"session": {a.session},
+		"session": {a.state.Session},
 		"path":    {path},
 	})
 	if err != nil {
@@ -1470,9 +1470,4 @@ func (a *App) OpenURL(path string) error {
 // Parent returns parent path to an entry path.
 func (a *App) Parent(pth string) string {
 	return path.Dir(pth)
-}
-
-// Session returns session info of logged in user.
-func (a *App) Session() string {
-	return a.session
 }
