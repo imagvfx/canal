@@ -25,10 +25,9 @@ import (
 
 // App struct
 type App struct {
-	ctx         context.Context
-	config      *Config
-	state       *State
-	currentPath string
+	ctx    context.Context
+	config *Config
+	state  *State
 	// hold cacheLock before modify cachedEnvs
 	cacheLock   sync.Mutex
 	cachedEnvs  map[string][]string
@@ -67,7 +66,6 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	a.ctx = ctx
-	a.GoTo("/")
 }
 
 // Prepare prepares start up of the app gui.
@@ -94,12 +92,8 @@ func (a *App) Prepare() error {
 	if err != nil {
 		return fmt.Errorf("read options: %v", err)
 	}
+	a.GoTo("/")
 	return nil
-}
-
-// CurrentPath is the path, the app currently stands.
-func (a *App) CurrentPath() string {
-	return a.currentPath
 }
 
 type EntryResponse struct {
@@ -280,46 +274,59 @@ func (a *App) State() *State {
 }
 
 // GoTo goes to a path.
-func (a *App) GoTo(pth string) {
+func (a *App) GoTo(pth string) error {
 	if pth == "" {
-		return
+		return fmt.Errorf("please specify path to go")
 	}
 	if !path.IsAbs(pth) {
-		pth = a.currentPath + "/" + pth
+		pth = a.state.Path + "/" + pth
 	}
 	if pth != "/" && strings.HasSuffix(pth, "/") {
 		pth = pth[:len(pth)-1]
 	}
-	if pth == a.currentPath {
-		return
+	if pth == a.state.Path {
+		return nil
 	}
 	if len(a.history) > a.historyIdx+1 {
 		a.history = a.history[:a.historyIdx+1]
 	}
 	a.history = append(a.history, pth)
 	a.historyIdx = len(a.history) - 1
-	a.currentPath = a.history[a.historyIdx]
+	a.state.Path = a.history[a.historyIdx]
 	a.cacheLock.Lock()
-	defer a.cacheLock.Unlock()
 	a.cachedEnvs = make(map[string][]string)
+	a.cacheLock.Unlock()
+	err := a.ReloadEntry()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GoBack goes back to the previous path in history.
-func (a *App) GoBack() string {
+func (a *App) GoBack() error {
 	if a.historyIdx != 0 {
 		a.historyIdx--
 	}
-	a.currentPath = a.history[a.historyIdx]
-	return a.currentPath
+	a.state.Path = a.history[a.historyIdx]
+	err := a.ReloadEntry()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GoForward goes again to the forward path in history.
-func (a *App) GoForward() string {
+func (a *App) GoForward() error {
 	if a.historyIdx != len(a.history)-1 {
 		a.historyIdx++
 	}
-	a.currentPath = a.history[a.historyIdx]
-	return a.currentPath
+	a.state.Path = a.history[a.historyIdx]
+	err := a.ReloadEntry()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetAssignedOnly set assignedOnly option enabled/disabled.
@@ -637,8 +644,7 @@ func (a *App) Reload() error {
 }
 
 func (a *App) ReloadEntry() error {
-	path := a.CurrentPath()
-	a.state.Path = path
+	path := a.state.Path
 	leaf, err := a.IsLeaf(path)
 	if err != nil {
 		return err

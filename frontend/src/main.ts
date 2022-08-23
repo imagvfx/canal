@@ -75,9 +75,8 @@ window.onclick = async function(ev) {
 	}
 	let urlLink = closest(target, "#urlLink");
 	if (urlLink) {
-		App.CurrentPath().then(function(path) {
-			App.OpenURL(path).catch(logError);
-		});
+		let app = await App.State();
+		App.OpenURL(app.Path).catch(logError);
 	}
 	let reloadAssignedButton = closest(target, "#reloadAssignedButton");
 	if (reloadAssignedButton) {
@@ -88,10 +87,9 @@ window.onclick = async function(ev) {
 	let openDirButton = closest(target, "#openDirButton");
 	if (openDirButton) {
 		try {
-			let path = await App.CurrentPath();
-			let dir = await App.Dir(path);
-			if (dir != "") {
-				await App.OpenDir(dir);
+			let app = await App.State();
+			if (app.Dir != "") {
+				await App.OpenDir(app.Dir);
 			}
 		} catch (err) {
 			logError(err);
@@ -127,11 +125,11 @@ window.onclick = async function(ev) {
 				let ellapsed = now - lastSceneClick;
 				if (ellapsed < 300) {
 					try {
-						let path = await App.CurrentPath();
+						let app = await App.State();
 						let elem = scene.dataset.elem as string;
 						let ver = scene.dataset.ver as string;
 						let prog = scene.dataset.prog as string;
-						await App.OpenScene(path, elem, ver, prog);
+						await App.OpenScene(app.Path, elem, ver, prog);
 						redrawAll();
 					} catch(err) {
 						logError(err);
@@ -209,12 +207,12 @@ entryList.oncontextmenu = async function(ev) {
 		return;
 	}
 	menu.style.display = "flex";
-	let path = await App.CurrentPath();
+	let app = await App.State();
 	let elem = entItem.dataset.elem as string;
 	let prog = entItem.dataset.prog as string;
 	let ver = entItem.dataset.ver as string;
 	if (ver == "") {
-		ver = await App.LastVersionOfElement(path, elem, prog)
+		ver = await App.LastVersionOfElement(app.Path, elem, prog)
 	}
 	let label = document.createElement("div");
 	label.classList.add("contextMenuLabel");
@@ -275,11 +273,11 @@ window.onkeydown = async function(ev) {
 			if (!sel) {
 				return;
 			}
-			let path = await App.CurrentPath();
+			let app = await App.State();
 			let elem = sel.dataset.elem as string;
 			let ver = sel.dataset.ver as string;
 			let prog = sel.dataset.prog as string;
-			let scene = await App.SceneFile(path, elem, ver, prog);
+			let scene = await App.SceneFile(app.Path, elem, ver, prog);
 			copyToClipboard(scene);
 			log("path copied: " + scene);
 		}
@@ -305,20 +303,19 @@ window.onkeydown = async function(ev) {
 	let newElementFieldInput = closest(target, ".newElementFieldInput");
 	if (newElementFieldInput) {
 		let input = newElementFieldInput as HTMLInputElement;
+		let app = await App.State();
 		let oninput = function() {
 			if (ev.key != "Enter") {
 				return;
 			}
 			let field = closest(input, ".newElementField");
 			let prog = field.dataset.prog as string;
-			App.CurrentPath().then(function(path: string) {
-				let name = input.value as string;
-				if (name == "") {
-					name = "main";
-				}
-				field.classList.add("hidden");
-				App.NewElement(path, name, prog).then(redrawAll).catch(logError);
-			});
+			let name = input.value as string;
+			if (name == "") {
+				name = "main";
+			}
+			field.classList.add("hidden");
+			App.NewElement(app.Path, name, prog).then(redrawAll).catch(logError);
 		}
 		oninput();
 	}
@@ -359,11 +356,6 @@ function logError(err: any) {
 }
 
 async function redrawAll(): Promise<void> {
-	try {
-		await App.ReloadEntry();
-	} catch (err) {
-		logError(err);
-	}
 	let app = await App.State();
 	console.log(app);
 	try {
