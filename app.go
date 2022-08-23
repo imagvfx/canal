@@ -36,7 +36,6 @@ type App struct {
 	history     []string
 	historyIdx  int
 	assigned    []*Entry
-	user        string
 	userSetting *userSetting
 	session     string
 	options     Options
@@ -265,7 +264,6 @@ type State struct {
 }
 
 func (a *App) State() *State {
-	a.state.User = a.SessionUser()
 	a.state.Programs = a.Programs()
 	a.state.ProgramsInUse = a.ProgramsInUse()
 	a.state.RecentPaths = a.RecentPaths()
@@ -567,7 +565,7 @@ func (a *App) ReloadAssigned() error {
 	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
 		"session": {a.session},
 		"from":    {"/"},
-		"q":       {"assignee=" + a.user},
+		"q":       {"assignee=" + a.state.User},
 	})
 	if err != nil {
 		return err
@@ -624,7 +622,7 @@ func (a *App) Login() (string, error) {
 		return "", err
 	}
 	fmt.Println("login done")
-	return a.user, nil
+	return a.state.User, nil
 }
 
 func (a *App) Reload() error {
@@ -714,7 +712,7 @@ func (a *App) WaitLogin(key string) error {
 	if r.Err != "" {
 		return fmt.Errorf(r.Err)
 	}
-	a.user = r.Msg.User
+	a.state.User = r.Msg.User
 	a.session = r.Msg.Session
 	return nil
 }
@@ -788,14 +786,14 @@ func (a *App) readSession() error {
 	if len(toks) != 2 {
 		return fmt.Errorf("invalid session")
 	}
-	a.user = toks[0]
+	a.state.User = toks[0]
 	a.session = toks[1]
 	return nil
 }
 
 // writeSession writes session to a config file.
 func (a *App) writeSession() error {
-	data := []byte(a.user + " " + a.session)
+	data := []byte(a.state.User + " " + a.session)
 	err := writeConfigData("session", data)
 	if err != nil {
 		return err
@@ -805,7 +803,7 @@ func (a *App) writeSession() error {
 
 // removeSession removes sesson config file.
 func (a *App) removeSession() error {
-	a.user = ""
+	a.state.User = ""
 	a.session = ""
 	err := removeConfigFile("session")
 	if err != nil {
@@ -822,10 +820,10 @@ type Options struct {
 
 // readOptions reads options config file of the logged in user.
 func (a *App) readOptions() error {
-	if a.user == "" {
+	if a.state.User == "" {
 		return nil
 	}
-	data, err := readConfigData("options_" + a.user)
+	data, err := readConfigData("options_" + a.state.User)
 	if err != nil {
 		return err
 	}
@@ -841,14 +839,14 @@ func (a *App) readOptions() error {
 
 // writeOptions writes options config file of the logged in user.
 func (a *App) writeOptions() error {
-	if a.user == "" {
+	if a.state.User == "" {
 		return nil
 	}
 	data, err := json.Marshal(&a.options)
 	if err != nil {
 		return err
 	}
-	err = writeConfigData("options_"+a.user, data)
+	err = writeConfigData("options_"+a.state.User, data)
 	if err != nil {
 		return err
 	}
@@ -912,11 +910,6 @@ func (a *App) Logout() error {
 		return err
 	}
 	return nil
-}
-
-// SessionUser returns a user name currently logged in.
-func (a *App) SessionUser() string {
-	return a.user
 }
 
 // GenerateRandomString returns random string that has length 'n', using alpha-numeric characters.
@@ -1021,7 +1014,7 @@ type forgeUserSettingResponse struct {
 func (a *App) ReloadUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
 		"session": {a.session},
-		"user":    {a.user},
+		"user":    {a.state.User},
 	})
 	if err != nil {
 		return err
