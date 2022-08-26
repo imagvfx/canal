@@ -130,6 +130,7 @@ window.onclick = async function(ev) {
 						let ver = scene.dataset.ver as string;
 						let prog = scene.dataset.prog as string;
 						await App.OpenScene(app.Path, elem, ver, prog);
+						await App.ReloadUserSetting();
 						redrawAll();
 					} catch(err) {
 						logError(err);
@@ -315,7 +316,10 @@ window.onkeydown = async function(ev) {
 				name = "main";
 			}
 			field.classList.add("hidden");
-			App.NewElement(app.Path, name, prog).then(redrawAll).catch(logError);
+			App.NewElement(app.Path, name, prog).then(async function() {
+				await App.ReloadUserSetting();
+				await App.ReloadEntry();
+			}).then(redrawAll).catch(logError);
 		}
 		oninput();
 	}

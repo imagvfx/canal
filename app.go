@@ -254,7 +254,6 @@ type State struct {
 }
 
 func (a *App) State() *State {
-	a.state.RecentPaths = a.RecentPaths()
 	return a.state
 }
 
@@ -866,14 +865,6 @@ func (a *App) arrangeRecentPaths(path string, at int) error {
 	return nil
 }
 
-// RecentPaths returns recent paths of the logged in user.
-func (a *App) RecentPaths() []string {
-	if a.userSetting == nil {
-		return []string{}
-	}
-	return a.userSetting.RecentPaths
-}
-
 // addRecentPath adds a path to head of recent paths.
 // If the path has already in recent paths, it will move to head instead.
 func (a *App) addRecentPath(path string) error {
@@ -1021,6 +1012,7 @@ func (a *App) ReloadUserSetting() error {
 	a.userSetting = r.Msg
 	a.state.Programs = a.programs()
 	a.state.ProgramsInUse = a.programsInUse()
+	a.state.RecentPaths = a.userSetting.RecentPaths
 	return nil
 }
 
