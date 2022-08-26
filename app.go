@@ -243,7 +243,7 @@ type State struct {
 	ProgramsInUse []*Program
 	RecentPaths   []string
 	Path          string
-	IsLeaf        bool
+	AtLeaf        bool
 	Entries       []*Entry
 	Elements      []*Elem
 	Entry         *Entry
@@ -630,9 +630,9 @@ func (a *App) ReloadEntry() error {
 	if err != nil {
 		return err
 	}
-	a.state.IsLeaf = false
+	a.state.AtLeaf = false
 	if a.state.Entry.Type == a.config.LeafEntryType {
-		a.state.IsLeaf = true
+		a.state.AtLeaf = true
 	}
 	// make concurrent fetchs to reduce waiting.
 	parentErr := make(chan error)
@@ -647,7 +647,7 @@ func (a *App) ReloadEntry() error {
 		a.state.Entries = []*Entry{}
 		a.state.Elements = []*Elem{}
 		// we only can have either entries or elements by design.
-		if a.state.IsLeaf {
+		if a.state.AtLeaf {
 			a.state.Elements, err = a.ListElements(path)
 		} else {
 			a.state.Entries, err = a.ListEntries(path)

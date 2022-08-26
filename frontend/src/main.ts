@@ -476,7 +476,7 @@ function redrawEntryList(app: any) {
 		entryList.replaceChildren();
 		return;
 	}
-	if (app.IsLeaf) {
+	if (app.AtLeaf) {
 		entryList.replaceChildren();
 		for (let e of app.Elements) {
 			let elem = document.createElement("div");
@@ -538,7 +538,7 @@ function redrawNewElementButtons(app: any) {
 		if (prog.NotDefined) {
 			btn.classList.add("invalid");
 		}
-		if (!app.IsLeaf) {
+		if (!app.AtLeaf) {
 			btn.classList.add("invalid");
 		}
 		btns.push(btn);
