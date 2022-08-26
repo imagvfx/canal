@@ -633,35 +633,43 @@ func (a *App) Reload() error {
 }
 
 func (a *App) ReloadEntry() error {
+	var err error
 	path := a.state.Path
-	leaf, err := a.IsLeaf(path)
+	a.state.Entry, err = a.GetEntry(path)
 	if err != nil {
 		return err
 	}
-	a.state.IsLeaf = leaf
-	entry, err := a.GetEntry(path)
-	if err != nil {
-		return err
+	a.state.IsLeaf = false
+	if a.state.Entry.Type == a.config.LeafEntryType {
+		a.state.IsLeaf = true
 	}
-	a.state.Entry = entry
-	parents, err := a.ParentEntries(path)
-	if err != nil {
-		return err
-	}
-	a.state.ParentEntries = parents
-	// we only can have either entries or elements by design.
-	a.state.Entries = []*Entry{}
-	a.state.Elements = []*Elem{}
-	if leaf {
-		a.state.Elements, err = a.ListElements(path)
-		if err != nil {
-			return err
+	// make concurrent fetchs to reduce waiting.
+	parentErr := make(chan error)
+	subErr := make(chan error)
+	go func() {
+		var err error
+		a.state.ParentEntries, err = a.ParentEntries(path)
+		parentErr <- err
+	}()
+	go func() {
+		var err error
+		a.state.Entries = []*Entry{}
+		a.state.Elements = []*Elem{}
+		// we only can have either entries or elements by design.
+		if a.state.IsLeaf {
+			a.state.Elements, err = a.ListElements(path)
+		} else {
+			a.state.Entries, err = a.ListEntries(path)
 		}
-	} else {
-		a.state.Entries, err = a.ListEntries(path)
-		if err != nil {
-			return err
-		}
+		subErr <- err
+	}()
+	err = <-parentErr
+	if err != nil {
+		return err
+	}
+	err = <-subErr
+	if err != nil {
+		return err
 	}
 	dir, err := a.Dir(path)
 	if err != nil {
