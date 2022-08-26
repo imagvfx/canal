@@ -128,15 +128,6 @@ func (a *App) GetEntry(path string) (*Entry, error) {
 	return ent, nil
 }
 
-// IsLeaf checks whether a path is leaf.
-func (a *App) IsLeaf(path string) (bool, error) {
-	e, err := a.getEntry(path)
-	if err != nil {
-		return false, err
-	}
-	return e.Type == a.config.LeafEntryType, nil
-}
-
 type EntryTypesResponse struct {
 	Msg []string
 	Err string
