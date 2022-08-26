@@ -246,6 +246,7 @@ window.onchange = async function(ev) {
 		try {
 			let checkbox = assignedCheckBox as HTMLInputElement;
 			await App.SetAssignedOnly(checkbox.checked);
+			await App.ReloadEntry();
 		} catch (err) {
 			// The option may not be restored whenuser run the App next time.
 			// But not a fatal error. Just log it.
@@ -409,7 +410,7 @@ function redrawOptionBar(app: any) {
 		return;
 	}
 	assignedCheckBox.disabled = false;
-	assignedCheckBox.checked = app.AssignedOnly;
+	assignedCheckBox.checked = app.Options.AssignedOnly;
 	reloadAssignedButton.classList.remove("disabled");
 	openDirButton.dataset.type = "";
 	if (app.Dir == "") {

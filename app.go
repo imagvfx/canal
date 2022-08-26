@@ -37,7 +37,6 @@ type App struct {
 	historyIdx  int
 	assigned    []*Entry
 	userSetting *userSetting
-	options     Options
 	openCmd     string
 }
 
@@ -260,12 +259,11 @@ type State struct {
 	ParentEntries []*Entry
 	Dir           string
 	DirExists     bool
-	AssignedOnly  bool
+	Options       *Options
 }
 
 func (a *App) State() *State {
 	a.state.RecentPaths = a.RecentPaths()
-	a.state.AssignedOnly = a.AssignedOnly()
 	return a.state
 }
 
@@ -327,17 +325,12 @@ func (a *App) GoForward() error {
 
 // SetAssignedOnly set assignedOnly option enabled/disabled.
 func (a *App) SetAssignedOnly(only bool) error {
-	a.options.AssignedOnly = only
+	a.state.Options.AssignedOnly = only
 	err := a.writeOptions()
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-// AssignedOnly returns assignedOnly option value currently set.
-func (a *App) AssignedOnly() bool {
-	return a.options.AssignedOnly
 }
 
 type SearchResponse struct {
@@ -374,7 +367,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 		return nil, err
 	}
 	vis := make(map[string]bool)
-	if a.options.AssignedOnly {
+	if a.state.Options.AssignedOnly {
 		paths := a.subAssigned(path)
 		for _, p := range paths {
 			vis[p] = true
@@ -382,7 +375,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 	}
 	ents := make([]*Entry, 0, len(subs))
 	for _, e := range subs {
-		if a.options.AssignedOnly {
+		if a.state.Options.AssignedOnly {
 			if !vis[e.Path] {
 				continue
 			}
@@ -828,7 +821,7 @@ func (a *App) readOptions() error {
 	if len(data) == 0 {
 		return nil
 	}
-	err = json.Unmarshal(data, &a.options)
+	err = json.Unmarshal(data, &a.state.Options)
 	if err != nil {
 		return err
 	}
@@ -840,7 +833,7 @@ func (a *App) writeOptions() error {
 	if a.state.User == "" {
 		return nil
 	}
-	data, err := json.Marshal(&a.options)
+	data, err := json.Marshal(&a.state.Options)
 	if err != nil {
 		return err
 	}
