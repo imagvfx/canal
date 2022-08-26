@@ -264,8 +264,6 @@ type State struct {
 }
 
 func (a *App) State() *State {
-	a.state.Programs = a.Programs()
-	a.state.ProgramsInUse = a.ProgramsInUse()
 	a.state.RecentPaths = a.RecentPaths()
 	a.state.AssignedOnly = a.AssignedOnly()
 	return a.state
@@ -955,7 +953,7 @@ func (a *App) Program(prog string) (*Program, error) {
 
 // Programs returns programs in config, and legacy programs
 // which user registred earlier when they were existed in previous config.
-func (a *App) Programs() []*Program {
+func (a *App) programs() []*Program {
 	prog := make(map[string]*Program, 0)
 	for _, p := range a.config.Programs {
 		prog[p.Name] = p
@@ -979,7 +977,7 @@ func (a *App) Programs() []*Program {
 
 // ProgramsInUse returns programs what user marked as in use.
 // Note that it may have invalid programs.
-func (a *App) ProgramsInUse() []*Program {
+func (a *App) programsInUse() []*Program {
 	if a.userSetting == nil {
 		return []*Program{}
 	}
@@ -1029,6 +1027,8 @@ func (a *App) ReloadUserSetting() error {
 		return fmt.Errorf(r.Err)
 	}
 	a.userSetting = r.Msg
+	a.state.Programs = a.programs()
+	a.state.ProgramsInUse = a.programsInUse()
 	return nil
 }
 

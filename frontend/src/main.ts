@@ -160,8 +160,7 @@ window.onclick = async function(ev) {
 		if (item) {
 			toggleAddProgramLinkPopup();
 			let prog = item.dataset.value as string;
-			await toggleNewElementButton(prog);
-			App.Reload().then(redrawAll).catch(logError);
+			toggleNewElementButton(prog).then(redrawAll).catch(logError);
 		}
 	}
 	if (!addProgramLink && !addProgramLinkPopup) {
@@ -694,10 +693,10 @@ function fillAddProgramLinkPopup(app: any) {
 }
 
 async function toggleNewElementButton(prog: string) {
+	let app = await App.State();
 	try {
 		let found = false;
-		let progs = await App.ProgramsInUse();
-		for (let p of progs) {
+		for (let p of app.ProgramsInUse) {
 			if (p.Name == prog) {
 				found = true;
 				break;
@@ -706,8 +705,9 @@ async function toggleNewElementButton(prog: string) {
 		if (found) {
 			await App.RemoveProgramInUse(prog);
 		} else {
-			await App.AddProgramInUse(prog, progs.length);
+			await App.AddProgramInUse(prog, app.ProgramsInUse.length);
 		}
+		await App.ReloadUserSetting();
 	} catch (err) {
 		logError(err);
 	}
