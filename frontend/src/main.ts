@@ -51,7 +51,7 @@ window.onclick = async function(ev) {
 	}
 	let reloadButton = closest(target, "#reloadButton");
 	if (reloadButton) {
-		App.Reload().then(redrawAll).catch(logError);
+		App.ReloadEntry().then(redrawAll).catch(logError);
 	}
 	let loginButton = closest(target, "#loginButton");
 	if (loginButton) {
