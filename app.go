@@ -81,15 +81,15 @@ func (a *App) Prepare() error {
 	if a.state.Session == "" {
 		return nil
 	}
-	err = a.Reload()
-	if err != nil {
-		return err
-	}
 	err = a.readOptions()
 	if err != nil {
 		return fmt.Errorf("read options: %v", err)
 	}
 	a.GoTo("/")
+	err = a.Reload()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -618,6 +618,11 @@ func (a *App) Reload() error {
 	err = a.ReloadAssigned()
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
+	}
+	// ReloadEntry should be called after ReloadAssigned
+	err = a.ReloadEntry()
+	if err != nil {
+		return fmt.Errorf("entry: %v", err)
 	}
 	return nil
 }
