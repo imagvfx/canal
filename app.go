@@ -671,7 +671,7 @@ func (a *App) ReloadEntry() error {
 		return err
 	}
 	a.state.Dir = dir
-	dirExists, err := a.DirExists(path)
+	dirExists, err := a.DirExists(dir)
 	if err != nil {
 		return err
 	}
