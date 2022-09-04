@@ -44,7 +44,9 @@ type App struct {
 func NewApp(cfg *Config) *App {
 	return &App{
 		config: cfg,
-		state:  &State{},
+		state: &State{
+			Options: &Options{},
+		},
 	}
 }
 
@@ -81,7 +83,7 @@ func (a *App) Prepare() error {
 	if a.state.Session == "" {
 		return nil
 	}
-	err = a.readOptions()
+	err = a.getUserDataSection()
 	if err != nil {
 		return fmt.Errorf("read options: %v", err)
 	}
@@ -316,7 +318,11 @@ func (a *App) GoForward() error {
 // SetAssignedOnly set assignedOnly option enabled/disabled.
 func (a *App) SetAssignedOnly(only bool) error {
 	a.state.Options.AssignedOnly = only
-	err := a.writeOptions()
+	value, err := json.Marshal(only)
+	if err != nil {
+		return err
+	}
+	err = a.setUserData("options.assigned_only", string(value))
 	if err != nil {
 		return err
 	}
@@ -812,37 +818,68 @@ type Options struct {
 	AssignedOnly bool
 }
 
-// readOptions reads options config file of the logged in user.
-func (a *App) readOptions() error {
+type forgeAPIUserDataSectionResponse struct {
+	Msg *UserDataSection
+	Err string
+}
+
+type UserDataSection struct {
+	Section string
+	Data    map[string]string
+}
+
+func (a *App) getUserDataSection() error {
 	if a.state.User == "" {
 		return nil
 	}
-	data, err := readConfigData("options_" + a.state.User)
+	resp, err := http.PostForm(a.config.Host+"/api/get-user-data-section", url.Values{
+		"session": {a.state.Session},
+		"user":    {a.state.User},
+		"section": {"canal"},
+	})
 	if err != nil {
 		return err
 	}
-	if len(data) == 0 {
-		return nil
-	}
-	err = json.Unmarshal(data, &a.state.Options)
+	r := forgeAPIUserDataSectionResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
 	if err != nil {
 		return err
+	}
+	if r.Err != "" {
+		return fmt.Errorf(r.Err)
+	}
+	sec := r.Msg
+	err = json.Unmarshal([]byte(sec.Data["options.assigned_only"]), &a.state.Options.AssignedOnly)
+	if err != nil {
+		// Empty or invalid data. Set the default value.
+		a.state.Options.AssignedOnly = false
 	}
 	return nil
 }
 
-// writeOptions writes options config file of the logged in user.
-func (a *App) writeOptions() error {
+func (a *App) setUserData(key, value string) error {
 	if a.state.User == "" {
-		return nil
+		return fmt.Errorf("please login")
 	}
-	data, err := json.Marshal(&a.state.Options)
+	resp, err := http.PostForm(a.config.Host+"/api/set-user-data", url.Values{
+		"session": {a.state.Session},
+		"user":    {a.state.User},
+		"section": {"canal"},
+		"key":     {key},
+		"value":   {value},
+	})
 	if err != nil {
 		return err
 	}
-	err = writeConfigData("options_"+a.state.User, data)
+	r := forgeAPIErrorResponse{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&r)
 	if err != nil {
 		return err
+	}
+	if r.Err != "" {
+		return fmt.Errorf(r.Err)
 	}
 	return nil
 }
