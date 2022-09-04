@@ -85,7 +85,7 @@ func (a *App) Prepare() error {
 	}
 	err = a.getUserDataSection()
 	if err != nil {
-		return fmt.Errorf("read options: %v", err)
+		return fmt.Errorf("user data section: %v", err)
 	}
 	a.GoTo("/")
 	err = a.Reload()
