@@ -44,9 +44,7 @@ type App struct {
 func NewApp(cfg *Config) *App {
 	return &App{
 		config: cfg,
-		state: &State{
-			Options: &Options{},
-		},
+		state:  &State{},
 	}
 }
 
@@ -252,7 +250,7 @@ type State struct {
 	ParentEntries []*Entry
 	Dir           string
 	DirExists     bool
-	Options       *Options
+	Options       Options
 }
 
 func (a *App) State() *State {
