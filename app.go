@@ -93,11 +93,6 @@ func (a *App) Prepare() error {
 	return nil
 }
 
-type EntryResponse struct {
-	Msg *Entry
-	Err string
-}
-
 // getEntry gets entry info from host.
 func (a *App) getEntry(path string) (*Entry, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-entry", url.Values{
@@ -107,16 +102,12 @@ func (a *App) getEntry(path string) (*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := EntryResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var ent *Entry
+	err = decodeAPIResponse(resp, &ent)
 	if err != nil {
 		return nil, err
 	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
-	}
-	return r.Msg, nil
+	return ent, nil
 }
 
 // GetEntry gets entry info from host.
@@ -128,11 +119,6 @@ func (a *App) GetEntry(path string) (*Entry, error) {
 	return ent, nil
 }
 
-type EntryTypesResponse struct {
-	Msg []string
-	Err string
-}
-
 func (a *App) getBaseEntryTypes() ([]string, error) {
 	resp, err := http.PostForm(a.config.Host+"/api/get-base-entry-types", url.Values{
 		"session": {a.state.Session},
@@ -140,21 +126,12 @@ func (a *App) getBaseEntryTypes() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := EntryTypesResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var types []string
+	err = decodeAPIResponse(resp, &types)
 	if err != nil {
 		return nil, err
 	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
-	}
-	return r.Msg, nil
-}
-
-type GlobalResponse struct {
-	Msg []*Global
-	Err string
+	return types, nil
 }
 
 type Global struct {
@@ -171,16 +148,12 @@ func (a *App) getGlobals(entType string) ([]*Global, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := GlobalResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var globals []*Global
+	err = decodeAPIResponse(resp, &globals)
 	if err != nil {
 		return nil, err
 	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
-	}
-	return r.Msg, nil
+	return globals, nil
 }
 
 func (a *App) ReloadGlobals() error {
@@ -327,11 +300,6 @@ func (a *App) SetAssignedOnly(only bool) error {
 	return nil
 }
 
-type SearchResponse struct {
-	Msg []*Entry
-	Err string
-}
-
 // Entry is a entry info.
 type Entry struct {
 	Type     string
@@ -397,16 +365,11 @@ func (a *App) subEntries(path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := SearchResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var ents []*Entry
+	err = decodeAPIResponse(resp, &ents)
 	if err != nil {
 		return nil, err
 	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
-	}
-	ents := r.Msg
 	sorters := a.entrySorters()
 	sort.Slice(ents, func(i, j int) bool {
 		cmp := strings.Compare(ents[i].Type, ents[j].Type)
@@ -533,16 +496,12 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := SearchResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var parents []*Entry
+	err = decodeAPIResponse(resp, &parents)
 	if err != nil {
 		return nil, err
 	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
-	}
-	return r.Msg, nil
+	return parents, nil
 }
 
 // ReloadAssigned searches entries from host those have logged in user as assignee.
@@ -555,16 +514,12 @@ func (a *App) ReloadAssigned() error {
 	if err != nil {
 		return err
 	}
-	r := SearchResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var assigned []*Entry
+	err = decodeAPIResponse(resp, &assigned)
 	if err != nil {
 		return err
 	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
-	}
-	a.assigned = r.Msg
+	a.assigned = assigned
 	return nil
 }
 
@@ -577,11 +532,6 @@ func (a *App) ClearEntries() {
 type SessionInfo struct {
 	User    string
 	Session string
-}
-
-type LoginResponse struct {
-	Msg SessionInfo
-	Err string
 }
 
 // Login waits to login and return the logged in user name.
@@ -701,17 +651,13 @@ func (a *App) WaitLogin(key string) error {
 	if err != nil {
 		return err
 	}
-	r := LoginResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var info SessionInfo
+	err = decodeAPIResponse(resp, &info)
 	if err != nil {
 		return err
 	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
-	}
-	a.state.User = r.Msg.User
-	a.state.Session = r.Msg.Session
+	a.state.User = info.User
+	a.state.Session = info.Session
 	return nil
 }
 
@@ -816,11 +762,6 @@ type Options struct {
 	AssignedOnly bool
 }
 
-type forgeAPIUserDataSectionResponse struct {
-	Msg *UserDataSection
-	Err string
-}
-
 type UserDataSection struct {
 	Section string
 	Data    map[string]string
@@ -838,16 +779,11 @@ func (a *App) getUserDataSection() error {
 	if err != nil {
 		return err
 	}
-	r := forgeAPIUserDataSectionResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var sec *UserDataSection
+	err = decodeAPIResponse(resp, &sec)
 	if err != nil {
 		return err
 	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
-	}
-	sec := r.Msg
 	err = json.Unmarshal([]byte(sec.Data["options.assigned_only"]), &a.state.Options.AssignedOnly)
 	if err != nil {
 		// Empty or invalid data. Set the default value.
@@ -870,14 +806,9 @@ func (a *App) setUserData(key, value string) error {
 	if err != nil {
 		return err
 	}
-	r := forgeAPIErrorResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	err = decodeAPIResponse(resp, nil)
 	if err != nil {
 		return err
-	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
 	}
 	return nil
 }
@@ -893,14 +824,9 @@ func (a *App) arrangeRecentPaths(path string, at int) error {
 	if err != nil {
 		return err
 	}
-	r := forgeAPIErrorResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	err = decodeAPIResponse(resp, nil)
 	if err != nil {
 		return err
-	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
 	}
 	return nil
 }
@@ -1026,11 +952,6 @@ type userSetting struct {
 	EntryPageSortProperty map[string]string
 }
 
-type forgeUserSettingResponse struct {
-	Msg *userSetting
-	Err string
-}
-
 // ReloadUserSetting get user setting from host, and remember it.
 func (a *App) ReloadUserSetting() error {
 	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
@@ -1040,24 +961,16 @@ func (a *App) ReloadUserSetting() error {
 	if err != nil {
 		return err
 	}
-	r := forgeUserSettingResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var setting *userSetting
+	err = decodeAPIResponse(resp, &setting)
 	if err != nil {
 		return err
 	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
-	}
-	a.userSetting = r.Msg
+	a.userSetting = setting
 	a.state.Programs = a.programs()
 	a.state.ProgramsInUse = a.programsInUse()
 	a.state.RecentPaths = a.userSetting.RecentPaths
 	return nil
-}
-
-type forgeAPIErrorResponse struct {
-	Err string
 }
 
 // arrangeProgramInUse insert/move/remove a in-use program to where user wants.
@@ -1071,14 +984,9 @@ func (a *App) arrangeProgramInUse(prog string, at int) error {
 	if err != nil {
 		return err
 	}
-	r := forgeAPIErrorResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	err = decodeAPIResponse(resp, nil)
 	if err != nil {
 		return err
-	}
-	if r.Err != "" {
-		return fmt.Errorf(r.Err)
 	}
 	return nil
 }
@@ -1091,11 +999,6 @@ func (a *App) AddProgramInUse(prog string, at int) error {
 // RemoveProgramInUse removes a in-use program.
 func (a *App) RemoveProgramInUse(prog string) error {
 	return a.arrangeProgramInUse(prog, -1)
-}
-
-type entryEnvironsResponse struct {
-	Msg []forgeEnviron
-	Err string
 }
 
 // forgeEnviron an environ defined for an entry retrieved from host.
@@ -1177,20 +1080,16 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := entryEnvironsResponse{}
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&r)
+	var forgeEnv []forgeEnviron
+	err = decodeAPIResponse(resp, &forgeEnv)
 	if err != nil {
 		return nil, err
-	}
-	if r.Err != "" {
-		return nil, fmt.Errorf(r.Err)
 	}
 	env = os.Environ()
 	for _, e := range a.config.Envs {
 		env = append(env, e)
 	}
-	for _, e := range r.Msg {
+	for _, e := range forgeEnv {
 		env = append(env, e.Name+"="+e.Eval)
 	}
 	a.cachedEnvs[path] = env
