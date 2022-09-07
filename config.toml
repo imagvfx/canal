@@ -1,4 +1,4 @@
-Host = "https://imagvfx.com"
+Host = "imagvfx.com"
 LeafEntryType = "part"
 Scene = "${SHOW_ROOT}/${SHOW}/${CATEG}/${GROUP}/${UNIT}/part/${PART}/${GROUP}_${UNIT}_${PART}_${ELEM}_${VER}.${EXT}"
 

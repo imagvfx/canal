@@ -27,7 +27,7 @@ func decodeAPIResponse(resp *http.Response, dest interface{}) error {
 }
 
 func appLogin(host, key string) (SessionInfo, error) {
-	resp, err := http.PostForm(host+"/api/app-login", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/app-login", url.Values{
 		"key": {key},
 	})
 	if err != nil {
@@ -42,7 +42,7 @@ func appLogin(host, key string) (SessionInfo, error) {
 }
 
 func getEntry(host, session, path string) (*Entry, error) {
-	resp, err := http.PostForm(host+"/api/get-entry", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/get-entry", url.Values{
 		"session": {session},
 		"path":    {path},
 	})
@@ -58,7 +58,7 @@ func getEntry(host, session, path string) (*Entry, error) {
 }
 
 func getBaseEntryTypes(host, session string) ([]string, error) {
-	resp, err := http.PostForm(host+"/api/get-base-entry-types", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/get-base-entry-types", url.Values{
 		"session": {session},
 	})
 	if err != nil {
@@ -73,7 +73,7 @@ func getBaseEntryTypes(host, session string) ([]string, error) {
 }
 
 func getGlobals(host, session, entType string) ([]*Global, error) {
-	resp, err := http.PostForm(host+"/api/get-globals", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/get-globals", url.Values{
 		"session":    {session},
 		"entry_type": {entType},
 	})
@@ -89,7 +89,7 @@ func getGlobals(host, session, entType string) ([]*Global, error) {
 }
 
 func subEntries(host, session, path string) ([]*Entry, error) {
-	resp, err := http.PostForm(host+"/api/sub-entries", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/sub-entries", url.Values{
 		"session": {session},
 		"path":    {path},
 	})
@@ -105,7 +105,7 @@ func subEntries(host, session, path string) ([]*Entry, error) {
 }
 
 func parentEntries(host, session, path string) ([]*Entry, error) {
-	resp, err := http.PostForm(host+"/api/parent-entries", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/parent-entries", url.Values{
 		"session": {session},
 		"path":    {path},
 	})
@@ -121,7 +121,7 @@ func parentEntries(host, session, path string) ([]*Entry, error) {
 }
 
 func searchEntries(host, session, query string) ([]*Entry, error) {
-	resp, err := http.PostForm(host+"/api/search-entries", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/search-entries", url.Values{
 		"session": {session},
 		"from":    {"/"},
 		"q":       {query},
@@ -138,7 +138,7 @@ func searchEntries(host, session, query string) ([]*Entry, error) {
 }
 
 func getUserDataSection(host, session, user string) (*UserDataSection, error) {
-	resp, err := http.PostForm(host+"/api/get-user-data-section", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/get-user-data-section", url.Values{
 		"session": {session},
 		"user":    {user},
 		"section": {"canal"},
@@ -155,7 +155,7 @@ func getUserDataSection(host, session, user string) (*UserDataSection, error) {
 }
 
 func setUserData(host, session, user, key, value string) error {
-	resp, err := http.PostForm(host+"/api/set-user-data", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/set-user-data", url.Values{
 		"session": {session},
 		"user":    {user},
 		"section": {"canal"},
@@ -173,7 +173,7 @@ func setUserData(host, session, user, key, value string) error {
 }
 
 func arrangeRecentPaths(host, session, path string, at int) error {
-	resp, err := http.PostForm(host+"/api/update-user-setting", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/update-user-setting", url.Values{
 		"session":             {session},
 		"update_recent_paths": {"1"},
 		"path":                {path},
@@ -190,7 +190,7 @@ func arrangeRecentPaths(host, session, path string, at int) error {
 }
 
 func arrangeProgramInUse(host, session, prog string, at int) error {
-	resp, err := http.PostForm(host+"/api/update-user-setting", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/update-user-setting", url.Values{
 		"session":                {session},
 		"update_programs_in_use": {"1"},
 		"program":                {prog},
@@ -207,7 +207,7 @@ func arrangeProgramInUse(host, session, prog string, at int) error {
 }
 
 func getUserSetting(host, session, user string) (*userSetting, error) {
-	resp, err := http.PostForm(host+"/api/get-user-setting", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/get-user-setting", url.Values{
 		"session": {session},
 		"user":    {user},
 	})
@@ -223,7 +223,7 @@ func getUserSetting(host, session, user string) (*userSetting, error) {
 }
 
 func entryEnvirons(host, session, path string) ([]forgeEnviron, error) {
-	resp, err := http.PostForm(host+"/api/entry-environs", url.Values{
+	resp, err := http.PostForm("https://"+host+"/api/entry-environs", url.Values{
 		"session": {session},
 		"path":    {path},
 	})

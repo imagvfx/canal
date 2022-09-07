@@ -67,11 +67,7 @@ func (a *App) startup(ctx context.Context) {
 // It is similar to startup, but I need separate method for functions
 // those return error.
 func (a *App) Prepare() error {
-	toks := strings.Split(a.config.Host, "://")
-	if len(toks) != 2 {
-		return fmt.Errorf("invalid host: %v", a.config.Host)
-	}
-	a.state.Host = toks[1]
+	a.state.Host = a.config.Host
 	err := a.readSession()
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
