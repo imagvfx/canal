@@ -581,7 +581,7 @@ func (a *App) ReloadEntry() error {
 
 // OpenLoginPage shows login page to user.
 func (a *App) OpenLoginPage(key string) error {
-	cmd := exec.Command(a.openCmd, a.config.Host+"/login?app_session_key="+key)
+	cmd := exec.Command(a.openCmd, "https://"+a.config.Host+"/login?app_session_key="+key)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -1206,7 +1206,7 @@ func (a *App) OpenDir(dir string) error {
 
 // OpenURL opens a url page which shows information about the entry.
 func (a *App) OpenURL(path string) error {
-	cmd := exec.Command(a.openCmd, a.config.Host+path)
+	cmd := exec.Command(a.openCmd, "https://"+a.config.Host+path)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
