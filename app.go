@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"os"
@@ -601,65 +600,9 @@ func (a *App) WaitLogin(key string) error {
 	return nil
 }
 
-// readConfigData reads data from a config file.
-func readConfigData(filename string) ([]byte, error) {
-	confd, err := os.UserConfigDir()
-	if err != nil {
-		return nil, err
-	}
-	f, err := os.Open(confd + "/canal/" + filename)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
-		}
-		return []byte{}, nil
-	}
-	defer f.Close()
-	data, err := io.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-// writeConfigData writes data to a config file.
-func writeConfigData(filename string, data []byte) error {
-	confd, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(confd+"/canal", 0755)
-	if err != nil {
-		return err
-	}
-	f, err := os.Create(confd + "/canal/" + filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.Write(data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// removeConfigFile removes a config file.
-func removeConfigFile(filename string) error {
-	confd, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-	err = os.Remove(confd + "/canal/" + filename)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // readSession reads session from a config file.
 func (a *App) readSession() error {
-	data, err := readConfigData("session")
+	data, err := readConfigFile("session")
 	if err != nil {
 		return err
 	}
@@ -678,7 +621,7 @@ func (a *App) readSession() error {
 // writeSession writes session to a config file.
 func (a *App) writeSession() error {
 	data := []byte(a.state.User + " " + a.state.Session)
-	err := writeConfigData("session", data)
+	err := writeConfigFile("session", data)
 	if err != nil {
 		return err
 	}
