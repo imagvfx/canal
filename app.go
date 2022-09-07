@@ -488,11 +488,11 @@ func (a *App) Login() (string, error) {
 	}
 	err = a.OpenLoginPage(key)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("open login page: %v", err)
 	}
 	err = a.WaitLogin(key)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("wait login: %v", err)
 	}
 	err = a.writeSession()
 	if err != nil {
@@ -500,7 +500,7 @@ func (a *App) Login() (string, error) {
 	}
 	err = a.Reload()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("reload: %v", err)
 	}
 	fmt.Println("login done")
 	return a.state.User, nil
