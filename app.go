@@ -651,9 +651,6 @@ type UserDataSection struct {
 }
 
 func (a *App) getUserDataSection() error {
-	if a.state.User == "" {
-		return nil
-	}
 	sec, err := getUserDataSection(a.config.Host, a.state.Session, a.state.User)
 	if err != nil {
 		return err
@@ -667,9 +664,6 @@ func (a *App) getUserDataSection() error {
 }
 
 func (a *App) setUserData(key, value string) error {
-	if a.state.User == "" {
-		return fmt.Errorf("please login")
-	}
 	err := setUserData(a.config.Host, a.state.Session, a.state.User, key, value)
 	if err != nil {
 		return err
