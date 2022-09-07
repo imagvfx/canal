@@ -9,8 +9,6 @@ import (
 	"io"
 	"log"
 	"math/big"
-	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -95,15 +93,7 @@ func (a *App) Prepare() error {
 
 // getEntry gets entry info from host.
 func (a *App) getEntry(path string) (*Entry, error) {
-	resp, err := http.PostForm(a.config.Host+"/api/get-entry", url.Values{
-		"session": {a.state.Session},
-		"path":    {path},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var ent *Entry
-	err = decodeAPIResponse(resp, &ent)
+	ent, err := getEntry(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -120,14 +110,7 @@ func (a *App) GetEntry(path string) (*Entry, error) {
 }
 
 func (a *App) getBaseEntryTypes() ([]string, error) {
-	resp, err := http.PostForm(a.config.Host+"/api/get-base-entry-types", url.Values{
-		"session": {a.state.Session},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var types []string
-	err = decodeAPIResponse(resp, &types)
+	types, err := getBaseEntryTypes(a.config.Host, a.state.Session)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +124,7 @@ type Global struct {
 }
 
 func (a *App) getGlobals(entType string) ([]*Global, error) {
-	resp, err := http.PostForm(a.config.Host+"/api/get-globals", url.Values{
-		"session":    {a.state.Session},
-		"entry_type": {entType},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var globals []*Global
-	err = decodeAPIResponse(resp, &globals)
+	globals, err := getGlobals(a.config.Host, a.state.Session, entType)
 	if err != nil {
 		return nil, err
 	}
@@ -358,15 +333,7 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 
 // subEntries get all sub entries of an entry from host.
 func (a *App) subEntries(path string) ([]*Entry, error) {
-	resp, err := http.PostForm(a.config.Host+"/api/sub-entries", url.Values{
-		"session": {a.state.Session},
-		"path":    {path},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var ents []*Entry
-	err = decodeAPIResponse(resp, &ents)
+	ents, err := subEntries(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -489,15 +456,7 @@ func (a *App) subAssigned(path string) []string {
 
 // ParentEntries get parent entries of an entry.
 func (a *App) ParentEntries(path string) ([]*Entry, error) {
-	resp, err := http.PostForm(a.config.Host+"/api/parent-entries", url.Values{
-		"session": {a.state.Session},
-		"path":    {path},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var parents []*Entry
-	err = decodeAPIResponse(resp, &parents)
+	parents, err := parentEntries(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -506,20 +465,12 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 
 // ReloadAssigned searches entries from host those have logged in user as assignee.
 func (a *App) ReloadAssigned() error {
-	resp, err := http.PostForm(a.config.Host+"/api/search-entries", url.Values{
-		"session": {a.state.Session},
-		"from":    {"/"},
-		"q":       {"assignee=" + a.state.User},
-	})
+	query := "assignee=" + a.state.User
+	ents, err := searchEntries(a.config.Host, a.state.Session, query)
 	if err != nil {
 		return err
 	}
-	var assigned []*Entry
-	err = decodeAPIResponse(resp, &assigned)
-	if err != nil {
-		return err
-	}
-	a.assigned = assigned
+	a.assigned = ents
 	return nil
 }
 
@@ -645,14 +596,7 @@ func (a *App) OpenLoginPage(key string) error {
 
 // WaitLogin waits until the user log in.
 func (a *App) WaitLogin(key string) error {
-	resp, err := http.PostForm(a.config.Host+"/api/app-login", url.Values{
-		"key": {key},
-	})
-	if err != nil {
-		return err
-	}
-	var info SessionInfo
-	err = decodeAPIResponse(resp, &info)
+	info, err := appLogin(a.config.Host, key)
 	if err != nil {
 		return err
 	}
@@ -771,16 +715,7 @@ func (a *App) getUserDataSection() error {
 	if a.state.User == "" {
 		return nil
 	}
-	resp, err := http.PostForm(a.config.Host+"/api/get-user-data-section", url.Values{
-		"session": {a.state.Session},
-		"user":    {a.state.User},
-		"section": {"canal"},
-	})
-	if err != nil {
-		return err
-	}
-	var sec *UserDataSection
-	err = decodeAPIResponse(resp, &sec)
+	sec, err := getUserDataSection(a.config.Host, a.state.Session, a.state.User)
 	if err != nil {
 		return err
 	}
@@ -796,17 +731,7 @@ func (a *App) setUserData(key, value string) error {
 	if a.state.User == "" {
 		return fmt.Errorf("please login")
 	}
-	resp, err := http.PostForm(a.config.Host+"/api/set-user-data", url.Values{
-		"session": {a.state.Session},
-		"user":    {a.state.User},
-		"section": {"canal"},
-		"key":     {key},
-		"value":   {value},
-	})
-	if err != nil {
-		return err
-	}
-	err = decodeAPIResponse(resp, nil)
+	err := setUserData(a.config.Host, a.state.Session, a.state.User, key, value)
 	if err != nil {
 		return err
 	}
@@ -815,16 +740,7 @@ func (a *App) setUserData(key, value string) error {
 
 // arrangeRecentPaths insert/move/remove recent paths where user want.
 func (a *App) arrangeRecentPaths(path string, at int) error {
-	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
-		"session":             {a.state.Session},
-		"update_recent_paths": {"1"},
-		"path":                {path},
-		"path_at":             {strconv.Itoa(at)},
-	})
-	if err != nil {
-		return err
-	}
-	err = decodeAPIResponse(resp, nil)
+	err := arrangeRecentPaths(a.config.Host, a.state.Session, path, at)
 	if err != nil {
 		return err
 	}
@@ -954,15 +870,7 @@ type userSetting struct {
 
 // ReloadUserSetting get user setting from host, and remember it.
 func (a *App) ReloadUserSetting() error {
-	resp, err := http.PostForm(a.config.Host+"/api/get-user-setting", url.Values{
-		"session": {a.state.Session},
-		"user":    {a.state.User},
-	})
-	if err != nil {
-		return err
-	}
-	var setting *userSetting
-	err = decodeAPIResponse(resp, &setting)
+	setting, err := getUserSetting(a.config.Host, a.state.Session, a.state.User)
 	if err != nil {
 		return err
 	}
@@ -975,16 +883,7 @@ func (a *App) ReloadUserSetting() error {
 
 // arrangeProgramInUse insert/move/remove a in-use program to where user wants.
 func (a *App) arrangeProgramInUse(prog string, at int) error {
-	resp, err := http.PostForm(a.config.Host+"/api/update-user-setting", url.Values{
-		"session":                {a.state.Session},
-		"update_programs_in_use": {"1"},
-		"program":                {prog},
-		"program_at":             {strconv.Itoa(at)},
-	})
-	if err != nil {
-		return err
-	}
-	err = decodeAPIResponse(resp, nil)
+	err := arrangeProgramInUse(a.config.Host, a.state.Session, prog, at)
 	if err != nil {
 		return err
 	}
@@ -1073,15 +972,7 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 	if env != nil {
 		return env, nil
 	}
-	resp, err := http.PostForm(a.config.Host+"/api/entry-environs", url.Values{
-		"session": {a.state.Session},
-		"path":    {path},
-	})
-	if err != nil {
-		return nil, err
-	}
-	var forgeEnv []forgeEnviron
-	err = decodeAPIResponse(resp, &forgeEnv)
+	forgeEnv, err := entryEnvirons(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
 	}
