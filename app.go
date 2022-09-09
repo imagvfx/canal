@@ -74,10 +74,6 @@ func (a *App) Prepare() error {
 	if a.state.Session == "" {
 		return nil
 	}
-	err = a.getUserDataSection()
-	if err != nil {
-		return fmt.Errorf("user data section: %v", err)
-	}
 	a.GoTo("/")
 	err = a.Reload()
 	if err != nil {
@@ -476,6 +472,10 @@ func (a *App) Reload() error {
 	if err != nil {
 		return fmt.Errorf("user setting: %v", err)
 	}
+	err = a.ReloadUserData()
+	if err != nil {
+		return fmt.Errorf("user data: %v", err)
+	}
 	err = a.ReloadAssigned()
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
@@ -611,7 +611,7 @@ type UserDataSection struct {
 	Data    map[string]string
 }
 
-func (a *App) getUserDataSection() error {
+func (a *App) ReloadUserData() error {
 	sec, err := getUserDataSection(a.config.Host, a.state.Session, a.state.User)
 	if err != nil {
 		return err
