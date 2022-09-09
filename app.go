@@ -86,30 +86,13 @@ func (a *App) Prepare() error {
 	return nil
 }
 
-// getEntry gets entry info from host.
-func (a *App) getEntry(path string) (*Entry, error) {
+// GetEntry gets entry info from host.
+func (a *App) GetEntry(path string) (*Entry, error) {
 	ent, err := getEntry(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
 	}
 	return ent, nil
-}
-
-// GetEntry gets entry info from host.
-func (a *App) GetEntry(path string) (*Entry, error) {
-	ent, err := a.getEntry(path)
-	if err != nil {
-		return nil, err
-	}
-	return ent, nil
-}
-
-func (a *App) getBaseEntryTypes() ([]string, error) {
-	types, err := getBaseEntryTypes(a.config.Host, a.state.Session)
-	if err != nil {
-		return nil, err
-	}
-	return types, nil
 }
 
 type Global struct {
@@ -118,16 +101,8 @@ type Global struct {
 	Value string
 }
 
-func (a *App) getGlobals(entType string) ([]*Global, error) {
-	globals, err := getGlobals(a.config.Host, a.state.Session, entType)
-	if err != nil {
-		return nil, err
-	}
-	return globals, nil
-}
-
 func (a *App) ReloadGlobals() error {
-	types, err := a.getBaseEntryTypes()
+	types, err := getBaseEntryTypes(a.config.Host, a.state.Session)
 	if err != nil {
 		return fmt.Errorf("get entry types: %v", err)
 	}
@@ -135,7 +110,7 @@ func (a *App) ReloadGlobals() error {
 	defer a.globalLock.Unlock()
 	a.global = make(map[string]map[string]*Global)
 	for _, t := range types {
-		globals, err := a.getGlobals(t)
+		globals, err := getGlobals(a.config.Host, a.state.Session, t)
 		if err != nil {
 			return fmt.Errorf("get globals: %v", err)
 		}
@@ -263,7 +238,7 @@ func (a *App) SetAssignedOnly(only bool) error {
 	if err != nil {
 		return err
 	}
-	err = a.setUserData("options.assigned_only", string(value))
+	err = setUserData(a.config.Host, a.state.Session, a.state.User, "options.assigned_only", string(value))
 	if err != nil {
 		return err
 	}
@@ -663,27 +638,10 @@ func (a *App) getUserDataSection() error {
 	return nil
 }
 
-func (a *App) setUserData(key, value string) error {
-	err := setUserData(a.config.Host, a.state.Session, a.state.User, key, value)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// arrangeRecentPaths insert/move/remove recent paths where user want.
-func (a *App) arrangeRecentPaths(path string, at int) error {
-	err := arrangeRecentPaths(a.config.Host, a.state.Session, path, at)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // addRecentPath adds a path to head of recent paths.
 // If the path has already in recent paths, it will move to head instead.
 func (a *App) addRecentPath(path string) error {
-	err := a.arrangeRecentPaths(path, 0)
+	err := arrangeRecentPaths(a.config.Host, a.state.Session, path, 0)
 	if err != nil {
 		return err
 	}
@@ -814,8 +772,8 @@ func (a *App) ReloadUserSetting() error {
 	return nil
 }
 
-// arrangeProgramInUse insert/move/remove a in-use program to where user wants.
-func (a *App) arrangeProgramInUse(prog string, at int) error {
+// AddProgramInUse adds a in-use program to where user wants.
+func (a *App) AddProgramInUse(prog string, at int) error {
 	err := arrangeProgramInUse(a.config.Host, a.state.Session, prog, at)
 	if err != nil {
 		return err
@@ -823,14 +781,9 @@ func (a *App) arrangeProgramInUse(prog string, at int) error {
 	return nil
 }
 
-// AddProgramInUse adds a in-use program to where user wants.
-func (a *App) AddProgramInUse(prog string, at int) error {
-	return a.arrangeProgramInUse(prog, at)
-}
-
 // RemoveProgramInUse removes a in-use program.
 func (a *App) RemoveProgramInUse(prog string) error {
-	return a.arrangeProgramInUse(prog, -1)
+	return arrangeProgramInUse(a.config.Host, a.state.Session, prog, -1)
 }
 
 // forgeEnviron an environ defined for an entry retrieved from host.
@@ -1156,7 +1109,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 
 // Dir returns directory path of an entry.
 func (a *App) Dir(path string) (string, error) {
-	ent, err := a.getEntry(path)
+	ent, err := getEntry(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return "", err
 	}
