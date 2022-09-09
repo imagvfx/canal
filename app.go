@@ -269,7 +269,7 @@ func (p *Property) String() string {
 // ListEntries shows sub entries of an entry,
 // it shows only paths to assigned entries when the options is enabled.
 func (a *App) ListEntries(path string) ([]*Entry, error) {
-	subs, err := a.subEntries(path)
+	subs, err := a.ListAllEntries(path)
 	if err != nil {
 		return nil, err
 	}
@@ -294,15 +294,6 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 
 // ListAllEntries shows all sub entries of an entry.
 func (a *App) ListAllEntries(path string) ([]*Entry, error) {
-	ents, err := a.subEntries(path)
-	if err != nil {
-		return nil, err
-	}
-	return ents, nil
-}
-
-// subEntries get all sub entries of an entry from host.
-func (a *App) subEntries(path string) ([]*Entry, error) {
 	ents, err := subEntries(a.config.Host, a.state.Session, path)
 	if err != nil {
 		return nil, err
