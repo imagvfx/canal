@@ -501,31 +501,18 @@ func (a *App) ReloadEntry() error {
 	if a.state.Entry.Type == a.config.LeafEntryType {
 		a.state.AtLeaf = true
 	}
-	// make concurrent fetchs to reduce waiting.
-	parentErr := make(chan error)
-	subErr := make(chan error)
-	go func() {
-		var err error
-		a.state.ParentEntries, err = a.ParentEntries(path)
-		parentErr <- err
-	}()
-	go func() {
-		var err error
-		a.state.Entries = []*Entry{}
-		a.state.Elements = []*Elem{}
-		// we only can have either entries or elements by design.
-		if a.state.AtLeaf {
-			a.state.Elements, err = a.ListElements(path)
-		} else {
-			a.state.Entries, err = a.ListEntries(path)
-		}
-		subErr <- err
-	}()
-	err = <-parentErr
+	a.state.ParentEntries, err = a.ParentEntries(path)
 	if err != nil {
 		return err
 	}
-	err = <-subErr
+	a.state.Entries = []*Entry{}
+	a.state.Elements = []*Elem{}
+	// we only can have either entries or elements by design.
+	if a.state.AtLeaf {
+		a.state.Elements, err = a.ListElements(path)
+	} else {
+		a.state.Entries, err = a.ListEntries(path)
+	}
 	if err != nil {
 		return err
 	}
