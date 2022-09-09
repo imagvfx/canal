@@ -455,7 +455,12 @@ body {
     visibility: hidden;
 }
 
-.addProgramPopupItem {
+.addProgramLinkPopupItem.legacy {
+    color: #b66;
+}
+
+.addProgramLinkPopupItem.legacy:hover {
+    text-decoration: line-through;
 }
 
 #newElementButtons {

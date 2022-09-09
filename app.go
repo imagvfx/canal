@@ -150,21 +150,22 @@ func (a *App) StatusColor(entType, stat string) string {
 }
 
 type State struct {
-	Host          string
-	User          string
-	Session       string
-	Programs      []*Program
-	ProgramsInUse []*Program
-	RecentPaths   []string
-	Path          string
-	AtLeaf        bool
-	Entries       []*Entry
-	Elements      []*Elem
-	Entry         *Entry
-	ParentEntries []*Entry
-	Dir           string
-	DirExists     bool
-	Options       Options
+	Host           string
+	User           string
+	Session        string
+	Programs       []*Program
+	LegacyPrograms []*Program
+	ProgramsInUse  []*Program
+	RecentPaths    []string
+	Path           string
+	AtLeaf         bool
+	Entries        []*Entry
+	Elements       []*Elem
+	Entry          *Entry
+	ParentEntries  []*Entry
+	Dir            string
+	DirExists      bool
+	Options        Options
 }
 
 func (a *App) State() *State {
@@ -464,6 +465,7 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) Reload() error {
+	a.state.Programs = a.config.Programs
 	err := a.ReloadGlobals()
 	if err != nil {
 		return fmt.Errorf("globals: %v", err)
@@ -693,28 +695,21 @@ func (a *App) Program(prog string) (*Program, error) {
 	return nil, fmt.Errorf("not found program: %s", prog)
 }
 
-// Programs returns programs in config, and legacy programs
-// which user registred earlier when they were existed in previous config.
-func (a *App) programs() []*Program {
-	prog := make(map[string]*Program, 0)
-	for _, p := range a.config.Programs {
-		prog[p.Name] = p
+func (a *App) legacyPrograms() []*Program {
+	if a.userSetting == nil {
+		return []*Program{}
 	}
-	if a.userSetting != nil {
-		// User might have programs currently not defined for some reason.
-		// Let's add those so user can remove if they want.
-		for _, name := range a.userSetting.ProgramsInUse {
-			if _, ok := prog[name]; !ok {
-				prog[name] = &Program{Name: name, NotFound: true}
-			}
+	prog := make(map[string]bool, 0)
+	for _, p := range a.config.Programs {
+		prog[p.Name] = true
+	}
+	legacy := make([]*Program, 0, len(prog))
+	for _, name := range a.userSetting.ProgramsInUse {
+		if !prog[name] {
+			legacy = append(legacy, &Program{Name: name, NotFound: true})
 		}
 	}
-	progs := make([]*Program, 0, len(prog))
-	for _, p := range prog {
-		progs = append(progs, p)
-	}
-	sort.Slice(progs, func(i, j int) bool { return progs[i].Name < progs[j].Name })
-	return progs
+	return legacy
 }
 
 // ProgramsInUse returns programs what user marked as in use.
@@ -752,7 +747,7 @@ func (a *App) ReloadUserSetting() error {
 		return err
 	}
 	a.userSetting = setting
-	a.state.Programs = a.programs()
+	a.state.LegacyPrograms = a.legacyPrograms()
 	a.state.ProgramsInUse = a.programsInUse()
 	a.state.RecentPaths = a.userSetting.RecentPaths
 	return nil

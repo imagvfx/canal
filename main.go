@@ -4,6 +4,7 @@ import (
 	"embed"
 	"flag"
 	"log"
+	"sort"
 
 	"github.com/BurntSushi/toml"
 	"github.com/wailsapp/wails/v2"
@@ -28,6 +29,9 @@ func mustReadConfig(config string) *Config {
 	if err != nil {
 		log.Fatalf("couldn't decode config file: %s", config)
 	}
+	sort.Slice(cfg.Programs, func(i, j int) bool {
+		return cfg.Programs[i].Name < cfg.Programs[j].Name
+	})
 	return cfg
 }
 

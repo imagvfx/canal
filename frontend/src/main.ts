@@ -539,7 +539,7 @@ function redrawNewElementButtons(app: any) {
 		btn.classList.add("button");
 		btn.dataset.prog = prog.Name;
 		btn.innerText = "+" + prog.Name;
-		if (prog.NotDefined) {
+		if (prog.NotFound) {
 			btn.classList.add("invalid");
 		}
 		if (!app.AtLeaf) {
@@ -687,10 +687,14 @@ function hideAddProgramLinkPopup() {
 function fillAddProgramLinkPopup(app: any) {
 	let popup = querySelector("#addProgramLinkPopup");
 	popup.replaceChildren();
-	for (let prog of app.Programs) {
+	let progs = app.Programs.concat(app.LegacyPrograms)
+	for (let prog of progs) {
 		let div = document.createElement("div");
 		div.classList.add("addProgramLinkPopupItem");
 		div.classList.add("button");
+		if (prog.NotFound) {
+			div.classList.add("legacy");
+		}
 		div.dataset.value = prog.Name;
 		div.innerText = prog.Name;
 		popup.append(div);
