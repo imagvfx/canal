@@ -444,11 +444,6 @@ func (a *App) ReloadAssigned() error {
 	return nil
 }
 
-// ClearEntries clears assigned entries.
-func (a *App) ClearEntries() {
-	a.assigned = nil
-}
-
 // SessionInfo is a session info of logged in user.
 type SessionInfo struct {
 	User    string
@@ -1165,9 +1160,4 @@ func (a *App) OpenURL(path string) error {
 		return err
 	}
 	return nil
-}
-
-// Parent returns parent path to an entry path.
-func (a *App) Parent(pth string) string {
-	return path.Dir(pth)
 }
