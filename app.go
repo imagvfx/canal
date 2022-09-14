@@ -22,9 +22,12 @@ import (
 
 // App struct
 type App struct {
-	ctx    context.Context
-	config *Config
-	state  *State
+	ctx     context.Context
+	config  *Config
+	host    string
+	user    string
+	session string
+	state   *State
 	// hold cacheLock before modify cachedEnvs
 	cacheLock   sync.Mutex
 	cachedEnvs  map[string][]string
@@ -41,6 +44,7 @@ type App struct {
 func NewApp(cfg *Config) *App {
 	return &App{
 		config: cfg,
+		host:   cfg.Host,
 		state:  &State{},
 	}
 }
@@ -66,12 +70,12 @@ func (a *App) startup(ctx context.Context) {
 // It is similar to startup, but I need separate method for functions
 // those return error.
 func (a *App) Prepare() error {
-	a.state.Host = a.config.Host
+	a.state.Host = a.host
 	err := a.readSession()
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
 	}
-	if a.state.Session == "" {
+	if a.session == "" {
 		return nil
 	}
 	a.GoTo("/")
@@ -84,7 +88,7 @@ func (a *App) Prepare() error {
 
 // GetEntry gets entry info from host.
 func (a *App) GetEntry(path string) (*Entry, error) {
-	ent, err := getEntry(a.config.Host, a.state.Session, path)
+	ent, err := getEntry(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +102,7 @@ type Global struct {
 }
 
 func (a *App) ReloadGlobals() error {
-	types, err := getBaseEntryTypes(a.config.Host, a.state.Session)
+	types, err := getBaseEntryTypes(a.host, a.session)
 	if err != nil {
 		return fmt.Errorf("get entry types: %v", err)
 	}
@@ -106,7 +110,7 @@ func (a *App) ReloadGlobals() error {
 	defer a.globalLock.Unlock()
 	a.global = make(map[string]map[string]*Global)
 	for _, t := range types {
-		globals, err := getGlobals(a.config.Host, a.state.Session, t)
+		globals, err := getGlobals(a.host, a.session, t)
 		if err != nil {
 			return fmt.Errorf("get globals: %v", err)
 		}
@@ -152,7 +156,6 @@ func (a *App) StatusColor(entType, stat string) string {
 type State struct {
 	Host           string
 	User           string
-	Session        string
 	Programs       []*Program
 	LegacyPrograms []*Program
 	ProgramsInUse  []*Program
@@ -235,7 +238,7 @@ func (a *App) SetAssignedOnly(only bool) error {
 	if err != nil {
 		return err
 	}
-	err = setUserData(a.config.Host, a.state.Session, a.state.User, "options.assigned_only", string(value))
+	err = setUserData(a.host, a.session, a.user, "options.assigned_only", string(value))
 	if err != nil {
 		return err
 	}
@@ -291,7 +294,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 
 // ListAllEntries shows all sub entries of an entry.
 func (a *App) ListAllEntries(path string) ([]*Entry, error) {
-	ents, err := subEntries(a.config.Host, a.state.Session, path)
+	ents, err := subEntries(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +417,7 @@ func (a *App) subAssigned(path string) []string {
 
 // ParentEntries get parent entries of an entry.
 func (a *App) ParentEntries(path string) ([]*Entry, error) {
-	parents, err := parentEntries(a.config.Host, a.state.Session, path)
+	parents, err := parentEntries(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -423,8 +426,8 @@ func (a *App) ParentEntries(path string) ([]*Entry, error) {
 
 // ReloadAssigned searches entries from host those have logged in user as assignee.
 func (a *App) ReloadAssigned() error {
-	query := "assignee=" + a.state.User
-	ents, err := searchEntries(a.config.Host, a.state.Session, query)
+	query := "assignee=" + a.user
+	ents, err := searchEntries(a.host, a.session, query)
 	if err != nil {
 		return err
 	}
@@ -461,10 +464,12 @@ func (a *App) Login() (string, error) {
 		return "", fmt.Errorf("reload: %v", err)
 	}
 	fmt.Println("login done")
-	return a.state.User, nil
+	return a.user, nil
 }
 
 func (a *App) Reload() error {
+	a.state.Host = a.host
+	a.state.User = a.user
 	a.state.Programs = a.config.Programs
 	err := a.ReloadGlobals()
 	if err != nil {
@@ -531,7 +536,7 @@ func (a *App) ReloadEntry() error {
 
 // OpenLoginPage shows login page to user.
 func (a *App) OpenLoginPage(key string) error {
-	cmd := exec.Command(a.openCmd, "https://"+a.config.Host+"/login?app_session_key="+key)
+	cmd := exec.Command(a.openCmd, "https://"+a.host+"/login?app_session_key="+key)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
@@ -541,12 +546,12 @@ func (a *App) OpenLoginPage(key string) error {
 
 // WaitLogin waits until the user log in.
 func (a *App) WaitLogin(key string) error {
-	info, err := appLogin(a.config.Host, key)
+	info, err := appLogin(a.host, key)
 	if err != nil {
 		return err
 	}
-	a.state.User = info.User
-	a.state.Session = info.Session
+	a.user = info.User
+	a.session = info.Session
 	return nil
 }
 
@@ -563,14 +568,14 @@ func (a *App) readSession() error {
 	if len(toks) != 2 {
 		return fmt.Errorf("invalid session")
 	}
-	a.state.User = toks[0]
-	a.state.Session = toks[1]
+	a.user = toks[0]
+	a.session = toks[1]
 	return nil
 }
 
 // writeSession writes session to a config file.
 func (a *App) writeSession() error {
-	data := []byte(a.state.User + " " + a.state.Session)
+	data := []byte(a.user + " " + a.session)
 	err := writeConfigFile("session", data)
 	if err != nil {
 		return err
@@ -580,8 +585,8 @@ func (a *App) writeSession() error {
 
 // removeSession removes sesson config file.
 func (a *App) removeSession() error {
-	a.state.User = ""
-	a.state.Session = ""
+	a.user = ""
+	a.session = ""
 	err := removeConfigFile("session")
 	if err != nil {
 		return err
@@ -601,7 +606,7 @@ type UserDataSection struct {
 }
 
 func (a *App) ReloadUserData() error {
-	sec, err := getUserDataSection(a.config.Host, a.state.Session, a.state.User)
+	sec, err := getUserDataSection(a.host, a.session, a.user)
 	if err != nil {
 		return err
 	}
@@ -616,7 +621,7 @@ func (a *App) ReloadUserData() error {
 // addRecentPath adds a path to head of recent paths.
 // If the path has already in recent paths, it will move to head instead.
 func (a *App) addRecentPath(path string) error {
-	err := arrangeRecentPaths(a.config.Host, a.state.Session, path, 0)
+	err := arrangeRecentPaths(a.host, a.session, path, 0)
 	if err != nil {
 		return err
 	}
@@ -729,7 +734,7 @@ type userSetting struct {
 
 // ReloadUserSetting get user setting from host, and remember it.
 func (a *App) ReloadUserSetting() error {
-	setting, err := getUserSetting(a.config.Host, a.state.Session, a.state.User)
+	setting, err := getUserSetting(a.host, a.session, a.user)
 	if err != nil {
 		return err
 	}
@@ -742,7 +747,7 @@ func (a *App) ReloadUserSetting() error {
 
 // AddProgramInUse adds a in-use program to where user wants.
 func (a *App) AddProgramInUse(prog string, at int) error {
-	err := arrangeProgramInUse(a.config.Host, a.state.Session, prog, at)
+	err := arrangeProgramInUse(a.host, a.session, prog, at)
 	if err != nil {
 		return err
 	}
@@ -751,7 +756,7 @@ func (a *App) AddProgramInUse(prog string, at int) error {
 
 // RemoveProgramInUse removes a in-use program.
 func (a *App) RemoveProgramInUse(prog string) error {
-	return arrangeProgramInUse(a.config.Host, a.state.Session, prog, -1)
+	return arrangeProgramInUse(a.host, a.session, prog, -1)
 }
 
 // forgeEnviron an environ defined for an entry retrieved from host.
@@ -826,7 +831,7 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 	if env != nil {
 		return env, nil
 	}
-	forgeEnv, err := entryEnvirons(a.config.Host, a.state.Session, path)
+	forgeEnv, err := entryEnvirons(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
@@ -1077,7 +1082,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 
 // Dir returns directory path of an entry.
 func (a *App) Dir(path string) (string, error) {
-	ent, err := getEntry(a.config.Host, a.state.Session, path)
+	ent, err := getEntry(a.host, a.session, path)
 	if err != nil {
 		return "", err
 	}
@@ -1127,7 +1132,7 @@ func (a *App) OpenDir(dir string) error {
 
 // OpenURL opens a url page which shows information about the entry.
 func (a *App) OpenURL(path string) error {
-	cmd := exec.Command(a.openCmd, "https://"+a.config.Host+path)
+	cmd := exec.Command(a.openCmd, "https://"+a.host+path)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
