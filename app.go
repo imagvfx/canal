@@ -45,7 +45,6 @@ func NewApp(cfg *Config) *App {
 	return &App{
 		config: cfg,
 		host:   cfg.Host,
-		state:  &State{},
 	}
 }
 
@@ -70,15 +69,12 @@ func (a *App) startup(ctx context.Context) {
 // It is similar to startup, but I need separate method for functions
 // those return error.
 func (a *App) Prepare() error {
-	a.state.Host = a.host
 	err := a.readSession()
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
 	}
-	if a.session == "" {
-		return nil
-	}
-	a.GoTo("/")
+	a.state = a.newState()
+	a.GoTo("/") // at least one page needed in history
 	err = a.Reload()
 	if err != nil {
 		return err
@@ -173,6 +169,20 @@ type State struct {
 
 func (a *App) State() *State {
 	return a.state
+}
+
+func (a *App) newState() *State {
+	return &State{
+		Host:           a.host,
+		Path:           "/",
+		Programs:       a.config.Programs,
+		LegacyPrograms: make([]*Program, 0),
+		ProgramsInUse:  make([]*Program, 0),
+		RecentPaths:    make([]string, 0),
+		Entries:        make([]*Entry, 0),
+		Elements:       make([]*Elem, 0),
+		ParentEntries:  make([]*Entry, 0),
+	}
 }
 
 // GoTo goes to a path.
@@ -470,7 +480,6 @@ func (a *App) Login() (string, error) {
 func (a *App) Reload() error {
 	a.state.Host = a.host
 	a.state.User = a.user
-	a.state.Programs = a.config.Programs
 	err := a.ReloadGlobals()
 	if err != nil {
 		return fmt.Errorf("globals: %v", err)
@@ -639,6 +648,7 @@ func (a *App) addRecentPath(path string) error {
 func (a *App) Logout() error {
 	a.assigned = nil
 	a.userSetting = nil
+	a.state = a.newState()
 	err := a.removeSession()
 	if err != nil {
 		return err
