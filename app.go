@@ -29,15 +29,15 @@ type App struct {
 	session string
 	state   *State
 	// hold cacheLock before modify cachedEnvs
-	cacheLock   sync.Mutex
-	cachedEnvs  map[string][]string
-	globalLock  sync.Mutex
-	global      map[string]map[string]*Global
-	history     []string
-	historyIdx  int
-	assigned    []*Entry
-	userSetting *userSetting
-	openCmd     string
+	cacheLock    sync.Mutex
+	cachedEnvs   map[string][]string
+	globalLock   sync.Mutex
+	global       map[string]map[string]*Global
+	history      []string
+	historyIdx   int
+	assigned     []*Entry
+	openCmd      string
+	entrySorters map[string]Sorter
 }
 
 // NewApp creates a new App application struct
@@ -308,13 +308,12 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	sorters := a.entrySorters()
 	sort.Slice(ents, func(i, j int) bool {
 		cmp := strings.Compare(ents[i].Type, ents[j].Type)
 		if cmp != 0 {
 			return cmp < 0
 		}
-		sorter := sorters[ents[i].Type]
+		sorter := a.entrySorters[ents[i].Type]
 		dir := 1
 		if sorter.Descending {
 			dir = -1
@@ -377,12 +376,9 @@ type Sorter struct {
 	Descending bool
 }
 
-func (a *App) entrySorters() map[string]Sorter {
+func (a *App) makeEntrySorters(entryPageSortProperty map[string]string) map[string]Sorter {
 	sorters := make(map[string]Sorter)
-	if a.userSetting == nil {
-		return sorters
-	}
-	for typ, prop := range a.userSetting.EntryPageSortProperty {
+	for typ, prop := range entryPageSortProperty {
 		if prop == "" {
 			continue
 		}
@@ -638,19 +634,18 @@ func (a *App) addRecentPath(path string) error {
 		return err
 	}
 	paths := make([]string, 0)
-	for _, pth := range a.userSetting.RecentPaths {
+	for _, pth := range a.state.RecentPaths {
 		if path != pth {
 			paths = append(paths, pth)
 		}
 	}
-	a.userSetting.RecentPaths = append([]string{path}, paths...)
+	a.state.RecentPaths = append([]string{path}, paths...)
 	return nil
 }
 
 // Logout forgets session info of latest logged in user.
 func (a *App) Logout() error {
 	a.assigned = nil
-	a.userSetting = nil
 	a.state = a.newState()
 	err := a.removeSession()
 	if err != nil {
@@ -700,16 +695,13 @@ func (a *App) Program(prog string) (*Program, error) {
 	return nil, fmt.Errorf("not found program: %s", prog)
 }
 
-func (a *App) legacyPrograms() []*Program {
-	if a.userSetting == nil {
-		return []*Program{}
-	}
+func (a *App) legacyPrograms(programs []string) []*Program {
 	prog := make(map[string]bool, 0)
 	for _, p := range a.config.Programs {
 		prog[p.Name] = true
 	}
 	legacy := make([]*Program, 0, len(prog))
-	for _, name := range a.userSetting.ProgramsInUse {
+	for _, name := range programs {
 		if !prog[name] {
 			legacy = append(legacy, &Program{Name: name, NotFound: true})
 		}
@@ -719,16 +711,13 @@ func (a *App) legacyPrograms() []*Program {
 
 // ProgramsInUse returns programs what user marked as in use.
 // Note that it may have invalid programs.
-func (a *App) programsInUse() []*Program {
-	if a.userSetting == nil {
-		return []*Program{}
-	}
+func (a *App) toPrograms(programs []string) []*Program {
 	prog := make(map[string]*Program, 0)
 	for _, p := range a.config.Programs {
 		prog[p.Name] = p
 	}
 	progs := make([]*Program, 0, len(prog))
-	for _, name := range a.userSetting.ProgramsInUse {
+	for _, name := range programs {
 		if _, ok := prog[name]; !ok {
 			progs = append(progs, &Program{Name: name, NotFound: true})
 		} else {
@@ -751,10 +740,10 @@ func (a *App) ReloadUserSetting() error {
 	if err != nil {
 		return err
 	}
-	a.userSetting = setting
-	a.state.LegacyPrograms = a.legacyPrograms()
-	a.state.ProgramsInUse = a.programsInUse()
-	a.state.RecentPaths = a.userSetting.RecentPaths
+	a.state.LegacyPrograms = a.legacyPrograms(setting.ProgramsInUse)
+	a.state.ProgramsInUse = a.toPrograms(setting.ProgramsInUse)
+	a.state.RecentPaths = setting.RecentPaths
+	a.entrySorters = a.makeEntrySorters(setting.EntryPageSortProperty)
 	return nil
 }
 
@@ -769,7 +758,11 @@ func (a *App) AddProgramInUse(prog string, at int) error {
 
 // RemoveProgramInUse removes a in-use program.
 func (a *App) RemoveProgramInUse(prog string) error {
-	return arrangeProgramInUse(a.host, a.session, prog, -1)
+	err := arrangeProgramInUse(a.host, a.session, prog, -1)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // forgeEnviron an environ defined for an entry retrieved from host.
