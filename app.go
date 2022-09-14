@@ -478,6 +478,9 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) Reload() error {
+	if a.session == "" {
+		return nil
+	}
 	a.state.Host = a.host
 	a.state.User = a.user
 	err := a.ReloadGlobals()
