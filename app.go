@@ -77,9 +77,40 @@ func (a *App) Prepare() error {
 	}
 	a.state = a.newState()
 	a.GoTo("/") // at least one page needed in history
-	err = a.Reload()
+	err = a.ReloadAll()
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// ReloadAll reloads all information needed by the app from the host.
+func (a *App) ReloadAll() error {
+	if a.session == "" {
+		return nil
+	}
+	a.state.Host = a.host
+	a.state.User = a.user
+	err := a.ReloadGlobals()
+	if err != nil {
+		return fmt.Errorf("globals: %v", err)
+	}
+	err = a.ReloadUserSetting()
+	if err != nil {
+		return fmt.Errorf("user setting: %v", err)
+	}
+	err = a.ReloadUserData()
+	if err != nil {
+		return fmt.Errorf("user data: %v", err)
+	}
+	err = a.ReloadAssigned()
+	if err != nil {
+		return fmt.Errorf("search assigned: %v", err)
+	}
+	// ReloadEntry should be called after ReloadAssigned
+	err = a.ReloadEntry()
+	if err != nil {
+		return fmt.Errorf("entry: %v", err)
 	}
 	return nil
 }
@@ -440,42 +471,12 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("write session: %v", err)
 	}
-	err = a.Reload()
+	err = a.ReloadAll()
 	if err != nil {
 		return "", fmt.Errorf("reload: %v", err)
 	}
 	fmt.Println("login done")
 	return a.user, nil
-}
-
-func (a *App) Reload() error {
-	if a.session == "" {
-		return nil
-	}
-	a.state.Host = a.host
-	a.state.User = a.user
-	err := a.ReloadGlobals()
-	if err != nil {
-		return fmt.Errorf("globals: %v", err)
-	}
-	err = a.ReloadUserSetting()
-	if err != nil {
-		return fmt.Errorf("user setting: %v", err)
-	}
-	err = a.ReloadUserData()
-	if err != nil {
-		return fmt.Errorf("user data: %v", err)
-	}
-	err = a.ReloadAssigned()
-	if err != nil {
-		return fmt.Errorf("search assigned: %v", err)
-	}
-	// ReloadEntry should be called after ReloadAssigned
-	err = a.ReloadEntry()
-	if err != nil {
-		return fmt.Errorf("entry: %v", err)
-	}
-	return nil
 }
 
 func (a *App) ReloadEntry() error {

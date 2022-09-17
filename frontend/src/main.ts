@@ -267,7 +267,7 @@ window.onkeydown = async function(ev) {
 	if (ctrlLike) {
 		ev.preventDefault();
 		if (ev.key == "r") {
-			App.Reload().then(redrawAll).catch(logError);
+			App.ReloadAll().then(redrawAll).catch(logError);
 		}
 		if (ev.key == "c") {
 			let sel = document.querySelector<HTMLElement>(".item.selected");
@@ -297,7 +297,7 @@ window.onkeydown = async function(ev) {
 	}
 	if (ev.key == "F5") {
 		ev.preventDefault();
-		App.Reload().then(redrawAll).catch(logError);
+		App.ReloadAll().then(redrawAll).catch(logError);
 		return;
 	}
 	let target = (<HTMLElement> ev.target);
