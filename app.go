@@ -29,6 +29,7 @@ type App struct {
 	host    string
 	user    string
 	session string
+	program map[string]*Program
 	state   *State
 	// hold cacheLock before modify cachedEnvs
 	cacheLock    sync.Mutex
@@ -44,9 +45,14 @@ type App struct {
 
 // NewApp creates a new App application struct
 func NewApp(cfg *Config) *App {
+	program := make(map[string]*Program)
+	for _, pg := range cfg.Programs {
+		program[pg.Name] = pg
+	}
 	return &App{
-		config: cfg,
-		host:   cfg.Host,
+		config:  cfg,
+		host:    cfg.Host,
+		program: program,
 	}
 }
 
@@ -91,6 +97,12 @@ func (a *App) ReloadAll() error {
 	}
 	a.state.Host = a.host
 	a.state.User = a.user
+	progs := make([]string, 0, len(a.program))
+	for _, p := range a.program {
+		progs = append(progs, p.Name)
+	}
+	sort.Strings(progs)
+	a.state.Programs = progs
 	err := a.ReloadGlobals()
 	if err != nil {
 		return fmt.Errorf("globals: %v", err)
@@ -179,9 +191,9 @@ func (a *App) StatusColor(entType, stat string) string {
 type State struct {
 	Host           string
 	User           string
-	Programs       []*Program
-	LegacyPrograms []*Program
-	ProgramsInUse  []*Program
+	Programs       []string
+	LegacyPrograms []string
+	ProgramsInUse  []string
 	RecentPaths    []string
 	Path           string
 	AtLeaf         bool
@@ -202,9 +214,9 @@ func (a *App) newState() *State {
 	return &State{
 		Host:           a.host,
 		Path:           "/",
-		Programs:       a.config.Programs,
-		LegacyPrograms: make([]*Program, 0),
-		ProgramsInUse:  make([]*Program, 0),
+		Programs:       make([]string, 0),
+		LegacyPrograms: make([]string, 0),
+		ProgramsInUse:  make([]string, 0),
 		RecentPaths:    make([]string, 0),
 		Entries:        make([]*forge.Entry, 0),
 		Elements:       make([]*Elem, 0),
@@ -650,52 +662,18 @@ type Program struct {
 
 // Program returns a Program of given name.
 // It will return error when not found the program or it is incompleted.
-func (a *App) Program(prog string) (*Program, error) {
-	for _, pg := range a.config.Programs {
-		if pg.Name != prog {
-			continue
-		}
-		if len(pg.CreateCmd) == 0 {
-			return nil, fmt.Errorf("incomplete program: creation command is not defined: %s", prog)
-		}
-		if len(pg.OpenCmd) == 0 {
-			return nil, fmt.Errorf("incomplete program: open command is not defined: %s", prog)
-		}
-		return pg, nil
-	}
-	return nil, fmt.Errorf("not found program: %s", prog)
+func (a *App) Program(prog string) *Program {
+	return a.program[prog]
 }
 
-func (a *App) legacyPrograms(programs []string) []*Program {
-	prog := make(map[string]bool, 0)
-	for _, p := range a.config.Programs {
-		prog[p.Name] = true
-	}
-	legacy := make([]*Program, 0, len(prog))
-	for _, name := range programs {
-		if !prog[name] {
-			legacy = append(legacy, &Program{Name: name, NotFound: true})
+func (a *App) legacyPrograms(programs []string) []string {
+	legacy := make([]string, 0)
+	for _, prog := range programs {
+		if a.program[prog] == nil {
+			legacy = append(legacy, prog)
 		}
 	}
 	return legacy
-}
-
-// ProgramsInUse returns programs what user marked as in use.
-// Note that it may have invalid programs.
-func (a *App) toPrograms(programs []string) []*Program {
-	prog := make(map[string]*Program, 0)
-	for _, p := range a.config.Programs {
-		prog[p.Name] = p
-	}
-	progs := make([]*Program, 0, len(prog))
-	for _, name := range programs {
-		if _, ok := prog[name]; !ok {
-			progs = append(progs, &Program{Name: name, NotFound: true})
-		} else {
-			progs = append(progs, prog[name])
-		}
-	}
-	return progs
 }
 
 // ReloadUserSetting get user setting from host, and remember it.
@@ -705,7 +683,7 @@ func (a *App) ReloadUserSetting() error {
 		return err
 	}
 	a.state.LegacyPrograms = a.legacyPrograms(setting.ProgramsInUse)
-	a.state.ProgramsInUse = a.toPrograms(setting.ProgramsInUse)
+	a.state.ProgramsInUse = setting.ProgramsInUse
 	a.state.RecentPaths = setting.RecentPaths
 	a.entrySorters = a.makeEntrySorters(setting.EntryPageSortProperty)
 	return nil
@@ -816,9 +794,9 @@ func (a *App) NewElement(path, name, prog string) error {
 	if err != nil {
 		return err
 	}
-	pg, err := a.Program(prog)
-	if err != nil {
-		return err
+	pg := a.Program(prog)
+	if pg == nil {
+		return fmt.Errorf("unknown program: %s", prog)
 	}
 	env = append(env, "ELEM="+name)
 	env = append(env, "VER="+getEnv("NEW_VER", env))
@@ -930,9 +908,9 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 }
 
 func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
-	pg, err := a.Program(prog)
-	if err != nil {
-		return "", err
+	pg := a.Program(prog)
+	if pg == nil {
+		return "", fmt.Errorf("unknown program: %s", prog)
 	}
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
@@ -987,9 +965,9 @@ func (a *App) SceneFile(path, elem, ver, prog string) (string, error) {
 		}
 		ver = last
 	}
-	pg, err := a.Program(prog)
-	if err != nil {
-		return "", err
+	pg := a.Program(prog)
+	if pg == nil {
+		return "", fmt.Errorf("unknown program: %s", prog)
 	}
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
@@ -1011,9 +989,9 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 		}
 		ver = last
 	}
-	pg, err := a.Program(prog)
-	if err != nil {
-		return err
+	pg := a.Program(prog)
+	if pg == nil {
+		return fmt.Errorf("unknown program: %s", prog)
 	}
 	env, err := a.EntryEnvirons(path)
 	if err != nil {

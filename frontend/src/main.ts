@@ -531,15 +531,16 @@ function redrawEntryList(app: any) {
 	}
 }
 
-function redrawNewElementButtons(app: any) {
+async function redrawNewElementButtons(app: any) {
 	let btns = [];
 	for (let prog of app.ProgramsInUse) {
 		let btn = document.createElement("div");
 		btn.classList.add("newElementButton");
 		btn.classList.add("button");
-		btn.dataset.prog = prog.Name;
-		btn.innerText = "+" + prog.Name;
-		if (prog.NotFound) {
+		let p = await App.Program(prog);
+		btn.dataset.prog = prog;
+		btn.innerText = "+" + prog;
+		if (!p) {
 			btn.classList.add("invalid");
 		}
 		if (!app.AtLeaf) {
@@ -684,7 +685,7 @@ function hideAddProgramLinkPopup() {
 	popup.classList.add("hidden");
 }
 
-function fillAddProgramLinkPopup(app: any) {
+async function fillAddProgramLinkPopup(app: any) {
 	let popup = querySelector("#addProgramLinkPopup");
 	popup.replaceChildren();
 	let progs = app.Programs.concat(app.LegacyPrograms)
@@ -692,11 +693,12 @@ function fillAddProgramLinkPopup(app: any) {
 		let div = document.createElement("div");
 		div.classList.add("addProgramLinkPopupItem");
 		div.classList.add("button");
-		if (prog.NotFound) {
+		let p = await App.Program(prog);
+		if (!p) {
 			div.classList.add("legacy");
 		}
-		div.dataset.value = prog.Name;
-		div.innerText = prog.Name;
+		div.dataset.value = prog;
+		div.innerText = prog;
 		popup.append(div);
 	}
 }
@@ -706,7 +708,7 @@ async function toggleNewElementButton(prog: string) {
 	try {
 		let found = false;
 		for (let p of app.ProgramsInUse) {
-			if (p.Name == prog) {
+			if (p == prog) {
 				found = true;
 				break;
 			}
