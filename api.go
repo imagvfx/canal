@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/imagvfx/forge"
 )
 
 type apiResponse struct {
@@ -41,7 +43,7 @@ func appLogin(host, key string) (SessionInfo, error) {
 	return info, nil
 }
 
-func getEntry(host, session, path string) (*Entry, error) {
+func getEntry(host, session, path string) (*forge.Entry, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-entry", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -49,7 +51,7 @@ func getEntry(host, session, path string) (*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ent *Entry
+	var ent *forge.Entry
 	err = decodeAPIResponse(resp, &ent)
 	if err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func getBaseEntryTypes(host, session string) ([]string, error) {
 	return types, nil
 }
 
-func getGlobals(host, session, entType string) ([]*Global, error) {
+func getGlobals(host, session, entType string) ([]*forge.Global, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-globals", url.Values{
 		"session":    {session},
 		"entry_type": {entType},
@@ -80,7 +82,7 @@ func getGlobals(host, session, entType string) ([]*Global, error) {
 	if err != nil {
 		return nil, err
 	}
-	var globals []*Global
+	var globals []*forge.Global
 	err = decodeAPIResponse(resp, &globals)
 	if err != nil {
 		return nil, err
@@ -88,7 +90,7 @@ func getGlobals(host, session, entType string) ([]*Global, error) {
 	return globals, nil
 }
 
-func subEntries(host, session, path string) ([]*Entry, error) {
+func subEntries(host, session, path string) ([]*forge.Entry, error) {
 	resp, err := http.PostForm("https://"+host+"/api/sub-entries", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -96,7 +98,7 @@ func subEntries(host, session, path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ents []*Entry
+	var ents []*forge.Entry
 	err = decodeAPIResponse(resp, &ents)
 	if err != nil {
 		return nil, err
@@ -104,7 +106,7 @@ func subEntries(host, session, path string) ([]*Entry, error) {
 	return ents, nil
 }
 
-func parentEntries(host, session, path string) ([]*Entry, error) {
+func parentEntries(host, session, path string) ([]*forge.Entry, error) {
 	resp, err := http.PostForm("https://"+host+"/api/parent-entries", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -112,7 +114,7 @@ func parentEntries(host, session, path string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var parents []*Entry
+	var parents []*forge.Entry
 	err = decodeAPIResponse(resp, &parents)
 	if err != nil {
 		return nil, err
@@ -120,7 +122,7 @@ func parentEntries(host, session, path string) ([]*Entry, error) {
 	return parents, nil
 }
 
-func searchEntries(host, session, query string) ([]*Entry, error) {
+func searchEntries(host, session, query string) ([]*forge.Entry, error) {
 	resp, err := http.PostForm("https://"+host+"/api/search-entries", url.Values{
 		"session": {session},
 		"from":    {"/"},
@@ -129,7 +131,7 @@ func searchEntries(host, session, query string) ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ents []*Entry
+	var ents []*forge.Entry
 	err = decodeAPIResponse(resp, &ents)
 	if err != nil {
 		return nil, err
@@ -137,7 +139,7 @@ func searchEntries(host, session, query string) ([]*Entry, error) {
 	return ents, nil
 }
 
-func getUserDataSection(host, session, user string) (*UserDataSection, error) {
+func getUserDataSection(host, session, user string) (*forge.UserDataSection, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-user-data-section", url.Values{
 		"session": {session},
 		"user":    {user},
@@ -146,7 +148,7 @@ func getUserDataSection(host, session, user string) (*UserDataSection, error) {
 	if err != nil {
 		return nil, err
 	}
-	var sec *UserDataSection
+	var sec *forge.UserDataSection
 	err = decodeAPIResponse(resp, &sec)
 	if err != nil {
 		return nil, err
@@ -206,7 +208,7 @@ func arrangeProgramInUse(host, session, prog string, at int) error {
 	return nil
 }
 
-func getUserSetting(host, session, user string) (*userSetting, error) {
+func getUserSetting(host, session, user string) (*forge.UserSetting, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-user-setting", url.Values{
 		"session": {session},
 		"user":    {user},
@@ -214,7 +216,7 @@ func getUserSetting(host, session, user string) (*userSetting, error) {
 	if err != nil {
 		return nil, err
 	}
-	var setting *userSetting
+	var setting *forge.UserSetting
 	err = decodeAPIResponse(resp, &setting)
 	if err != nil {
 		return nil, err
@@ -222,7 +224,7 @@ func getUserSetting(host, session, user string) (*userSetting, error) {
 	return setting, nil
 }
 
-func entryEnvirons(host, session, path string) ([]forgeEnviron, error) {
+func entryEnvirons(host, session, path string) ([]*forge.Property, error) {
 	resp, err := http.PostForm("https://"+host+"/api/entry-environs", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -230,7 +232,7 @@ func entryEnvirons(host, session, path string) ([]forgeEnviron, error) {
 	if err != nil {
 		return nil, err
 	}
-	var forgeEnv []forgeEnviron
+	var forgeEnv []*forge.Property
 	err = decodeAPIResponse(resp, &forgeEnv)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/imagvfx/forge"
 )
 
 // App struct
@@ -32,10 +34,10 @@ type App struct {
 	cacheLock    sync.Mutex
 	cachedEnvs   map[string][]string
 	globalLock   sync.Mutex
-	global       map[string]map[string]*Global
+	global       map[string]map[string]*forge.Global
 	history      []string
 	historyIdx   int
-	assigned     []*Entry
+	assigned     []*forge.Entry
 	openCmd      string
 	entrySorters map[string]Sorter
 }
@@ -83,18 +85,12 @@ func (a *App) Prepare() error {
 }
 
 // GetEntry gets entry info from host.
-func (a *App) GetEntry(path string) (*Entry, error) {
+func (a *App) GetEntry(path string) (*forge.Entry, error) {
 	ent, err := getEntry(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
 	return ent, nil
-}
-
-type Global struct {
-	Name  string
-	Type  string
-	Value string
 }
 
 func (a *App) ReloadGlobals() error {
@@ -104,13 +100,13 @@ func (a *App) ReloadGlobals() error {
 	}
 	a.globalLock.Lock()
 	defer a.globalLock.Unlock()
-	a.global = make(map[string]map[string]*Global)
+	a.global = make(map[string]map[string]*forge.Global)
 	for _, t := range types {
 		globals, err := getGlobals(a.host, a.session, t)
 		if err != nil {
 			return fmt.Errorf("get globals: %v", err)
 		}
-		global := make(map[string]*Global)
+		global := make(map[string]*forge.Global)
 		for _, g := range globals {
 			global[g.Name] = g
 		}
@@ -119,7 +115,7 @@ func (a *App) ReloadGlobals() error {
 	return nil
 }
 
-func (a *App) Global(entType, name string) *Global {
+func (a *App) Global(entType, name string) *forge.Global {
 	a.globalLock.Lock()
 	defer a.globalLock.Unlock()
 	global := a.global[entType]
@@ -158,10 +154,10 @@ type State struct {
 	RecentPaths    []string
 	Path           string
 	AtLeaf         bool
-	Entries        []*Entry
+	Entries        []*forge.Entry
 	Elements       []*Elem
-	Entry          *Entry
-	ParentEntries  []*Entry
+	Entry          *forge.Entry
+	ParentEntries  []*forge.Entry
 	Dir            string
 	DirExists      bool
 	Options        Options
@@ -179,9 +175,9 @@ func (a *App) newState() *State {
 		LegacyPrograms: make([]*Program, 0),
 		ProgramsInUse:  make([]*Program, 0),
 		RecentPaths:    make([]string, 0),
-		Entries:        make([]*Entry, 0),
+		Entries:        make([]*forge.Entry, 0),
 		Elements:       make([]*Elem, 0),
-		ParentEntries:  make([]*Entry, 0),
+		ParentEntries:  make([]*forge.Entry, 0),
 	}
 }
 
@@ -255,30 +251,9 @@ func (a *App) SetAssignedOnly(only bool) error {
 	return nil
 }
 
-// Entry is a entry info.
-type Entry struct {
-	Type     string
-	Path     string
-	Name     string
-	Property map[string]*Property
-}
-
-// Property is a property an entry is holding.
-type Property struct {
-	Name  string
-	Type  string
-	Value string
-	Eval  string
-}
-
-// String represents the property as string.
-func (p *Property) String() string {
-	return p.Eval
-}
-
 // ListEntries shows sub entries of an entry,
 // it shows only paths to assigned entries when the options is enabled.
-func (a *App) ListEntries(path string) ([]*Entry, error) {
+func (a *App) ListEntries(path string) ([]*forge.Entry, error) {
 	subs, err := a.ListAllEntries(path)
 	if err != nil {
 		return nil, err
@@ -290,7 +265,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 			vis[p] = true
 		}
 	}
-	ents := make([]*Entry, 0, len(subs))
+	ents := make([]*forge.Entry, 0, len(subs))
 	for _, e := range subs {
 		if a.state.Options.AssignedOnly {
 			if !vis[e.Path] {
@@ -303,7 +278,7 @@ func (a *App) ListEntries(path string) ([]*Entry, error) {
 }
 
 // ListAllEntries shows all sub entries of an entry.
-func (a *App) ListAllEntries(path string) ([]*Entry, error) {
+func (a *App) ListAllEntries(path string) ([]*forge.Entry, error) {
 	ents, err := subEntries(a.host, a.session, path)
 	if err != nil {
 		return nil, err
@@ -362,7 +337,7 @@ func (a *App) ListAllEntries(path string) ([]*Entry, error) {
 		if cmp != 0 {
 			return dir*cmp < 0
 		}
-		cmp = strings.Compare(ents[i].Name, ents[j].Name)
+		cmp = strings.Compare(ents[i].Name(), ents[j].Name())
 		if cmp != 0 {
 			return dir*cmp < 0
 		}
@@ -422,7 +397,7 @@ func (a *App) subAssigned(path string) []string {
 }
 
 // ParentEntries get parent entries of an entry.
-func (a *App) ParentEntries(path string) ([]*Entry, error) {
+func (a *App) ParentEntries(path string) ([]*forge.Entry, error) {
 	parents, err := parentEntries(a.host, a.session, path)
 	if err != nil {
 		return nil, err
@@ -518,7 +493,7 @@ func (a *App) ReloadEntry() error {
 	if err != nil {
 		return err
 	}
-	a.state.Entries = []*Entry{}
+	a.state.Entries = []*forge.Entry{}
 	a.state.Elements = []*Elem{}
 	// we only can have either entries or elements by design.
 	if a.state.AtLeaf {
@@ -606,11 +581,6 @@ func (a *App) removeSession() error {
 // Note that options those are closely related with the user will remembered by host instead.
 type Options struct {
 	AssignedOnly bool
-}
-
-type UserDataSection struct {
-	Section string
-	Data    map[string]string
 }
 
 func (a *App) ReloadUserData() error {
@@ -727,13 +697,6 @@ func (a *App) toPrograms(programs []string) []*Program {
 	return progs
 }
 
-// userSetting is user setting saved in host that is related with this app.
-type userSetting struct {
-	ProgramsInUse         []string
-	RecentPaths           []string
-	EntryPageSortProperty map[string]string
-}
-
 // ReloadUserSetting get user setting from host, and remember it.
 func (a *App) ReloadUserSetting() error {
 	setting, err := getUserSetting(a.host, a.session, a.user)
@@ -763,12 +726,6 @@ func (a *App) RemoveProgramInUse(prog string) error {
 		return err
 	}
 	return nil
-}
-
-// forgeEnviron an environ defined for an entry retrieved from host.
-type forgeEnviron struct {
-	Name string
-	Eval string
 }
 
 // getEnv get value of a environment variable from `env`.

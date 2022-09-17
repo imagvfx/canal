@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/BurntSushi/toml"
+	"github.com/imagvfx/forge"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 )
@@ -57,7 +58,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 			&Elem{},
-			&Entry{},
+			&forge.Entry{},
 		},
 	})
 
