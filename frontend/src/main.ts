@@ -199,7 +199,6 @@ entryList.oncontextmenu = async function(ev) {
 	let menu = querySelector("#contextMenu");
 	menu.style.left = ev.pageX + "px";
 	menu.style.top = ev.pageY + "px";
-	menu.replaceChildren();
 	let target = ev.target as HTMLElement;
 	let entItem = target.closest(".scene.item") as HTMLElement;
 	if (!entItem) {
@@ -217,11 +216,10 @@ entryList.oncontextmenu = async function(ev) {
 	let label = document.createElement("div");
 	label.classList.add("contextMenuLabel");
 	label.innerText = elem + " / " + ver;
-	menu.append(label);
 	let item = document.createElement("div");
 	item.classList.add("contextMenuItem");
 	item.innerText = "publish";
-	menu.append(item);
+	menu.replaceChildren(label, item);
 }
 
 let contextMenu = querySelector("#contextMenu");
@@ -430,7 +428,7 @@ function redrawOptionBar(app: any) {
 
 function setCurrentPath(app: any) {
 	let currentPath = querySelector("#currentPath");
-	currentPath.replaceChildren();
+	let children = [];
 	let goto = ""
 	let toks = app.Path.split("/").slice(1);
 	let root = document.createElement("span");
@@ -445,14 +443,14 @@ function setCurrentPath(app: any) {
 			logError(err);
 		}
 	}
-	currentPath.append(root);
+	children.push(root);
 	for (let t of toks) {
 		let gotoPath = goto + "/" + t;
 		goto = gotoPath;
 		let span = document.createElement("span");
 		span.innerText = "/"
 		span.classList.add("link");
-		currentPath.append(span)
+		children.push(span)
 		span = document.createElement("span");
 		span.classList.add("link");
 		span.innerText = t
@@ -464,28 +462,28 @@ function setCurrentPath(app: any) {
 				logError(err);
 			}
 		}
-		currentPath.append(span)
+		children.push(span)
 	}
 	let divider = document.createElement("div");
 	divider.classList.add("divider");
-	currentPath.append(divider);
+	children.push(divider);
 	let link = document.createElement("div");
 	link.id = "urlLink";
-	currentPath.append(link)
+	children.push(link)
+	currentPath.replaceChildren(...children);
 }
 
 function redrawEntryList(app: any) {
 	let entryList = querySelector("#entryList");
+	let children = [];
 	if (app.User == "") {
 		entryList.replaceChildren();
 		return;
 	}
 	if (app.AtLeaf) {
-		entryList.replaceChildren();
 		for (let e of app.Elements) {
 			let elem = document.createElement("div");
 			elem.classList.add("element");
-			entryList.append(elem);
 			let scene = document.createElement("div");
 			scene.classList.add("scene");
 			scene.classList.add("item");
@@ -510,9 +508,9 @@ function redrawEntryList(app: any) {
 				scene.innerText = v.Name;
 				elem.append(scene);
 			}
+			children.push(elem);
 		}
 	} else {
-		entryList.replaceChildren();
 		for (let ent of app.Entries) {
 			let div = document.createElement("div");
 			div.classList.add("entry");
@@ -526,13 +524,15 @@ function redrawEntryList(app: any) {
 					logError(err);
 				}
 			}
-			entryList.append(div);
+			children.push(div);
 		}
 	}
+	entryList.replaceChildren(...children);
 }
 
 async function redrawNewElementButtons(app: any) {
-	let btns = [];
+	let elemBtns = querySelector("#newElementButtons");
+	let children = [];
 	for (let prog of app.ProgramsInUse) {
 		let btn = document.createElement("div");
 		btn.classList.add("newElementButton");
@@ -546,23 +546,23 @@ async function redrawNewElementButtons(app: any) {
 		if (!app.AtLeaf) {
 			btn.classList.add("invalid");
 		}
-		btns.push(btn);
+		children.push(btn);
 	}
-	let elemBtns = querySelector("#newElementButtons");
-	elemBtns.replaceChildren(...btns);
+	elemBtns.replaceChildren(...children);
 }
 
 function redrawRecentPaths(app: any) {
 	let cnt = querySelector("#recentPaths");
-	cnt.replaceChildren();
+	let children = [];
 	for (let path of app.RecentPaths) {
 		let div = document.createElement("div");
 		div.classList.add("recentPath");
 		div.classList.add("link");
 		div.dataset.path = path;
 		div.innerText = path;
-		cnt.append(div);
+		children.push(div);
 	}
+	cnt.replaceChildren(...children);
 }
 
 async function redrawInfoArea(app: any) {
@@ -594,7 +594,7 @@ async function redrawInfoArea(app: any) {
 		div.append(title)
 		return div
 	}
-	let entDivs = [];
+	let children = [];
 	for (let ent of ents) {
 		if (ent.Path == "/") {
 			continue;
@@ -603,7 +603,7 @@ async function redrawInfoArea(app: any) {
 			let entDiv = addEntryInfoDiv(ent);
 			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;
-			entDivs.push(entDiv);
+			children.push(entDiv);
 		} else if (ent.Type == "shot" || ent.Type == "asset") {
 			let entDiv = addEntryInfoDiv(ent);
 			let statusProp = ent.Property["status"];
@@ -627,7 +627,7 @@ async function redrawInfoArea(app: any) {
 			if (due != "") {
 				info.innerText = "~ " + due;
 			}
-			entDivs.push(entDiv);
+			children.push(entDiv);
 			let parts = [];
 			try {
 				parts = await App.ListAllEntries(ent.Path);
@@ -659,11 +659,11 @@ async function redrawInfoArea(app: any) {
 				}
 				let info = entDiv.querySelector(".titleInfo") as HTMLElement;
 				info.innerText = ent.Property["assignee"].Eval;
-				entDivs.push(entDiv);
+				children.push(entDiv);
 			}
 		}
 	}
-	area.replaceChildren(...entDivs);
+	area.replaceChildren(...children);
 }
 
 function toggleAddProgramLinkPopup() {
@@ -687,7 +687,7 @@ function hideAddProgramLinkPopup() {
 
 async function fillAddProgramLinkPopup(app: any) {
 	let popup = querySelector("#addProgramLinkPopup");
-	popup.replaceChildren();
+	let children = [];
 	let progs = app.Programs.concat(app.LegacyPrograms)
 	for (let prog of progs) {
 		let div = document.createElement("div");
@@ -699,8 +699,9 @@ async function fillAddProgramLinkPopup(app: any) {
 		}
 		div.dataset.value = prog;
 		div.innerText = prog;
-		popup.append(div);
+		children.push(div);
 	}
+	popup.replaceChildren(...children);
 }
 
 async function toggleNewElementButton(prog: string) {
