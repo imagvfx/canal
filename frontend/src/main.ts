@@ -161,7 +161,7 @@ window.onclick = async function(ev) {
 		if (item) {
 			toggleAddProgramLinkPopup();
 			let prog = item.dataset.value as string;
-			toggleNewElementButton(prog).then(redrawAll).catch(logError);
+			toggleNewElementButton(prog).catch(logError);
 		}
 	}
 	if (!addProgramLink && !addProgramLinkPopup) {
@@ -719,7 +719,8 @@ async function toggleNewElementButton(prog: string) {
 		} else {
 			await App.AddProgramInUse(prog, app.ProgramsInUse.length);
 		}
-		await App.ReloadUserSetting();
+		app = await App.State();
+		await redrawNewElementButtons(app);
 	} catch (err) {
 		logError(err);
 	}

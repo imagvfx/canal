@@ -695,6 +695,8 @@ func (a *App) AddProgramInUse(prog string, at int) error {
 	if err != nil {
 		return err
 	}
+	key := func(s string) string { return s }
+	a.state.ProgramsInUse = forge.Arrange(a.state.ProgramsInUse, prog, at, key, false)
 	return nil
 }
 
@@ -704,6 +706,8 @@ func (a *App) RemoveProgramInUse(prog string) error {
 	if err != nil {
 		return err
 	}
+	key := func(s string) string { return s }
+	a.state.ProgramsInUse = forge.Arrange(a.state.ProgramsInUse, prog, -1, key, false)
 	return nil
 }
 
