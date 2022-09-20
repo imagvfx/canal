@@ -82,16 +82,16 @@ func (a *App) Prepare() error {
 		return fmt.Errorf("read session: %v", err)
 	}
 	a.state = a.newState()
-	a.GoTo("/") // at least one page needed in history
-	err = a.ReloadAll()
+	err = a.GoTo("/") // at least one page needed in history
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// ReloadAll reloads all information needed by the app from the host.
-func (a *App) ReloadAll() error {
+// ReloadBase reloads base information needed by the app from the host.
+func (a *App) ReloadBase() error {
+	a.state.baseLoaded = false
 	if a.session == "" {
 		return nil
 	}
@@ -119,11 +119,7 @@ func (a *App) ReloadAll() error {
 	if err != nil {
 		return fmt.Errorf("search assigned: %v", err)
 	}
-	// ReloadEntry should be called after ReloadAssigned
-	err = a.ReloadEntry()
-	if err != nil {
-		return fmt.Errorf("entry: %v", err)
-	}
+	a.state.baseLoaded = true
 	return nil
 }
 
@@ -189,6 +185,8 @@ func (a *App) StatusColor(entType, stat string) string {
 }
 
 type State struct {
+	// Loaded indicates whether last ReloadBase was successful.
+	baseLoaded     bool
 	Host           string
 	User           string
 	Programs       []string
@@ -213,7 +211,7 @@ func (a *App) State() *State {
 func (a *App) newState() *State {
 	return &State{
 		Host:           a.host,
-		Path:           "/",
+		Path:           "",
 		Programs:       make([]string, 0),
 		LegacyPrograms: make([]string, 0),
 		ProgramsInUse:  make([]string, 0),
@@ -483,7 +481,7 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("write session: %v", err)
 	}
-	err = a.ReloadAll()
+	err = a.GoTo("/")
 	if err != nil {
 		return "", fmt.Errorf("reload: %v", err)
 	}
@@ -492,6 +490,12 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) ReloadEntry() error {
+	if !a.state.baseLoaded {
+		err := a.ReloadBase()
+		if err != nil {
+			return err
+		}
+	}
 	var err error
 	path := a.state.Path
 	a.state.Entry, err = a.GetEntry(path)

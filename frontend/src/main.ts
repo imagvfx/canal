@@ -67,7 +67,6 @@ window.onclick = async function(ev) {
 	if (logoutButton) {
 		try {
 			await App.Logout();
-			await App.GoTo("/");
 			redrawAll();
 		} catch (err: any) {
 			logError(err);
@@ -265,7 +264,7 @@ window.onkeydown = async function(ev) {
 	if (ctrlLike) {
 		ev.preventDefault();
 		if (ev.key == "r") {
-			App.ReloadAll().then(redrawAll).catch(logError);
+			App.ReloadEntry().then(redrawAll).catch(logError);
 		}
 		if (ev.key == "c") {
 			let sel = document.querySelector<HTMLElement>(".item.selected");
@@ -295,7 +294,7 @@ window.onkeydown = async function(ev) {
 	}
 	if (ev.key == "F5") {
 		ev.preventDefault();
-		App.ReloadAll().then(redrawAll).catch(logError);
+		App.ReloadEntry().then(redrawAll).catch(logError);
 		return;
 	}
 	let target = (<HTMLElement> ev.target);
