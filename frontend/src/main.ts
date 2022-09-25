@@ -598,35 +598,50 @@ async function redrawInfoArea(app: any) {
 		if (ent.Path == "/") {
 			continue;
 		}
-		if (ent.Type == "show") {
-			let entDiv = addEntryInfoDiv(ent);
-			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
-			info.innerText = ent.Property["sup"].Eval + " / " + ent.Property["pm"].Eval;
-			children.push(entDiv);
-		} else if (ent.Type == "shot" || ent.Type == "asset") {
-			let entDiv = addEntryInfoDiv(ent);
-			let statusProp = ent.Property["status"];
-			if (statusProp) {
-				let status = statusProp.Eval;
-				let color = await App.StatusColor(ent.Type, status);
-				if (!color) {
-					color = "#dddddd"
-				}
-				let dot = entDiv.querySelector(".statusDot") as HTMLElement;
-				dot.title = status;
-				if (!status) {
-					dot.title = "(none)";
-				}
-				dot.style.backgroundColor = color;
-				dot.style.border = "1px solid " + color + "bb";
-				dot.classList.remove("hidden");
+		if (ent.Type == "part") {
+			continue
+		}
+		let entDiv = addEntryInfoDiv(ent);
+		let statusProp = ent.Property["status"];
+		if (statusProp) {
+			let status = statusProp.Eval;
+			let color = await App.StatusColor(ent.Type, status);
+			if (!color) {
+				color = "#dddddd"
 			}
-			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
-			let due = ent.Property["due"].Eval;
-			if (due != "") {
-				info.innerText = "~ " + due;
+			let dot = entDiv.querySelector(".statusDot") as HTMLElement;
+			dot.title = status;
+			if (!status) {
+				dot.title = "(none)";
 			}
-			children.push(entDiv);
+			dot.style.backgroundColor = color;
+			dot.style.border = "1px solid " + color + "bb";
+			dot.classList.remove("hidden");
+		}
+		let propsDiv = document.createElement("div");
+		propsDiv.classList.add("entryProperties");
+		entDiv.append(propsDiv);
+		for (let prop in ent.Property) {
+			if (prop.startsWith(".")) {
+				continue;
+			}
+			let p = ent.Property[prop];
+			let propDiv = document.createElement("div");
+			propDiv.classList.add("property");
+			let nameDiv = document.createElement("div");
+			nameDiv.classList.add("propertyName");
+			let valueDiv = document.createElement("div");
+			valueDiv.classList.add("propertyValue");
+			nameDiv.innerText = p.Name;
+			valueDiv.innerText = p.Eval;
+			propDiv.append(nameDiv, valueDiv);
+			propDiv.onclick = function() {
+				App.ToggleExposeProperty(ent.Type, p.Name).catch(logError);
+			}
+			propsDiv.append(propDiv);
+		}
+		children.push(entDiv);
+		if (ent.Type == "shot" || ent.Type == "asset") {
 			let parts = [];
 			try {
 				parts = await App.ListAllEntries(ent.Path);

@@ -186,22 +186,23 @@ func (a *App) StatusColor(entType, stat string) string {
 
 type State struct {
 	// Loaded indicates whether last ReloadBase was successful.
-	baseLoaded     bool
-	Host           string
-	User           string
-	Programs       []string
-	LegacyPrograms []string
-	ProgramsInUse  []string
-	RecentPaths    []string
-	Path           string
-	AtLeaf         bool
-	Entries        []*forge.Entry
-	Elements       []*Elem
-	Entry          *forge.Entry
-	ParentEntries  []*forge.Entry
-	Dir            string
-	DirExists      bool
-	Options        Options
+	baseLoaded        bool
+	Host              string
+	User              string
+	Programs          []string
+	LegacyPrograms    []string
+	ProgramsInUse     []string
+	RecentPaths       []string
+	Path              string
+	AtLeaf            bool
+	Entries           []*forge.Entry
+	Elements          []*Elem
+	Entry             *forge.Entry
+	ParentEntries     []*forge.Entry
+	Dir               string
+	DirExists         bool
+	Options           Options
+	ExposedProperties map[string][]string
 }
 
 func (a *App) State() *State {
@@ -210,15 +211,16 @@ func (a *App) State() *State {
 
 func (a *App) newState() *State {
 	return &State{
-		Host:           a.host,
-		Path:           "",
-		Programs:       make([]string, 0),
-		LegacyPrograms: make([]string, 0),
-		ProgramsInUse:  make([]string, 0),
-		RecentPaths:    make([]string, 0),
-		Entries:        make([]*forge.Entry, 0),
-		Elements:       make([]*Elem, 0),
-		ParentEntries:  make([]*forge.Entry, 0),
+		Host:              a.host,
+		Path:              "",
+		Programs:          make([]string, 0),
+		LegacyPrograms:    make([]string, 0),
+		ProgramsInUse:     make([]string, 0),
+		RecentPaths:       make([]string, 0),
+		Entries:           make([]*forge.Entry, 0),
+		Elements:          make([]*Elem, 0),
+		ParentEntries:     make([]*forge.Entry, 0),
+		ExposedProperties: make(map[string][]string),
 	}
 }
 
@@ -610,6 +612,49 @@ func (a *App) ReloadUserData() error {
 		// Empty or invalid data. Set the default value.
 		a.state.Options.AssignedOnly = false
 	}
+	a.state.ExposedProperties = make(map[string][]string)
+	for key, data := range sec.Data {
+		_, entType, found := strings.Cut(key, "exposed_properties.")
+		if !found {
+			continue
+		}
+		var props []string
+		err = json.Unmarshal([]byte(data), &props)
+		if err != nil {
+			// Invalid data. Set the default value.
+			props = make([]string, 0)
+		}
+		a.state.ExposedProperties[entType] = props
+	}
+	return nil
+}
+
+func (a *App) ToggleExposeProperty(entType, prop string) error {
+	props := a.state.ExposedProperties[entType]
+	if props == nil {
+		props = make([]string, 0)
+	}
+	idx := -1
+	for i, p := range props {
+		if p == prop {
+			idx = i
+			break
+		}
+	}
+	if idx == -1 {
+		props = append(props, prop)
+	} else {
+		props = append(props[:idx], props[idx+1:]...)
+	}
+	data, err := json.Marshal(props)
+	if err != nil {
+		return err
+	}
+	err = setUserData(a.host, a.session, a.user, "exposed_properties."+entType, string(data))
+	if err != nil {
+		return err
+	}
+	a.state.ExposedProperties[entType] = props
 	return nil
 }
 
