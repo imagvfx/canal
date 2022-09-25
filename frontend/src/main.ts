@@ -602,6 +602,26 @@ async function redrawInfoArea(app: any) {
 			continue
 		}
 		let entDiv = addEntryInfoDiv(ent);
+		let plistTglDiv = document.createElement("div");
+		plistTglDiv.classList.add("propertyListToggle");
+		let imageDiv = document.createElement("div");
+		imageDiv.classList.add("image");
+		plistTglDiv.append(imageDiv);
+		plistTglDiv.onclick = function() {
+			let on = plistTglDiv.classList.contains("on");
+			on = !on;
+			let propsDiv = entDiv.querySelector(".entryProperties");
+			if (on) {
+				plistTglDiv.classList.add("on");
+				propsDiv.classList.remove("hidden");
+			} else {
+				plistTglDiv.classList.remove("on");
+				propsDiv.classList.add("hidden");
+			}
+		}
+		let titleDiv = entDiv.querySelector(".title");
+		titleDiv.append(plistTglDiv);
+
 		let statusProp = ent.Property["status"];
 		if (statusProp) {
 			let status = statusProp.Eval;
@@ -620,6 +640,7 @@ async function redrawInfoArea(app: any) {
 		}
 		let propsDiv = document.createElement("div");
 		propsDiv.classList.add("entryProperties");
+		propsDiv.classList.add("hidden");
 		entDiv.append(propsDiv);
 		let exposedDiv = document.createElement("div");
 		exposedDiv.classList.add("exposedProperties");
