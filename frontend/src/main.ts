@@ -626,19 +626,28 @@ async function redrawInfoArea(app: any) {
 				continue;
 			}
 			let p = ent.Property[prop];
-			let propDiv = document.createElement("div");
-			propDiv.classList.add("property");
-			let nameDiv = document.createElement("div");
-			nameDiv.classList.add("propertyName");
-			let valueDiv = document.createElement("div");
-			valueDiv.classList.add("propertyValue");
-			nameDiv.innerText = p.Name;
-			valueDiv.innerText = p.Eval;
-			propDiv.append(nameDiv, valueDiv);
-			propDiv.onclick = function() {
+			let cellDiv = document.createElement("div");
+			cellDiv.classList.add("propertyToggleCell");
+			let tglDiv = document.createElement("div");
+			tglDiv.classList.add("propertyToggle");
+			tglDiv.dataset.entpath = ent.Path;
+			tglDiv.dataset.name = p.Name;
+			tglDiv.innerText = p.Name;
+			tglDiv.onclick = function() {
 				App.ToggleExposeProperty(ent.Type, p.Name).catch(logError);
 			}
-			propsDiv.append(propDiv);
+			cellDiv.append(tglDiv);
+			propsDiv.append(cellDiv);
+		}
+		let props = app.ExposedProperties[ent.Type];
+		if (props) {
+			for (let prop of props) {
+				let tglDiv = entDiv.querySelector(`.propertyToggle[data-entpath="${ent.Path}"][data-name="${prop}"]`);
+				if (!tglDiv) {
+					continue;
+				}
+				tglDiv.classList.add("on");
+			}
 		}
 		children.push(entDiv);
 		if (ent.Type == "shot" || ent.Type == "asset") {
