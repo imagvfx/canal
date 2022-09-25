@@ -621,6 +621,41 @@ async function redrawInfoArea(app: any) {
 		let propsDiv = document.createElement("div");
 		propsDiv.classList.add("entryProperties");
 		entDiv.append(propsDiv);
+		let exposedDiv = document.createElement("div");
+		exposedDiv.classList.add("exposedProperties");
+		entDiv.append(exposedDiv);
+		let redrawExposedProperties = async function(ent: any) {
+			let app = await App.State();
+			let props = app.ExposedProperties[ent.Type];
+			if (props) {
+				let tglDivs = entDiv.querySelectorAll(".propertyToggle");
+				for (let tglDiv of Array.from(tglDivs)) {
+					tglDiv.classList.remove("on");
+				}
+				for (let prop of props) {
+					let tglDiv = entDiv.querySelector(`.propertyToggle[data-entpath="${ent.Path}"][data-name="${prop}"]`);
+					if (!tglDiv) {
+						continue;
+					}
+					tglDiv.classList.add("on");
+				}
+				let children = [];
+				for (let prop of props) {
+					let p = ent.Property[prop];
+					let propDiv = document.createElement("div");
+					propDiv.classList.add("property");
+					let nameDiv = document.createElement("div");
+					nameDiv.classList.add("propertyName");
+					nameDiv.innerText = p.Name;
+					let valueDiv = document.createElement("div");
+					valueDiv.classList.add("propertyValue");
+					valueDiv.innerText = p.Eval;
+					propDiv.append(nameDiv, valueDiv);
+					children.push(propDiv);
+				}
+				exposedDiv.replaceChildren(...children);
+			}
+		}
 		for (let prop in ent.Property) {
 			if (prop.startsWith(".")) {
 				continue;
@@ -634,37 +669,14 @@ async function redrawInfoArea(app: any) {
 			tglDiv.dataset.name = p.Name;
 			tglDiv.innerText = p.Name;
 			tglDiv.onclick = function() {
-				App.ToggleExposeProperty(ent.Type, p.Name).catch(logError);
+				App.ToggleExposeProperty(ent.Type, p.Name).then(function() {
+					redrawExposedProperties(ent);
+				}).catch(logError);
 			}
 			cellDiv.append(tglDiv);
 			propsDiv.append(cellDiv);
 		}
-		let props = app.ExposedProperties[ent.Type];
-		if (props) {
-			for (let prop of props) {
-				let tglDiv = entDiv.querySelector(`.propertyToggle[data-entpath="${ent.Path}"][data-name="${prop}"]`);
-				if (!tglDiv) {
-					continue;
-				}
-				tglDiv.classList.add("on");
-			}
-			let exposedDiv = document.createElement("div");
-			exposedDiv.classList.add("exposedProperties");
-			for (let prop of props) {
-				let p = ent.Property[prop];
-				let propDiv = document.createElement("div");
-				propDiv.classList.add("property");
-				let nameDiv = document.createElement("div");
-				nameDiv.classList.add("propertyName");
-				nameDiv.innerText = p.Name;
-				let valueDiv = document.createElement("div");
-				valueDiv.classList.add("propertyValue");
-				valueDiv.innerText = p.Eval;
-				propDiv.append(nameDiv, valueDiv);
-				exposedDiv.append(propDiv);
-			}
-			entDiv.append(exposedDiv);
-		}
+		await redrawExposedProperties(ent);
 		children.push(entDiv);
 		if (ent.Type == "shot" || ent.Type == "asset") {
 			let parts = [];
