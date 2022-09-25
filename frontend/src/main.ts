@@ -648,6 +648,22 @@ async function redrawInfoArea(app: any) {
 				}
 				tglDiv.classList.add("on");
 			}
+			let exposedDiv = document.createElement("div");
+			exposedDiv.classList.add("exposedProperties");
+			for (let prop of props) {
+				let p = ent.Property[prop];
+				let propDiv = document.createElement("div");
+				propDiv.classList.add("property");
+				let nameDiv = document.createElement("div");
+				nameDiv.classList.add("propertyName");
+				nameDiv.innerText = p.Name;
+				let valueDiv = document.createElement("div");
+				valueDiv.classList.add("propertyValue");
+				valueDiv.innerText = p.Eval;
+				propDiv.append(nameDiv, valueDiv);
+				exposedDiv.append(propDiv);
+			}
+			entDiv.append(exposedDiv);
 		}
 		children.push(entDiv);
 		if (ent.Type == "shot" || ent.Type == "asset") {
