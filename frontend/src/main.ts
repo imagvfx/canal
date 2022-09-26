@@ -610,7 +610,7 @@ async function redrawInfoArea(app: any) {
 		plistTglDiv.onclick = function() {
 			let on = plistTglDiv.classList.contains("on");
 			on = !on;
-			let propsDiv = entDiv.querySelector(".entryProperties");
+			let propsDiv = entDiv.querySelector(".entryProperties") as HTMLElement;
 			if (on) {
 				plistTglDiv.classList.add("on");
 				propsDiv.classList.remove("hidden");
@@ -619,7 +619,7 @@ async function redrawInfoArea(app: any) {
 				propsDiv.classList.add("hidden");
 			}
 		}
-		let titleDiv = entDiv.querySelector(".title");
+		let titleDiv = entDiv.querySelector(".title") as HTMLElement;
 		titleDiv.append(plistTglDiv);
 
 		let statusProp = ent.Property["status"];
