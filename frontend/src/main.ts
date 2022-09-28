@@ -599,7 +599,16 @@ async function redrawInfoArea(app: any) {
 			continue;
 		}
 		if (ent.Type == "part") {
-			continue
+			continue;
+		}
+		let np = 0;
+		for (let prop in ent.Property) {
+			if (!prop.startsWith(".")) {
+				np += 1;
+			}
+		}
+		if (np == 0) {
+			continue;
 		}
 		let entDiv = addEntryInfoDiv(ent);
 		let plistTglDiv = document.createElement("div");
