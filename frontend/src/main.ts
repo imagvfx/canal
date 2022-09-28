@@ -598,9 +598,6 @@ async function redrawInfoArea(app: any) {
 		if (ent.Path == "/") {
 			continue;
 		}
-		if (ent.Type == "part") {
-			continue;
-		}
 		let np = 0;
 		for (let prop in ent.Property) {
 			if (!prop.startsWith(".")) {
@@ -711,6 +708,8 @@ async function redrawInfoArea(app: any) {
 		}
 		await redrawExposedProperties(ent);
 		children.push(entDiv);
+	}
+	for (let ent of ents) {
 		if (ent.Type == "shot" || ent.Type == "asset") {
 			let parts = [];
 			try {
@@ -722,9 +721,6 @@ async function redrawInfoArea(app: any) {
 			for (let ent of parts) {
 				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
-				if (ent.Path == app.Path) {
-					entDiv.classList.add("current");
-				}
 				let statusProp = ent.Property["status"];
 				if (statusProp) {
 					let status = statusProp.Eval;
