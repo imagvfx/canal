@@ -132,6 +132,14 @@ func (a *App) GetEntry(path string) (*forge.Entry, error) {
 	return ent, nil
 }
 
+func (a *App) GetThumbnail(path string) (*forge.Thumbnail, error) {
+	thumb, err := getThumbnail(a.host, a.session, path)
+	if err != nil {
+		return nil, err
+	}
+	return thumb, nil
+}
+
 func (a *App) ReloadGlobals() error {
 	types, err := getBaseEntryTypes(a.host, a.session)
 	if err != nil {

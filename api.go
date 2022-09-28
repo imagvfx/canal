@@ -59,6 +59,22 @@ func getEntry(host, session, path string) (*forge.Entry, error) {
 	return ent, err
 }
 
+func getThumbnail(host, session, path string) (*forge.Thumbnail, error) {
+	resp, err := http.PostForm("https://"+host+"/api/get-thumbnail", url.Values{
+		"session": {session},
+		"path":    {path},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var thumb *forge.Thumbnail
+	err = decodeAPIResponse(resp, &thumb)
+	if err != nil {
+		return nil, err
+	}
+	return thumb, err
+}
+
 func getBaseEntryTypes(host, session string) ([]string, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-base-entry-types", url.Values{
 		"session": {session},
