@@ -583,8 +583,7 @@ async function redrawInfoArea(app: any) {
 		dot.classList.add("statusDot", "hidden");
 		title.append(dot);
 		let name = document.createElement("div");
-		name.classList.add("titleName", "pathLink", "link");
-		name.dataset.path = ent.Path;
+		name.classList.add("titleName");
 		name.innerText = ent.Name;
 		title.append(name);
 		let info = document.createElement("div");
@@ -721,6 +720,9 @@ async function redrawInfoArea(app: any) {
 			for (let ent of parts) {
 				let entDiv = addEntryInfoDiv(ent);
 				entDiv.classList.add("sub");
+				let nameDiv = entDiv.querySelector(".titleName") as HTMLElement;
+				nameDiv.classList.add("pathLink", "link");
+				nameDiv.dataset.path = ent.Path;
 				let statusProp = ent.Property["status"];
 				if (statusProp) {
 					let status = statusProp.Eval;

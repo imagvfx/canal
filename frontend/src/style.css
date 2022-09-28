@@ -578,7 +578,7 @@ body {
     text-decoration: none !important;
 }
 
-.titleName:hover {
+.titleName.link:hover {
     color: #46d;
 }
 
