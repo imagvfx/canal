@@ -568,6 +568,7 @@ body {
 
 .titleName {
     flex: 1;
+    display: inline-flex;
     text-decoration: none !important;
 }
 
@@ -621,6 +622,11 @@ body {
     border-radius: 2px;
     margin: 1px;
     background-color: #cc8888;
+}
+
+.recentlyUpdatedDot.big {
+    width: 4px;
+    height: 4px;
 }
 
 .entryProperties {

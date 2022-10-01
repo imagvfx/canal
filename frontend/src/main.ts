@@ -564,6 +564,13 @@ function redrawRecentPaths(app: any) {
 	cnt.replaceChildren(...children);
 }
 
+function isRecent(then) {
+	let now = Date.now();
+	let delta = now - then;
+	let day = 24 * 60 * 60 * 1000;
+	return delta < day;
+}
+
 async function redrawInfoArea(app: any) {
 	let area = querySelector("#infoArea");
 	if (!app.User) {
@@ -585,6 +592,13 @@ async function redrawInfoArea(app: any) {
 		let name = document.createElement("div");
 		name.classList.add("titleName");
 		name.innerText = ent.Name;
+		let updated = new Date(ent.UpdatedAt);
+		if (isRecent(updated)) {
+			let dot = document.createElement("div");
+			dot.classList.add("recentlyUpdatedDot");
+			dot.classList.add("big");
+			name.append(dot);
+		}
 		title.append(name);
 		let info = document.createElement("div");
 		info.classList.add("titleInfo");
@@ -650,12 +664,6 @@ async function redrawInfoArea(app: any) {
 		let exposedDiv = document.createElement("div");
 		exposedDiv.classList.add("exposedProperties");
 		entDiv.append(exposedDiv);
-		let isRecent = function(then) {
-			let now = Date.now();
-			let delta = now - then;
-			let day = 24 * 60 * 60 * 1000;
-			return delta < day;
-		}
 		let redrawExposedProperties = async function(ent: any) {
 			let app = await App.State();
 			let props = app.ExposedProperties[ent.Type];
