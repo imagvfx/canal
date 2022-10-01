@@ -659,7 +659,7 @@ body {
     overflow: hidden;
 }
 
-.exposedProperties.hidden {
+.exposedProperties:empty {
     display: none;
 }
 

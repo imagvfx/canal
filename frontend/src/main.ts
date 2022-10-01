@@ -680,9 +680,6 @@ async function redrawInfoArea(app: any) {
 					children.push(propDiv);
 				}
 				exposedDiv.replaceChildren(...children);
-				exposedDiv.classList.remove("hidden");
-			} else {
-				exposedDiv.classList.add("hidden");
 			}
 		}
 		for (let prop in ent.Property) {
