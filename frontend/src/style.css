@@ -115,21 +115,21 @@ body {
 }
 
 #recentPathArea {
-    width: 16rem;
+    flex: 2;
     border-right: 1px solid #888;
     display: flex;
     flex-direction: column;
 }
 
 #entryArea {
-    flex: 1;
+    flex: 3;
     display: flex;
     flex-direction: column;
 }
 
 #infoArea {
     border-left: 1px solid #888;
-    width: 16rem;
+    flex: 2;
     padding: 0.5rem;
     overflow-x: wrap;
     overflow-y: scroll;
