@@ -362,13 +362,6 @@ body {
     gap: 0.3rem;
 }
 
-#pinned {
-}
-
-#recent {
-    display: none;
-}
-
 .recentPath {
     font-size: 0.8rem;
 }
