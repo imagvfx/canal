@@ -611,15 +611,16 @@ async function redrawInfoArea(app: any) {
 		if (ent.Path == "/") {
 			continue;
 		}
-		let np = 0;
+		let entProps = [];
 		for (let prop in ent.Property) {
 			if (!prop.startsWith(".")) {
-				np += 1;
+				entProps.push(prop);
 			}
 		}
-		if (np == 0) {
+		if (entProps.length == 0) {
 			continue;
 		}
+		entProps = await App.SortEntryProperties(entProps, ent.Type);
 		let entDiv = addEntryInfoDiv(ent);
 		let plistTglDiv = document.createElement("div");
 		plistTglDiv.classList.add("propertyListToggle");
@@ -702,10 +703,7 @@ async function redrawInfoArea(app: any) {
 				exposedDiv.replaceChildren(...children);
 			}
 		}
-		for (let prop in ent.Property) {
-			if (prop.startsWith(".")) {
-				continue;
-			}
+		for (let prop of entProps) {
 			let p = ent.Property[prop];
 			let cellDiv = document.createElement("div");
 			cellDiv.classList.add("propertyToggleCell");

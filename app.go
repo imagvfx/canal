@@ -172,6 +172,35 @@ func (a *App) Global(entType, name string) *forge.Global {
 	return global[name]
 }
 
+func (a *App) SortEntryProperties(entProps []string, entType string) []string {
+	filter := a.Global(entType, "property_filter")
+	if filter == nil {
+		return entProps
+	}
+	order := make(map[string]int)
+	filterProps := strings.Fields(filter.Value)
+	for i, p := range filterProps {
+		order[p] = i
+	}
+	sort.Slice(entProps, func(i, j int) bool {
+		ip := entProps[i]
+		jp := entProps[j]
+		io, ok := order[ip]
+		if !ok {
+			io = len(entProps)
+		}
+		jo, ok := order[jp]
+		if !ok {
+			jo = len(entProps)
+		}
+		if io == jo {
+			return ip < jp
+		}
+		return io < jo
+	})
+	return entProps
+}
+
 func (a *App) StatusColor(entType, stat string) string {
 	possibleStatus := a.Global(entType, "possible_status")
 	if possibleStatus == nil {
