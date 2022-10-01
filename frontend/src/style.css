@@ -615,6 +615,14 @@ body {
     margin-right: 0.4rem;
 }
 
+.recentlyUpdatedDot {
+    width: 3px;
+    height: 3px;
+    border-radius: 2px;
+    margin: 1px;
+    background-color: #cc8888;
+}
+
 .entryProperties {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -632,15 +640,19 @@ body {
 }
 
 .propertyToggleCell {
+    display: flex;
     outline: 1px solid #bbb;
 }
 
 .propertyToggle {
+    display: inline-flex;
+    flex: 1;
     padding: 1px 2px;
     box-sizing: border-box;
     color: #444;
     background-color: #f4f4f4;
     cursor: pointer;
+    word-break: break-all;
 }
 
 .propertyToggle.on {
@@ -671,9 +683,10 @@ body {
 
 .propertyName {
     flex: 1;
+    display: inline-flex;
     padding: 1px 2px;
     background-color: #eee;
-    overflow-x: auto;
+    word-break: break-all;
 }
 
 .propertyValue {

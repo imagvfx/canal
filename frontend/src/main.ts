@@ -650,6 +650,12 @@ async function redrawInfoArea(app: any) {
 		let exposedDiv = document.createElement("div");
 		exposedDiv.classList.add("exposedProperties");
 		entDiv.append(exposedDiv);
+		let isRecent = function(then) {
+			let now = Date.now();
+			let delta = now - then;
+			let day = 24 * 60 * 60 * 1000;
+			return delta < day;
+		}
 		let redrawExposedProperties = async function(ent: any) {
 			let app = await App.State();
 			let props = app.ExposedProperties[ent.Type];
@@ -673,6 +679,12 @@ async function redrawInfoArea(app: any) {
 					let nameDiv = document.createElement("div");
 					nameDiv.classList.add("propertyName");
 					nameDiv.innerText = p.Name;
+					let updated = new Date(p.UpdatedAt);
+					if (isRecent(updated)) {
+						let dot = document.createElement("div");
+						dot.classList.add("recentlyUpdatedDot");
+						nameDiv.append(dot);
+					}
 					let valueDiv = document.createElement("div");
 					valueDiv.classList.add("propertyValue");
 					valueDiv.innerText = p.Eval;
@@ -694,6 +706,12 @@ async function redrawInfoArea(app: any) {
 			tglDiv.dataset.entpath = ent.Path;
 			tglDiv.dataset.name = p.Name;
 			tglDiv.innerText = p.Name;
+			let updated = new Date(p.UpdatedAt);
+			if (isRecent(updated)) {
+				let dot = document.createElement("div");
+				dot.classList.add("recentlyUpdatedDot");
+				tglDiv.append(dot);
+			}
 			tglDiv.onclick = function() {
 				App.ToggleExposeProperty(ent.Type, p.Name).then(function() {
 					redrawExposedProperties(ent);
