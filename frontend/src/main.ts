@@ -564,7 +564,7 @@ function redrawRecentPaths(app: any) {
 	cnt.replaceChildren(...children);
 }
 
-function isRecent(then) {
+function isRecent(then: any) {
 	let now = Date.now();
 	let delta = now - then;
 	let day = 24 * 60 * 60 * 1000;
