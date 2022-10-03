@@ -667,41 +667,43 @@ async function redrawInfoArea(app: any) {
 		entDiv.append(exposedDiv);
 		let redrawExposedProperties = async function(ent: any) {
 			let app = await App.State();
-			let props = app.ExposedProperties[ent.Type];
-			if (props) {
-				let tglDivs = entDiv.querySelectorAll(".propertyToggle");
-				for (let tglDiv of Array.from(tglDivs)) {
-					tglDiv.classList.remove("on");
-				}
-				for (let prop of props) {
-					let tglDiv = entDiv.querySelector(`.propertyToggle[data-entpath="${ent.Path}"][data-name="${prop}"]`);
-					if (!tglDiv) {
-						continue;
-					}
-					tglDiv.classList.add("on");
-				}
-				let children = [];
-				for (let prop of props) {
-					let p = ent.Property[prop];
-					let propDiv = document.createElement("div");
-					propDiv.classList.add("property");
-					let nameDiv = document.createElement("div");
-					nameDiv.classList.add("propertyName");
-					nameDiv.innerText = p.Name;
-					let updated = new Date(p.UpdatedAt);
-					if (isRecent(updated)) {
-						let dot = document.createElement("div");
-						dot.classList.add("recentlyUpdatedDot");
-						nameDiv.append(dot);
-					}
-					let valueDiv = document.createElement("div");
-					valueDiv.classList.add("propertyValue");
-					valueDiv.innerText = p.Eval;
-					propDiv.append(nameDiv, valueDiv);
-					children.push(propDiv);
-				}
-				exposedDiv.replaceChildren(...children);
+			let exposedProps = app.ExposedProperties[ent.Type];
+			let exposed = new Set(exposedProps);
+			let tglDivs = entDiv.querySelectorAll(".propertyToggle");
+			for (let tglDiv of Array.from(tglDivs)) {
+				tglDiv.classList.remove("on");
 			}
+			for (let prop of exposed.keys()) {
+				let tglDiv = entDiv.querySelector(`.propertyToggle[data-entpath="${ent.Path}"][data-name="${prop}"]`);
+				if (!tglDiv) {
+					continue;
+				}
+				tglDiv.classList.add("on");
+			}
+			let children = [];
+			for (let prop of entProps) {
+				if (!exposed.has(prop)) {
+					continue
+				}
+				let p = ent.Property[prop];
+				let propDiv = document.createElement("div");
+				propDiv.classList.add("property");
+				let nameDiv = document.createElement("div");
+				nameDiv.classList.add("propertyName");
+				nameDiv.innerText = p.Name;
+				let updated = new Date(p.UpdatedAt);
+				if (isRecent(updated)) {
+					let dot = document.createElement("div");
+					dot.classList.add("recentlyUpdatedDot");
+					nameDiv.append(dot);
+				}
+				let valueDiv = document.createElement("div");
+				valueDiv.classList.add("propertyValue");
+				valueDiv.innerText = p.Eval;
+				propDiv.append(nameDiv, valueDiv);
+				children.push(propDiv);
+			}
+			exposedDiv.replaceChildren(...children);
 		}
 		for (let prop of entProps) {
 			let p = ent.Property[prop];
