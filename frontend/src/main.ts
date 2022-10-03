@@ -26,6 +26,7 @@ function querySelectorAll(query: string): NodeListOf<HTMLElement> {
 let lastSceneClick = Date.now();
 
 window.onclick = async function(ev) {
+	let altLike = ev.altKey || ev.metaKey;
 	let target = (<HTMLElement> ev.target);
 	let contextMenu = closest(target, "#contextMenu");
 	if (!contextMenu) {
@@ -186,6 +187,20 @@ window.onclick = async function(ev) {
 			redrawAll();
 		} catch(err) {
 			logError(err);
+		}
+	}
+	let pathText = closest(target, ".pathText");
+	if (pathText) {
+		let path = pathText.innerText;
+		if (altLike) {
+			try {
+				await App.Open(path)
+			} catch (err) {
+				log("failed to open: " + path);
+			}
+		} else {
+			copyToClipboard(path);
+			log("path copied: " + path);
 		}
 	}
 }
@@ -699,7 +714,20 @@ async function redrawInfoArea(app: any) {
 				}
 				let valueDiv = document.createElement("div");
 				valueDiv.classList.add("propertyValue");
-				valueDiv.innerText = p.Eval;
+				let lines = p.Eval.split(/\r?\n/);
+				for (let l of lines) {
+					if (l.trim() == "") {
+						let br = document.createElement("br");
+						valueDiv.append(br);
+						continue;
+					}
+					let d = document.createElement("div");
+					d.innerText = l;
+					if (l.startsWith("/")) {
+						d.classList.add("pathText");
+					}
+					valueDiv.append(d);
+				}
 				propDiv.append(nameDiv, valueDiv);
 				children.push(propDiv);
 			}

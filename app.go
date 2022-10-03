@@ -1142,6 +1142,22 @@ func (a *App) DirExists(dir string) (bool, error) {
 	return true, nil
 }
 
+// Open opens a directory or run a file.
+func (a *App) Open(ent string) error {
+	_, err := os.Stat(ent)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	cmd := exec.Command(a.openCmd, ent)
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // OpenDir opens a directory using native file browser of current OS.
 func (a *App) OpenDir(dir string) error {
 	_, err := os.Stat(dir)
