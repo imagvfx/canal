@@ -636,7 +636,8 @@ body {
     border-radius: 3px;
     gap: 1px;
     background-color: #eee;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
     overflow: hidden;
     -webkit-user-select: none;
 }
@@ -670,7 +671,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1px;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
     border: 1px solid #bbb;
     border-radius: 3px;
     background-color: #bbb;
