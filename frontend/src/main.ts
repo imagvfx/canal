@@ -626,7 +626,7 @@ async function redrawInfoArea(app: any) {
 		if (ent.Path == "/") {
 			continue;
 		}
-		let entProps = [];
+		let entProps = [] as any[];
 		for (let prop in ent.Property) {
 			if (!prop.startsWith(".")) {
 				entProps.push(prop);
