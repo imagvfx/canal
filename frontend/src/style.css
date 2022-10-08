@@ -721,6 +721,10 @@ body {
     -webkit-user-select: auto;
 }
 
+.pathText {
+    cursor: #8ab4f8;
+}
+
 .pathText:hover {
     cursor: pointer;
     text-decoration: underline;
