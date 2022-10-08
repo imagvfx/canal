@@ -205,6 +205,32 @@ window.onclick = async function(ev) {
 	}
 }
 
+window.onmouseover = async function(ev) {
+	let target = (<HTMLElement> ev.target);
+	let altLike = ev.altKey || ev.metaKey;
+	let recentPath = closest(target, ".recentPath");
+	if (recentPath) {
+		if (altLike) {
+			let popup = querySelector("#thumbnailPopup");
+			popup.classList.remove("on");
+			let item = document.createElement("img") as HTMLImageElement;
+			item.style.width = "96px";
+			item.style.height = "54px";
+			let path = recentPath.dataset.path as string;
+			App.GetThumbnail(path).then(function(thumb) {
+				item.src = "data:image/png;base64," + thumb.Data;
+				popup.classList.add("on");
+			}).catch(logError);
+			let rect = recentPath.getBoundingClientRect();
+			popup.style.top = rect.bottom + 6 + "px";
+			popup.style.left = rect.left + "px";
+			popup.replaceChildren(item);
+		}
+	} else {
+		let popup = querySelector("#thumbnailPopup");
+		popup.classList.remove("on");
+	}
+}
 
 let entryList = querySelector("#entryList");
 

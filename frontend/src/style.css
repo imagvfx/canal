@@ -153,6 +153,30 @@ body {
     cursor: default;
 }
 
+#thumbnailPopup {
+    position: absolute;
+    display: flex;
+    border: 1px solid #888;
+    border-radius: 2px;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.8rem;
+    background-color: #bbb;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+#thumbnailPopup.on {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
 .contextMenuLabel {
     padding: 0.2rem;
     background-color: #eee;
