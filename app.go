@@ -32,15 +32,17 @@ type App struct {
 	program map[string]*Program
 	state   *State
 	// hold cacheLock before modify cachedEnvs
-	cacheLock    sync.Mutex
-	cachedEnvs   map[string][]string
-	globalLock   sync.Mutex
-	global       map[string]map[string]*forge.Global
-	history      []string
-	historyIdx   int
-	assigned     []*forge.Entry
-	openCmd      string
-	entrySorters map[string]Sorter
+	cacheLock     sync.Mutex
+	cachedEnvs    map[string][]string
+	globalLock    sync.Mutex
+	global        map[string]map[string]*forge.Global
+	thumbnail     map[string]*forge.Thumbnail
+	thumbnailLock sync.Mutex
+	history       []string
+	historyIdx    int
+	assigned      []*forge.Entry
+	openCmd       string
+	entrySorters  map[string]Sorter
 }
 
 // NewApp creates a new App application struct
@@ -49,10 +51,12 @@ func NewApp(cfg *Config) *App {
 	for _, pg := range cfg.Programs {
 		program[pg.Name] = pg
 	}
+	thumbnail := make(map[string]*forge.Thumbnail)
 	return &App{
-		config:  cfg,
-		host:    cfg.Host,
-		program: program,
+		config:    cfg,
+		host:      cfg.Host,
+		program:   program,
+		thumbnail: thumbnail,
 	}
 }
 
@@ -133,10 +137,45 @@ func (a *App) GetEntry(path string) (*forge.Entry, error) {
 }
 
 func (a *App) GetThumbnail(path string) (*forge.Thumbnail, error) {
-	thumb, err := getThumbnail(a.host, a.session, path)
+	a.thumbnailLock.Lock()
+	defer a.thumbnailLock.Unlock()
+	thumb := a.thumbnail[path]
+	if thumb != nil {
+		return thumb, nil
+	}
+	var thumbEnt *forge.Entry
+	ent, err := a.GetEntry(path)
 	if err != nil {
 		return nil, err
 	}
+	if ent.HasThumbnail {
+		thumbEnt = ent
+	} else {
+		parents, err := a.ParentEntries(path)
+		if err != nil {
+			return nil, err
+		}
+		for i := len(parents) - 1; i >= 0; i-- {
+			ent = parents[i]
+			if ent.HasThumbnail {
+				thumbEnt = ent
+				break
+			}
+		}
+	}
+	if thumbEnt == nil {
+		return nil, fmt.Errorf("couldn't find thumbnail: %v", path)
+	}
+	thumb = a.thumbnail[thumbEnt.Path]
+	if thumb != nil {
+		return thumb, nil
+	}
+	thumb, err = getThumbnail(a.host, a.session, thumbEnt.Path)
+	if err != nil {
+		return nil, err
+	}
+	a.thumbnail[thumbEnt.Path] = thumb
+	a.thumbnail[path] = thumb
 	return thumb, nil
 }
 

@@ -379,6 +379,7 @@ async function redrawAll(): Promise<void> {
 		redrawLoginArea(app);
 		redrawOptionBar(app);
 		setCurrentPath(app);
+		redrawCurrentEntry(app);
 		redrawEntryList(app);
 		redrawInfoArea(app).catch(logError);
 		redrawProgramsBar(app);
@@ -487,6 +488,13 @@ function setCurrentPath(app: any) {
 	currentPath.replaceChildren(...children);
 }
 
+function redrawCurrentEntry(app: any) {
+	let entryThumbnail = querySelector("#currentEntryThumbnail") as HTMLImageElement;
+	App.GetThumbnail(app.Path).then(function(thumb) {
+		entryThumbnail.src = "data:image/png;base64," + thumb.Data;
+	}).catch(logError);
+}
+
 function redrawEntryList(app: any) {
 	let entryList = querySelector("#entryList");
 	let children = [];
@@ -506,6 +514,13 @@ function redrawEntryList(app: any) {
 			scene.dataset.prog = e.Program;
 			scene.dataset.ver = "";
 			elem.append(scene);
+			let thumbEl = document.createElement("img") as HTMLImageElement;
+			thumbEl.classList.add("thumbnail");
+			scene.append(thumbEl);
+			App.GetThumbnail(app.Path).then(function(thumb) {
+				let thumbEl = scene.querySelector(".thumbnail") as HTMLImageElement;
+				thumbEl.src = "data:image/png;base64," + thumb.Data;
+			}).catch(logError);
 			let expander = document.createElement("div");
 			expander.classList.add("sceneListExpander");
 			scene.append(expander);
@@ -529,7 +544,14 @@ function redrawEntryList(app: any) {
 			let div = document.createElement("div");
 			div.classList.add("entry");
 			div.classList.add("item");
-			div.innerText = ent.Name;
+			let thumbEl = document.createElement("img") as HTMLImageElement;
+			thumbEl.classList.add("thumbnail");
+			div.append(thumbEl);
+			App.GetThumbnail(ent.Path).then(function(thumb) {
+				let thumbEl = div.querySelector(".thumbnail") as HTMLImageElement;
+				thumbEl.src = "data:image/png;base64," + thumb.Data;
+			}).catch(logError);
+			div.innerHTML += ent.Name;
 			div.onclick = async function() {
 				await App.GoTo(ent.Path);
 				try {
