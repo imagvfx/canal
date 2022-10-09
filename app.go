@@ -95,19 +95,23 @@ func (a *App) Prepare() error {
 
 // ReloadBase reloads base information needed by the app from the host.
 func (a *App) ReloadBase() error {
+	var err error
 	a.state.baseLoaded = false
 	if a.session == "" {
 		return nil
 	}
 	a.state.Host = a.host
-	a.state.User = a.user
+	a.state.User, err = getSessionUser(a.host, a.session)
+	if err != nil {
+		return fmt.Errorf("session user: %v", err)
+	}
 	progs := make([]string, 0, len(a.program))
 	for _, p := range a.program {
 		progs = append(progs, p.Name)
 	}
 	sort.Strings(progs)
 	a.state.Programs = progs
-	err := a.ReloadGlobals()
+	err = a.ReloadGlobals()
 	if err != nil {
 		return fmt.Errorf("globals: %v", err)
 	}
@@ -264,7 +268,7 @@ type State struct {
 	// Loaded indicates whether last ReloadBase was successful.
 	baseLoaded        bool
 	Host              string
-	User              string
+	User              *forge.User
 	Programs          []string
 	LegacyPrograms    []string
 	ProgramsInUse     []string

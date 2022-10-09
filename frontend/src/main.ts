@@ -445,7 +445,7 @@ function redrawLoginArea(app: any) {
 	let loginButton = querySelector("#loginButton");
 	let logoutButton = querySelector("#logoutButton");
 	let currentUser = querySelector("#currentUser");
-	if (app.User == "") {
+	if (!app.User) {
 		currentUser.classList.add("hidden");
 		logoutButton.classList.add("hidden");
 		loginButton.classList.remove("hidden");
@@ -453,11 +453,10 @@ function redrawLoginArea(app: any) {
 		loginButton.classList.add("hidden");
 		currentUser.classList.remove("hidden");
 		logoutButton.classList.remove("hidden");
-		let toks = app.User.split("@")
-		if (toks.length == 2 && toks[1] == app.Host) {
-			currentUser.innerText = toks[0];
+		if (app.User.Called) {
+			currentUser.innerText = app.User.Called;
 		} else {
-			currentUser.innerText = app.User;
+			currentUser.innerText = app.User.Name;
 		}
 	}
 }

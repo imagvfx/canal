@@ -43,6 +43,21 @@ func appLogin(host, key string) (SessionInfo, error) {
 	return info, nil
 }
 
+func getSessionUser(host, session string) (*forge.User, error) {
+	resp, err := http.PostForm("https://"+host+"/api/get-session-user", url.Values{
+		"session": {session},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var u *forge.User
+	err = decodeAPIResponse(resp, &u)
+	if err != nil {
+		return nil, err
+	}
+	return u, err
+}
+
 func getEntry(host, session, path string) (*forge.Entry, error) {
 	resp, err := http.PostForm("https://"+host+"/api/get-entry", url.Values{
 		"session": {session},
