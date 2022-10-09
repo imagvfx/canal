@@ -24,7 +24,7 @@ function querySelectorAll(query: string): NodeListOf<HTMLElement> {
 }
 
 let lastSceneClick = Date.now();
-let HoveringRecentPath = null;
+let HoveringRecentPath: HTMLElement | null = null;
 
 window.onclick = async function(ev) {
 	let altLike = ev.altKey || ev.metaKey;
