@@ -24,6 +24,7 @@ function querySelectorAll(query: string): NodeListOf<HTMLElement> {
 }
 
 let lastSceneClick = Date.now();
+let HoveringRecentPath = null;
 
 window.onclick = async function(ev) {
 	let altLike = ev.altKey || ev.metaKey;
@@ -210,26 +211,36 @@ window.onmouseover = async function(ev) {
 	let altLike = ev.altKey || ev.metaKey;
 	let recentPath = closest(target, ".recentPath");
 	if (recentPath) {
+		HoveringRecentPath = recentPath;
 		if (altLike) {
-			let popup = querySelector("#thumbnailPopup");
-			popup.classList.remove("on");
-			let item = document.createElement("img") as HTMLImageElement;
-			item.style.width = "96px";
-			item.style.height = "54px";
-			let path = recentPath.dataset.path as string;
-			App.GetThumbnail(path).then(function(thumb) {
-				item.src = "data:image/png;base64," + thumb.Data;
-				popup.classList.add("on");
-			}).catch(logError);
-			let rect = recentPath.getBoundingClientRect();
-			popup.style.top = rect.bottom + 6 + "px";
-			popup.style.left = rect.left + "px";
-			popup.replaceChildren(item);
+			showThumbnailPopup(recentPath);
 		}
 	} else {
-		let popup = querySelector("#thumbnailPopup");
-		popup.classList.remove("on");
+		HoveringRecentPath = null;
+		hideThumbnailPopup();
 	}
+}
+
+function showThumbnailPopup(recentPath: HTMLElement) {
+	let popup = querySelector("#thumbnailPopup");
+	popup.classList.remove("on");
+	let item = document.createElement("img") as HTMLImageElement;
+	item.style.width = "96px";
+	item.style.height = "54px";
+	let path = recentPath.dataset.path as string;
+	App.GetThumbnail(path).then(function(thumb) {
+		item.src = "data:image/png;base64," + thumb.Data;
+		popup.classList.add("on");
+	}).catch(logError);
+	let rect = recentPath.getBoundingClientRect();
+	popup.style.top = rect.bottom + 6 + "px";
+	popup.style.left = rect.left + "px";
+	popup.replaceChildren(item);
+}
+
+function hideThumbnailPopup() {
+	let popup = querySelector("#thumbnailPopup");
+	popup.classList.remove("on");
 }
 
 let entryList = querySelector("#entryList");
@@ -332,6 +343,9 @@ window.onkeydown = async function(ev) {
 			App.GoForward().then(redrawAll).catch(logError);
 			return;
 		}
+		if (HoveringRecentPath) {
+			showThumbnailPopup(HoveringRecentPath);
+		}
 	}
 	if (ev.key == "F5") {
 		ev.preventDefault();
@@ -360,6 +374,13 @@ window.onkeydown = async function(ev) {
 			}).then(redrawAll).catch(logError);
 		}
 		oninput();
+	}
+}
+
+window.onkeyup = async function(ev) {
+	let altLike = ev.altKey || ev.metaKey;
+	if (!altLike) {
+		hideThumbnailPopup();
 	}
 }
 
