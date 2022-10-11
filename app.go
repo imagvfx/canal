@@ -934,6 +934,7 @@ func (a *App) NewElement(path, name, prog string) error {
 	env = append(env, "ELEM="+name)
 	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
+	env = append(env, "FORGE_SESSION="+a.session)
 	scene := evalEnvString(a.config.Scene, env)
 	err = os.MkdirAll(filepath.Dir(scene), 0755)
 	if err != nil {
