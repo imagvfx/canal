@@ -376,6 +376,26 @@ body {
 #forgeRoot {
 }
 
+#navigation {
+    display: flex;
+}
+
+#recentsButton {
+    margin: 0.5rem 1rem 0 1rem;
+    color: #eee;
+    background: #8ad;
+    border-radius: 2px;
+    padding: 0.05rem 0.3rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    -webkit-user-select: none;
+}
+
+#recentsButton.on {
+    background: #28e;
+    color: #eee;
+}
+
 #recentPaths {
     overflow-y: auto;
     word-break: break-word;
@@ -384,6 +404,11 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
+    height: 10rem;
+    margin: 0.5rem 1rem;
+    border-radius: 3px;
+    border: 1px solid #888;
+    background-color: #e4e4e4;
 }
 
 .recentPath {

@@ -85,6 +85,17 @@ window.onclick = async function(ev) {
 			App.ReloadAssigned().then(redrawAll).catch(logError);
 		}
 	}
+	let recentsButton = closest(target, "#recentsButton");
+	if (recentsButton) {
+		let recentPaths = querySelector("#recentPaths");
+		if (recentPaths.classList.contains("hidden")) {
+			recentsButton.classList.add("on");
+			recentPaths.classList.remove("hidden");
+		} else {
+			recentsButton.classList.remove("on");
+			recentPaths.classList.add("hidden");
+		}
+	}
 	let openDirButton = closest(target, "#openDirButton");
 	if (openDirButton) {
 		try {
