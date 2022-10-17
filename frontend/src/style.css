@@ -24,7 +24,7 @@ body {
 }
 
 #navBar .spacer {
-    width: 4rem;
+    flex: 1;
     max-width: 4rem;
 }
 
