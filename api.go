@@ -44,6 +44,9 @@ func appLogin(host, key string) (SessionInfo, error) {
 }
 
 func getSessionUser(host, session string) (*forge.User, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-session-user", url.Values{
 		"session": {session},
 	})
@@ -59,6 +62,9 @@ func getSessionUser(host, session string) (*forge.User, error) {
 }
 
 func getEntry(host, session, path string) (*forge.Entry, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-entry", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -75,6 +81,9 @@ func getEntry(host, session, path string) (*forge.Entry, error) {
 }
 
 func getThumbnail(host, session, path string) (*forge.Thumbnail, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-thumbnail", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -91,6 +100,9 @@ func getThumbnail(host, session, path string) (*forge.Thumbnail, error) {
 }
 
 func getBaseEntryTypes(host, session string) ([]string, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-base-entry-types", url.Values{
 		"session": {session},
 	})
@@ -106,6 +118,9 @@ func getBaseEntryTypes(host, session string) ([]string, error) {
 }
 
 func getGlobals(host, session, entType string) ([]*forge.Global, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-globals", url.Values{
 		"session":    {session},
 		"entry_type": {entType},
@@ -122,6 +137,9 @@ func getGlobals(host, session, entType string) ([]*forge.Global, error) {
 }
 
 func subEntries(host, session, path string) ([]*forge.Entry, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/sub-entries", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -138,6 +156,9 @@ func subEntries(host, session, path string) ([]*forge.Entry, error) {
 }
 
 func parentEntries(host, session, path string) ([]*forge.Entry, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/parent-entries", url.Values{
 		"session": {session},
 		"path":    {path},
@@ -154,6 +175,9 @@ func parentEntries(host, session, path string) ([]*forge.Entry, error) {
 }
 
 func searchEntries(host, session, query string) ([]*forge.Entry, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/search-entries", url.Values{
 		"session": {session},
 		"from":    {"/"},
@@ -171,6 +195,9 @@ func searchEntries(host, session, query string) ([]*forge.Entry, error) {
 }
 
 func getUserDataSection(host, session, user string) (*forge.UserDataSection, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-user-data-section", url.Values{
 		"session": {session},
 		"user":    {user},
@@ -188,6 +215,9 @@ func getUserDataSection(host, session, user string) (*forge.UserDataSection, err
 }
 
 func setUserData(host, session, user, key, value string) error {
+	if session == "" {
+		return fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/set-user-data", url.Values{
 		"session": {session},
 		"user":    {user},
@@ -206,6 +236,9 @@ func setUserData(host, session, user, key, value string) error {
 }
 
 func arrangeRecentPaths(host, session, path string, at int) error {
+	if session == "" {
+		return fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/update-user-setting", url.Values{
 		"session":             {session},
 		"update_recent_paths": {"1"},
@@ -223,6 +256,9 @@ func arrangeRecentPaths(host, session, path string, at int) error {
 }
 
 func arrangeProgramInUse(host, session, prog string, at int) error {
+	if session == "" {
+		return fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/update-user-setting", url.Values{
 		"session":                {session},
 		"update_programs_in_use": {"1"},
@@ -240,6 +276,9 @@ func arrangeProgramInUse(host, session, prog string, at int) error {
 }
 
 func getUserSetting(host, session, user string) (*forge.UserSetting, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/get-user-setting", url.Values{
 		"session": {session},
 		"user":    {user},
@@ -256,6 +295,9 @@ func getUserSetting(host, session, user string) (*forge.UserSetting, error) {
 }
 
 func entryEnvirons(host, session, path string) ([]*forge.Property, error) {
+	if session == "" {
+		return nil, fmt.Errorf("login please")
+	}
 	resp, err := http.PostForm("https://"+host+"/api/entry-environs", url.Values{
 		"session": {session},
 		"path":    {path},
