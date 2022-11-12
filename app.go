@@ -85,16 +85,7 @@ func (a *App) Prepare() error {
 	if err != nil {
 		return fmt.Errorf("read session: %v", err)
 	}
-	a.state = a.newState()
-	err = a.ReloadBase()
-	if err != nil {
-		return err
-	}
-	path := "/"
-	if len(a.state.RecentPaths) != 0 {
-		path = a.state.RecentPaths[0]
-	}
-	err = a.GoTo(path) // at least one page needed in history
+	err = a.afterLogin()
 	if err != nil {
 		return err
 	}
@@ -571,12 +562,29 @@ func (a *App) Login() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("write session: %v", err)
 	}
-	err = a.ReloadBase()
+	err = a.afterLogin()
 	if err != nil {
-		return "", fmt.Errorf("reload base: %v", err)
+		return "", err
 	}
 	fmt.Println("login done")
 	return a.user, nil
+}
+
+func (a *App) afterLogin() error {
+	a.state = a.newState()
+	err := a.ReloadBase()
+	if err != nil {
+		return fmt.Errorf("reload base: %v", err)
+	}
+	path := "/"
+	if len(a.state.RecentPaths) != 0 {
+		path = a.state.RecentPaths[0]
+	}
+	err = a.GoTo(path) // at least one page needed in history
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) ReloadEntry() error {
