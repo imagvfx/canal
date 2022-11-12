@@ -59,7 +59,12 @@ window.onclick = async function(ev) {
 	if (loginButton) {
 		try {
 			await App.Login();
-			await App.GoTo("/");
+			let app = await App.State();
+			let path = "/";
+			if (app.RecentPaths.length != 0) {
+				path = app.RecentPaths[0]
+			}
+			await App.GoTo(path);
 			redrawAll();
 		} catch (err: any) {
 			logError(err);
