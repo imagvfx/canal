@@ -1139,16 +1139,15 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	for i, c := range openCmd {
 		openCmd[i] = evalEnvString(c, env)
 	}
-	go func() {
-		cmd := exec.Command(openCmd[0], openCmd[1:]...)
-		cmd.Env = env
-		b, err := cmd.CombinedOutput()
-		out := string(b)
-		fmt.Println(out)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	cmd := exec.Command(openCmd[0], openCmd[1:]...)
+	cmd.Env = env
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+	}
 	err = a.addRecentPath(path)
 	if err != nil {
 		return err
