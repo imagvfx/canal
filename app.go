@@ -93,7 +93,10 @@ func (a *App) Prepare() error {
 }
 
 // ReloadBase reloads base information needed by the app from the host.
-func (a *App) ReloadBase() error {
+func (a *App) ReloadBase(force bool) error {
+	if !force && a.state.baseLoaded {
+		return nil
+	}
 	var err error
 	a.state.baseLoaded = false
 	if a.session == "" {
@@ -572,7 +575,7 @@ func (a *App) Login() (string, error) {
 
 func (a *App) afterLogin() error {
 	a.state = a.newState()
-	err := a.ReloadBase()
+	err := a.ReloadBase(true)
 	if err != nil {
 		return fmt.Errorf("reload base: %v", err)
 	}
@@ -588,13 +591,10 @@ func (a *App) afterLogin() error {
 }
 
 func (a *App) ReloadEntry() error {
-	if !a.state.baseLoaded {
-		err := a.ReloadBase()
-		if err != nil {
-			return err
-		}
+	err := a.ReloadBase(false)
+	if err != nil {
+		return err
 	}
-	var err error
 	path := a.state.Path
 	a.state.Entry, err = a.GetEntry(path)
 	if err != nil {
