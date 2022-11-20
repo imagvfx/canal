@@ -952,7 +952,8 @@ func (a *App) NewElement(path, name, prog string) error {
 	env = append(env, "EXT="+pg.Ext)
 	env = append(env, "FORGE_SESSION="+a.session)
 	scene := evalEnvString(a.config.Scene, env)
-	err = os.MkdirAll(filepath.Dir(scene), 0755)
+	sceneDir := filepath.Dir(scene)
+	err = os.MkdirAll(sceneDir, 0755)
 	if err != nil {
 		return err
 	}
@@ -962,6 +963,7 @@ func (a *App) NewElement(path, name, prog string) error {
 		createCmd[i] = evalEnvString(c, env)
 	}
 	cmd := exec.Command(createCmd[0], createCmd[1:]...)
+	cmd.Dir = sceneDir
 	cmd.Env = env
 	b, err := cmd.CombinedOutput()
 	out := string(b)
@@ -1150,12 +1152,14 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
-	env = append(env, "SCENE="+evalEnvString(a.config.Scene, env))
+	scene := evalEnvString(a.config.Scene, env)
+	env = append(env, "SCENE="+scene)
 	openCmd := append([]string{}, pg.OpenCmd...)
 	for i, c := range openCmd {
 		openCmd[i] = evalEnvString(c, env)
 	}
 	cmd := exec.Command(openCmd[0], openCmd[1:]...)
+	cmd.Dir = filepath.Dir(scene)
 	cmd.Env = env
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
