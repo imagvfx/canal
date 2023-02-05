@@ -927,11 +927,11 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 		return nil, err
 	}
 	env = os.Environ()
-	for _, e := range a.config.Envs {
-		env = append(env, e)
-	}
 	for _, e := range forgeEnv {
 		env = append(env, e.Name+"="+e.Eval)
+	}
+	for _, e := range a.config.Envs {
+		env = append(env, e)
 	}
 	a.cachedEnvs[path] = env
 	return env, nil
