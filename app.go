@@ -1152,6 +1152,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
+	env = append(env, "FORGE_SESSION="+a.session)
 	scene := evalEnvString(a.config.Scene, env)
 	env = append(env, "SCENE="+scene)
 	openCmd := append([]string{}, pg.OpenCmd...)
