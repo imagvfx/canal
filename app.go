@@ -943,6 +943,23 @@ func (a *App) NewElement(path, name, prog string) error {
 	if err != nil {
 		return err
 	}
+	sceneDir := getEnv("SCENE_DIR", env)
+	if sceneDir == "" {
+		return fmt.Errorf("no scene directory information: check SCENE_DIR environ")
+	}
+	sceneDir = evalEnvString(sceneDir, env)
+	err = os.MkdirAll(sceneDir, 0755)
+	if err != nil {
+		return err
+	}
+	sceneNameEnv := "SCENE_NAME"
+	if name == "" {
+		sceneNameEnv = "MAIN_SCENE_NAME"
+	}
+	sceneName := getEnv(sceneNameEnv, env)
+	if sceneName == "" {
+		return fmt.Errorf("no scene name information: check " + sceneNameEnv + " environ")
+	}
 	pg := a.Program(prog)
 	if pg == nil {
 		return fmt.Errorf("unknown program: %s", prog)
@@ -951,12 +968,8 @@ func (a *App) NewElement(path, name, prog string) error {
 	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
 	env = append(env, "FORGE_SESSION="+a.session)
-	scene := evalEnvString(a.config.Scene, env)
-	sceneDir := filepath.Dir(scene)
-	err = os.MkdirAll(sceneDir, 0755)
-	if err != nil {
-		return err
-	}
+	sceneName = evalEnvString(sceneName, env)
+	scene := sceneDir + "/" + sceneName
 	env = append(env, "SCENE="+scene)
 	createCmd := append([]string{}, pg.CreateCmd...)
 	for i, c := range createCmd {
@@ -999,11 +1012,13 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	if err != nil {
 		return nil, err
 	}
-	env = append(env, `ELEM=(?P<ELEM>\w+)`)
-	env = append(env, `VER=(?P<VER>[vV]\d+)`)
-	env = append(env, `EXT=(?P<EXT>\w+)`)
-	scene := evalEnvString(a.config.Scene, env)
-	sceneDir, sceneName := filepath.Split(scene)
+	sceneDir := getEnv("SCENE_DIR", env)
+	if sceneDir == "" {
+		return nil, fmt.Errorf("no scene directory information: check SCENE_DIR environ")
+	}
+	sceneDir = evalEnvString(sceneDir, env)
+	sceneName := getEnv("SCENE_NAME_QUERY", env)
+	sceneName = evalEnvString(sceneName, env)
 	reName, err := regexp.Compile("^" + sceneName + "$") // match as a whole
 	if err != nil {
 		return nil, err
@@ -1068,11 +1083,25 @@ func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	sceneDir := getEnv("SCENE_DIR", env)
+	if sceneDir == "" {
+		return "", fmt.Errorf("no scene directory information: check SCENE_DIR environ")
+	}
+	sceneDir = evalEnvString(sceneDir, env)
+	sceneNameEnv := "SCENE_NAME"
+	if elem == "" {
+		sceneNameEnv = "MAIN_SCENE_NAME"
+	}
+	sceneName := getEnv(sceneNameEnv, env)
+	if sceneName == "" {
+		return "", fmt.Errorf("no scene name information: check " + sceneNameEnv + " environ")
+	}
 	env = append(env, "ELEM="+elem)
 	env = append(env, `VER=(?P<VER>[vV]\d+)`)
 	env = append(env, "EXT="+pg.Ext)
-	scene := evalEnvString(a.config.Scene, env)
-	sceneDir, sceneName := filepath.Split(scene)
+	sceneName = evalEnvString(sceneName, env)
+	scene := sceneDir + "/" + sceneName
+	scene = evalEnvString(scene, env)
 	reName, err := regexp.Compile("^" + sceneName + "$") // match as a whole
 	if err != nil {
 		return "", err
@@ -1125,10 +1154,25 @@ func (a *App) SceneFile(path, elem, ver, prog string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	sceneDir := getEnv("SCENE_DIR", env)
+	if sceneDir == "" {
+		return "", fmt.Errorf("no scene directory information: check SCENE_DIR environ")
+	}
+	sceneDir = evalEnvString(sceneDir, env)
+	sceneNameEnv := "SCENE_NAME"
+	if elem == "" {
+		sceneNameEnv = "MAIN_SCENE_NAME"
+	}
+	sceneName := getEnv(sceneNameEnv, env)
+	if sceneName == "" {
+		return "", fmt.Errorf("no scene name information: check " + sceneNameEnv + " environ")
+	}
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
-	scene := evalEnvString(a.config.Scene, env)
+	sceneName = evalEnvString(sceneName, env)
+	scene := sceneDir + "/" + sceneName
+	scene = evalEnvString(scene, env)
 	return scene, nil
 }
 
@@ -1149,11 +1193,26 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	if err != nil {
 		return err
 	}
+	sceneDir := getEnv("SCENE_DIR", env)
+	if sceneDir == "" {
+		return fmt.Errorf("no scene directory information: check SCENE_DIR environ")
+	}
+	sceneDir = evalEnvString(sceneDir, env)
+	sceneNameEnv := "SCENE_NAME"
+	if elem == "" {
+		sceneNameEnv = "MAIN_SCENE_NAME"
+	}
+	sceneName := getEnv(sceneNameEnv, env)
+	if sceneName == "" {
+		return fmt.Errorf("no scene name information: check " + sceneNameEnv + " environ")
+	}
 	env = append(env, "ELEM="+elem)
 	env = append(env, "VER="+ver)
 	env = append(env, "EXT="+pg.Ext)
 	env = append(env, "FORGE_SESSION="+a.session)
-	scene := evalEnvString(a.config.Scene, env)
+	sceneName = evalEnvString(sceneName, env)
+	scene := sceneDir + "/" + sceneName
+	scene = evalEnvString(scene, env)
 	env = append(env, "SCENE="+scene)
 	openCmd := append([]string{}, pg.OpenCmd...)
 	for i, c := range openCmd {

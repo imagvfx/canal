@@ -380,9 +380,6 @@ window.onkeydown = async function(ev) {
 			let field = closest(input, ".newElementField");
 			let prog = field.dataset.prog as string;
 			let name = input.value as string;
-			if (name == "") {
-				name = "main";
-			}
 			field.classList.add("hidden");
 			App.NewElement(app.Path, name, prog).then(async function() {
 				await App.ReloadUserSetting();
