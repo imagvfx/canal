@@ -856,7 +856,7 @@ func (a *App) RemoveProgramInUse(prog string) error {
 	return nil
 }
 
-// getEnv get value of a environment variable from `env`.
+// getEnv get value of an environment variable from `env`.
 // It returns an empty string if it does not find the variable.
 func getEnv(key string, env []string) string {
 	for i := len(env) - 1; i >= 0; i-- {
@@ -872,6 +872,29 @@ func getEnv(key string, env []string) string {
 		}
 	}
 	return ""
+}
+
+// setEnv set value of an environment variable to `env`.
+func setEnv(key, val string, env []string) []string {
+	idx := -1
+	for i := len(env) - 1; i >= 0; i-- {
+		e := env[i]
+		kv := strings.SplitN(e, "=", -1)
+		if len(kv) != 2 {
+			continue
+		}
+		k := strings.TrimSpace(kv[0])
+		if k == key {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		env = append(env, key+"="+val)
+		return env
+	}
+	env[idx] = key + "=" + val
+	return env
 }
 
 // evalEnvString fills environment variables of a string.
@@ -968,8 +991,33 @@ func (a *App) NewElement(path, name, prog string) error {
 	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
 	env = append(env, "FORGE_SESSION="+a.session)
-	sceneName = evalEnvString(sceneName, env)
-	scene := sceneDir + "/" + sceneName
+	var scene string
+	// find lastest version of the element, and increment 1 from it.
+	for i := 1; i < 10000; i++ {
+		// need generic mechanism that isn't hardcoded
+		// just I can't think of it now.
+		pad := 3
+		n := strconv.Itoa(i)
+		z := pad - len(n)
+		if z < 0 {
+			z = 0
+		}
+		ver := "v" + strings.Repeat("0", z) + n
+		env = setEnv("VER", ver, env)
+		name := evalEnvString(sceneName, env)
+		scene = sceneDir + "/" + name
+		_, err := os.Stat(scene)
+		if err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+			// found the first scene path that is not exists.
+			break
+		}
+	}
+	if scene == "" {
+		return fmt.Errorf("couldn't get appropriate scene name:", sceneName)
+	}
 	env = append(env, "SCENE="+scene)
 	createCmd := append([]string{}, pg.CreateCmd...)
 	for i, c := range createCmd {
