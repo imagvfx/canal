@@ -699,7 +699,7 @@ type Options struct {
 }
 
 func (a *App) ReloadUserData() error {
-	sec, err := getUserDataSection(a.host, a.session, a.user)
+	sec, err := getUserDataSection(a.host, a.session, a.user, "canal")
 	if err != nil {
 		return err
 	}
@@ -965,6 +965,16 @@ func (a *App) NewElement(path, name, prog string) error {
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
+	}
+	sec, err := getUserDataSection(a.host, a.session, a.user, "environ")
+	if err != nil {
+		// TODO: shouldn't rely on error messages.
+		if err.Error() != "user data section is not exists: environ" {
+			return err
+		}
+	}
+	for key, val := range sec.Data {
+		env = setEnv(key, val, env)
 	}
 	sceneDir := getEnv("SCENE_DIR", env)
 	if sceneDir == "" {
@@ -1240,6 +1250,16 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
+	}
+	sec, err := getUserDataSection(a.host, a.session, a.user, "environ")
+	if err != nil {
+		// TODO: shouldn't rely on error messages.
+		if err.Error() != "user data section is not exists: environ" {
+			return err
+		}
+	}
+	for key, val := range sec.Data {
+		env = setEnv(key, val, env)
 	}
 	sceneDir := getEnv("SCENE_DIR", env)
 	if sceneDir == "" {
