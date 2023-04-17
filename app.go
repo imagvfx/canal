@@ -1025,9 +1025,13 @@ func (a *App) NewElement(path, name, prog string) error {
 		return fmt.Errorf("couldn't get appropriate scene name:", sceneName)
 	}
 	env = append(env, "SCENE="+scene)
-	createCmd := append([]string{}, pg.CreateCmd...)
-	for i, c := range createCmd {
-		createCmd[i] = evalEnvString(c, env)
+	createCmd := make([]string, 0, len(pg.CreateCmd))
+	for _, c := range pg.CreateCmd {
+		c = evalEnvString(c, env)
+		c = strings.TrimSpace(c)
+		if c != "" {
+			createCmd = append(createCmd, c)
+		}
 	}
 	cmd := exec.Command(createCmd[0], createCmd[1:]...)
 	cmd.Dir = sceneDir
@@ -1268,9 +1272,13 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	scene := sceneDir + "/" + sceneName
 	scene = evalEnvString(scene, env)
 	env = append(env, "SCENE="+scene)
-	openCmd := append([]string{}, pg.OpenCmd...)
-	for i, c := range openCmd {
-		openCmd[i] = evalEnvString(c, env)
+	openCmd := make([]string, 0, len(pg.OpenCmd))
+	for _, c := range pg.OpenCmd {
+		c = evalEnvString(c, env)
+		c = strings.TrimSpace(c)
+		if c != "" {
+			openCmd = append(openCmd, c)
+		}
 	}
 	cmd := exec.Command(openCmd[0], openCmd[1:]...)
 	cmd.Dir = filepath.Dir(scene)
