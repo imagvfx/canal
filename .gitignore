@@ -7,3 +7,4 @@ frontend/package-lock.json
 frontend/wailsjs/runtime/runtime.d.ts
 frontend/wailsjs/runtime/runtime.js
 frontend/wailsjs/go/*
+changeme
