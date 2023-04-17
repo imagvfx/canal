@@ -958,8 +958,10 @@ func (a *App) EntryEnvirons(path string) ([]string, error) {
 			return nil, err
 		}
 	}
-	for key, val := range sec.Data {
-		env = setEnv(key, val, env)
+	if sec != nil {
+		for key, val := range sec.Data {
+			env = setEnv(key, val, env)
+		}
 	}
 	return env, nil
 }
