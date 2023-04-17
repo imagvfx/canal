@@ -939,24 +939,28 @@ func evalEnvString(v string, env []string) string {
 func (a *App) EntryEnvirons(path string) ([]string, error) {
 	// check cached environs first to make only one query per path.
 	// The cache is remained until user reloaded or moved to other entry.
-	a.cacheLock.Lock()
-	defer a.cacheLock.Unlock()
-	env := a.cachedEnvs[path]
-	if env != nil {
-		return env, nil
-	}
+	env := os.Environ()
 	forgeEnv, err := entryEnvirons(a.host, a.session, path)
 	if err != nil {
 		return nil, err
 	}
-	env = os.Environ()
 	for _, e := range forgeEnv {
-		env = append(env, e.Name+"="+e.Eval)
+		env = setEnv(e.Name, e.Eval, env)
 	}
 	for _, e := range a.config.Envs {
-		env = append(env, e)
+		kv := strings.SplitN(e, "=", 2)
+		env = setEnv(kv[0], kv[1], env)
 	}
-	a.cachedEnvs[path] = env
+	sec, err := getUserDataSection(a.host, a.session, a.user, "environ")
+	if err != nil {
+		// TODO: shouldn't rely on error messages.
+		if err.Error() != "user data section is not exists: environ" {
+			return nil, err
+		}
+	}
+	for key, val := range sec.Data {
+		env = setEnv(key, val, env)
+	}
 	return env, nil
 }
 
@@ -965,16 +969,6 @@ func (a *App) NewElement(path, name, prog string) error {
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
-	}
-	sec, err := getUserDataSection(a.host, a.session, a.user, "environ")
-	if err != nil {
-		// TODO: shouldn't rely on error messages.
-		if err.Error() != "user data section is not exists: environ" {
-			return err
-		}
-	}
-	for key, val := range sec.Data {
-		env = setEnv(key, val, env)
 	}
 	sceneDir := getEnv("SCENE_DIR", env)
 	if sceneDir == "" {
@@ -1250,16 +1244,6 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return err
-	}
-	sec, err := getUserDataSection(a.host, a.session, a.user, "environ")
-	if err != nil {
-		// TODO: shouldn't rely on error messages.
-		if err.Error() != "user data section is not exists: environ" {
-			return err
-		}
-	}
-	for key, val := range sec.Data {
-		env = setEnv(key, val, env)
 	}
 	sceneDir := getEnv("SCENE_DIR", env)
 	if sceneDir == "" {
