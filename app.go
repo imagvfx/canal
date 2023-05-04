@@ -994,21 +994,32 @@ func (a *App) NewElement(path, name, prog string) error {
 		return fmt.Errorf("unknown program: %s", prog)
 	}
 	env = append(env, "ELEM="+name)
-	env = append(env, "VER="+getEnv("NEW_VER", env))
 	env = append(env, "EXT="+pg.Ext)
 	env = append(env, "FORGE_SESSION="+a.session)
-	var scene string
 	// find lastest version of the element, and increment 1 from it.
-	for i := 1; i < 10000; i++ {
-		// need generic mechanism that isn't hardcoded
-		// just I can't think of it now.
-		pad := 3
-		n := strconv.Itoa(i)
-		z := pad - len(n)
+	var scene string
+	verPre := "v"
+	verDigits := "001"
+	// override verPre, verDigits if NEW_VER environ defined.
+	ver := getEnv("NEW_VER", env)
+	if ver != "" {
+		for i := len(ver) - 1; i >= 0; i-- {
+			_, err := strconv.Atoi(string(ver[i]))
+			if err != nil {
+				verPre = ver[:i+1]
+				verDigits = ver[i+1:]
+			}
+		}
+	}
+	nDigits := len(verDigits)
+	start, _ := strconv.Atoi(verDigits)
+	for n := start; ; n++ {
+		v := strconv.Itoa(n)
+		z := nDigits - len(v)
 		if z < 0 {
 			z = 0
 		}
-		ver := "v" + strings.Repeat("0", z) + n
+		ver := verPre + strings.Repeat("0", z) + v
 		env = setEnv("VER", ver, env)
 		name := evalEnvString(sceneName, env)
 		scene = sceneDir + "/" + name
