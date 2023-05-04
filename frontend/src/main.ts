@@ -588,8 +588,7 @@ function redrawEntryList(app: any) {
 			} else {
 				scene.innerHTML += e.Name + " (" + e.Program + ")";
 			}
-			let vers = e.Versions.reverse();
-			for (let v of vers) {
+			for (let v of e.Versions) {
 				let scene = document.createElement("div");
 				scene.classList.add("scene");
 				scene.classList.add("item");

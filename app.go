@@ -1130,6 +1130,9 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 	}
 	elems := make([]*Elem, 0, len(elem))
 	for _, el := range elem {
+		sort.Slice(el.Versions, func(i, j int) bool {
+			return el.Versions[i].Name > el.Versions[j].Name
+		})
 		elems = append(elems, el)
 	}
 	sort.Slice(elems, func(i, j int) bool {
@@ -1199,9 +1202,7 @@ func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
 		return "", fmt.Errorf("element not exists: %s", elem)
 	}
 	sort.Slice(vers, func(i, j int) bool {
-		a, _ := strconv.Atoi(vers[i][1:])
-		b, _ := strconv.Atoi(vers[j][1:])
-		return a > b
+		return vers[i] > vers[j]
 	})
 	return vers[0], nil
 }
