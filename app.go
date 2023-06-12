@@ -105,6 +105,15 @@ func (a *App) ReloadBase(force bool) error {
 	a.state.Host = a.host
 	a.state.User, err = getSessionUser(a.host, a.session)
 	if err != nil {
+		// may be the session is expired, remove the session then try again.
+		err := a.removeSession()
+		if err != nil {
+			return err
+		}
+		a.state.User, err = getSessionUser(a.host, a.session)
+		if err != nil {
+			return err
+		}
 		return fmt.Errorf("session user: %v", err)
 	}
 	progs := make([]string, 0, len(a.program))
@@ -1319,10 +1328,12 @@ func (a *App) Dir(path string) (string, error) {
 	if !ok {
 		return "", nil
 	}
+	fmt.Println(dirTmpl)
 	env, err := a.EntryEnvirons(path)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(env)
 	dir := evalEnvString(dirTmpl, env)
 	return dir, nil
 }

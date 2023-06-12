@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,10 +18,13 @@ type apiResponse struct {
 
 func decodeAPIResponse(resp *http.Response, dest interface{}) error {
 	r := apiResponse{Msg: dest}
-	dec := json.NewDecoder(resp.Body)
-	err := dec.Decode(&r)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+	err = json.Unmarshal(b, &r)
+	if err != nil {
+		return fmt.Errorf("%s: %s", err, b)
 	}
 	if r.Err != "" {
 		return fmt.Errorf(r.Err)
