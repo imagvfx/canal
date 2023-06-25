@@ -350,7 +350,6 @@ window.onkeydown = async function(ev) {
 		if (ev.key == "v") {
 			let path = await App.GetClipboardText();
 			let app = await App.State();
-			let current = app.Path;
 			let host = "https://" + app.Host
 			if (path.startsWith(host)) {
 				path = path.slice(host.length);
