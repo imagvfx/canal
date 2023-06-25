@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -20,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/imagvfx/forge"
+	wails "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -319,9 +319,6 @@ func (a *App) newState() *State {
 func (a *App) GoTo(pth string) error {
 	if pth == "" {
 		return fmt.Errorf("please specify path to go")
-	}
-	if !path.IsAbs(pth) {
-		pth = a.state.Path + "/" + pth
 	}
 	if pth != "/" && strings.HasSuffix(pth, "/") {
 		pth = pth[:len(pth)-1]
@@ -1394,4 +1391,8 @@ func (a *App) OpenURL(path string) error {
 		return err
 	}
 	return nil
+}
+
+func (a *App) GetClipboardText() (string, error) {
+	return wails.ClipboardGetText(a.ctx)
 }

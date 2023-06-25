@@ -347,6 +347,24 @@ window.onkeydown = async function(ev) {
 			copyToClipboard(scene);
 			log("path copied: " + scene);
 		}
+		if (ev.key == "v") {
+			let path = await App.GetClipboardText();
+			let app = await App.State();
+			let current = app.Path;
+			let host = "https://" + app.Host
+			if (path.startsWith(host)) {
+				path = path.slice(host.length);
+			}
+			if (path.startsWith(app.Host)) {
+				path = path.slice(app.Host.length);
+			}
+			if (!path.startsWith("/")) {
+				logError("invalid path: " + path);
+				return;
+			}
+			App.GoTo(path).then(redrawAll).catch(logError);
+			return;
+		}
 	}
 	let altLike = ev.altKey || ev.metaKey;
 	if (altLike) {
