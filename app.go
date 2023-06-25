@@ -326,6 +326,10 @@ func (a *App) GoTo(pth string) error {
 	if pth == a.state.Path {
 		return nil
 	}
+	entry, err := a.GetEntry(pth)
+	if err != nil {
+		return err
+	}
 	if len(a.history) > a.historyIdx+1 {
 		a.history = a.history[:a.historyIdx+1]
 	}
@@ -335,7 +339,7 @@ func (a *App) GoTo(pth string) error {
 	a.cacheLock.Lock()
 	a.cachedEnvs = make(map[string][]string)
 	a.cacheLock.Unlock()
-	err := a.ReloadEntry()
+	err = a.loadEntry(entry)
 	if err != nil {
 		return err
 	}
@@ -344,11 +348,21 @@ func (a *App) GoTo(pth string) error {
 
 // GoBack goes back to the previous path in history.
 func (a *App) GoBack() error {
-	if a.historyIdx != 0 {
-		a.historyIdx--
+	if a.historyIdx < 0 {
+		// there is race condition I couldn't fix unfortunately
+		a.historyIdx = 0
 	}
-	a.state.Path = a.history[a.historyIdx]
-	err := a.ReloadEntry()
+	if a.historyIdx <= 0 {
+		return fmt.Errorf("no previous entry")
+	}
+	pth := a.history[a.historyIdx-1]
+	entry, err := a.GetEntry(pth)
+	if err != nil {
+		return err
+	}
+	a.historyIdx--
+	a.state.Path = pth
+	err = a.loadEntry(entry)
 	if err != nil {
 		return err
 	}
@@ -357,11 +371,21 @@ func (a *App) GoBack() error {
 
 // GoForward goes again to the forward path in history.
 func (a *App) GoForward() error {
-	if a.historyIdx != len(a.history)-1 {
-		a.historyIdx++
+	if a.historyIdx > len(a.history)-1 {
+		// there is race condition I couldn't fix unfortunately
+		a.historyIdx = len(a.history) - 1
 	}
-	a.state.Path = a.history[a.historyIdx]
-	err := a.ReloadEntry()
+	if a.historyIdx >= len(a.history)-1 {
+		return fmt.Errorf("no next entry")
+	}
+	pth := a.history[a.historyIdx+1]
+	entry, err := a.GetEntry(pth)
+	if err != nil {
+		return err
+	}
+	a.historyIdx++
+	a.state.Path = pth
+	err = a.loadEntry(entry)
 	if err != nil {
 		return err
 	}
@@ -597,15 +621,24 @@ func (a *App) afterLogin() error {
 }
 
 func (a *App) ReloadEntry() error {
+	pth := a.history[a.historyIdx]
+	entry, err := a.GetEntry(pth)
+	if err != nil {
+		return err
+	}
+	return a.loadEntry(entry)
+}
+
+func (a *App) loadEntry(entry *forge.Entry) error {
+	if entry == nil {
+		return fmt.Errorf("nil entry")
+	}
 	err := a.ReloadBase(false)
 	if err != nil {
 		return err
 	}
 	path := a.state.Path
-	a.state.Entry, err = a.GetEntry(path)
-	if err != nil {
-		return err
-	}
+	a.state.Entry = entry
 	a.state.AtLeaf = false
 	if a.state.Entry.Type == a.config.LeafEntryType {
 		a.state.AtLeaf = true
