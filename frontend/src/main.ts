@@ -199,22 +199,14 @@ window.onclick = async function(ev) {
 	let pathLink = closest(target, ".pathLink");
 	if (pathLink) {
 		let path = pathLink.dataset.path as string;
-		await App.GoTo(path);
-		try {
-			redrawAll();
-		} catch(err) {
-			logError(err);
-		}
+		App.GoTo(path).then(redrawAll).catch(logError);
+		return;
 	}
 	let entryLink = closest(target, ".entryLink");
 	if (entryLink) {
 		let path = entryLink.innerText as string;
-		await App.GoTo(path);
-		try {
-			redrawAll();
-		} catch(err) {
-			logError(err);
-		}
+		App.GoTo(path).then(redrawAll).catch(logError);
+		return;
 	}
 	let pathText = closest(target, ".pathText");
 	if (pathText) {
