@@ -632,7 +632,7 @@ body {
 }
 
 .titleName.link:hover {
-    color: #46d;
+    color: #248;
 }
 
 .titleInfo {
@@ -770,4 +770,17 @@ body {
 .pathText:hover {
     cursor: pointer;
     text-decoration: underline;
+}
+
+.entryLink {
+    color: #888;
+}
+
+.entryLink:hover {
+    cursor: pointer;
+    color: #248;
+}
+
+.entryLink:before {
+    content: "→ ";
 }

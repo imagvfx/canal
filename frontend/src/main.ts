@@ -206,6 +206,16 @@ window.onclick = async function(ev) {
 			logError(err);
 		}
 	}
+	let entryLink = closest(target, ".entryLink");
+	if (entryLink) {
+		let path = entryLink.innerText as string;
+		await App.GoTo(path);
+		try {
+			redrawAll();
+		} catch(err) {
+			logError(err);
+		}
+	}
 	let pathText = closest(target, ".pathText");
 	if (pathText) {
 		let path = pathText.innerText;
@@ -824,8 +834,12 @@ async function redrawInfoArea(app: any) {
 					}
 					let d = document.createElement("div");
 					d.innerText = l;
-					if (l.startsWith("/")) {
-						d.classList.add("pathText");
+					if (p.Type == "entry_link") {
+						d.classList.add("entryLink");
+					} else {
+						if (l.startsWith("/")) {
+							d.classList.add("pathText");
+						}
 					}
 					valueDiv.append(d);
 				}
