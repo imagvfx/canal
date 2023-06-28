@@ -351,6 +351,10 @@ window.onkeydown = async function(ev) {
 		}
 		if (ev.key == "v") {
 			let path = await App.GetClipboardText();
+			// use the first line, when pasted text is multi-line.
+			path = path.trim();
+			path = path.split("\n")[0];
+			path = path.trim();
 			let app = await App.State();
 			let host = "https://" + app.Host
 			if (path.startsWith(host)) {
