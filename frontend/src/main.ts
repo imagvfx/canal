@@ -333,10 +333,10 @@ window.onkeydown = async function(ev) {
 	let ctrlLike = ev.ctrlKey || ev.metaKey;
 	if (ctrlLike) {
 		ev.preventDefault();
-		if (ev.key == "r") {
+		if (ev.code == "KeyR") {
 			App.ReloadEntry().then(redrawAll).catch(logError);
 		}
-		if (ev.key == "c") {
+		if (ev.code == "KeyC") {
 			let sel = document.querySelector<HTMLElement>(".item.selected");
 			if (!sel) {
 				return;
@@ -349,7 +349,7 @@ window.onkeydown = async function(ev) {
 			copyToClipboard(scene);
 			log("path copied: " + scene);
 		}
-		if (ev.key == "v") {
+		if (ev.code == "KeyV") {
 			let path = await App.GetClipboardText();
 			// use the first line, when pasted text is multi-line.
 			path = path.trim();
@@ -374,11 +374,11 @@ window.onkeydown = async function(ev) {
 	let altLike = ev.altKey || ev.metaKey;
 	if (altLike) {
 		ev.preventDefault();
-		if (ev.key == "ArrowLeft") {
+		if (ev.code == "ArrowLeft") {
 			App.GoBack().then(redrawAll).catch(logError);
 			return;
 		}
-		if (ev.key == "ArrowRight") {
+		if (ev.code == "ArrowRight") {
 			App.GoForward().then(redrawAll).catch(logError);
 			return;
 		}
@@ -386,7 +386,7 @@ window.onkeydown = async function(ev) {
 			showThumbnailPopup(HoveringRecentPath);
 		}
 	}
-	if (ev.key == "F5") {
+	if (ev.code == "F5") {
 		ev.preventDefault();
 		App.ReloadEntry().then(redrawAll).catch(logError);
 		return;
@@ -397,7 +397,7 @@ window.onkeydown = async function(ev) {
 		let input = newElementFieldInput as HTMLInputElement;
 		let app = await App.State();
 		let oninput = function() {
-			if (ev.key != "Enter") {
+			if (ev.code != "Enter") {
 				return;
 			}
 			let field = closest(input, ".newElementField");
