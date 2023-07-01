@@ -1427,3 +1427,7 @@ func (a *App) OpenURL(path string) error {
 func (a *App) GetClipboardText() (string, error) {
 	return wails.ClipboardGetText(a.ctx)
 }
+
+func (a *App) Quit() {
+	wails.Quit(a.ctx)
+}

@@ -333,6 +333,9 @@ window.onkeydown = async function(ev) {
 	let ctrlLike = ev.ctrlKey || ev.metaKey;
 	if (ctrlLike) {
 		ev.preventDefault();
+		if (ev.code == "KeyQ") {
+			App.Quit();
+		}
 		if (ev.code == "KeyR") {
 			App.ReloadEntry().then(redrawAll).catch(logError);
 		}
