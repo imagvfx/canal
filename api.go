@@ -215,6 +215,7 @@ func ensureUserDataSection(host, session, user string) error {
 }
 
 func getUserDataSection(host, session, user, section string) (*forge.UserDataSection, error) {
+	// getUserDataSection accepts section because the app needs multiple sections to operate
 	if session == "" {
 		return nil, fmt.Errorf("login please")
 	}
