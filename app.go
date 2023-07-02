@@ -604,8 +604,12 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) afterLogin() error {
+	err := ensureUserDataSection(a.host, a.session, a.user)
+	if err != nil {
+		return fmt.Errorf("ensure user data section: %v", err)
+	}
 	a.state = a.newState()
-	err := a.ReloadBase(true)
+	err = a.ReloadBase(true)
 	if err != nil {
 		return fmt.Errorf("reload base: %v", err)
 	}

@@ -198,6 +198,22 @@ func searchEntries(host, session, query string) ([]*forge.Entry, error) {
 	return ents, nil
 }
 
+func ensureUserDataSection(host, session, user string) error {
+	resp, err := http.PostForm("https://"+host+"/api/ensure-user-data-section", url.Values{
+		"session": {session},
+		"user":    {user},
+		"section": {"canal"},
+	})
+	if err != nil {
+		return err
+	}
+	err = decodeAPIResponse(resp, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func getUserDataSection(host, session, user, section string) (*forge.UserDataSection, error) {
 	if session == "" {
 		return nil, fmt.Errorf("login please")
