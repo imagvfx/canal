@@ -22,6 +22,14 @@ import (
 	wails "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+type ElemNotExistError struct {
+	elem string
+}
+
+func (e *ElemNotExistError) Error() string {
+	return fmt.Sprintf("element does not exist: %s", e.elem)
+}
+
 // App struct
 type App struct {
 	ctx     context.Context
@@ -1056,6 +1064,21 @@ func (a *App) NewElement(path, name, prog string) error {
 	}
 	nDigits := len(verDigits)
 	start, _ := strconv.Atoi(verDigits)
+	last, err := a.LastVersionOfElement(path, name, prog)
+	if err != nil {
+		e := &ElemNotExistError{}
+		if !errors.As(err, &e) {
+			return err
+		}
+	}
+	if last != "" {
+		last = strings.TrimPrefix(last, "v")
+		n, err := strconv.Atoi(last)
+		if err != nil {
+			return err
+		}
+		start = n + 1
+	}
 	for n := start; ; n++ {
 		v := strconv.Itoa(n)
 		z := nDigits - len(v)
@@ -1115,6 +1138,7 @@ type Elem struct {
 // Version in the app represents a file in a part directory that is in an element group.
 type Version struct {
 	Name  string
+	Num   int
 	Scene string
 }
 
@@ -1168,13 +1192,26 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 			}
 		}
 		v := Version{Name: ver, Scene: sceneDir + "/" + name}
+		if strings.HasPrefix(ver, "v") {
+			ver = ver[1:]
+		}
+		num, err := strconv.Atoi(ver)
+		if err != nil {
+			num = -1
+		}
+		v.Num = num
 		e.Versions = append(e.Versions, v)
 		elem[el+"/"+p.Name] = e
 	}
 	elems := make([]*Elem, 0, len(elem))
 	for _, el := range elem {
 		sort.Slice(el.Versions, func(i, j int) bool {
-			return el.Versions[i].Name > el.Versions[j].Name
+			cmp := el.Versions[i].Num - el.Versions[j].Num
+			if cmp != 0 {
+				return cmp > 0
+			}
+			// prefer version having more digits
+			return len(el.Versions[i].Name) > len(el.Versions[j].Name)
 		})
 		elems = append(elems, el)
 	}
@@ -1228,7 +1265,7 @@ func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
 		}
 		return "", fmt.Errorf("not found scene directory: %v", sceneDir)
 	}
-	vers := make([]string, 0)
+	vers := make([]Version, 0)
 	for _, f := range files {
 		if f.IsDir() {
 			continue
@@ -1239,15 +1276,29 @@ func (a *App) LastVersionOfElement(path, elem, prog string) (string, error) {
 			continue
 		}
 		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
-		vers = append(vers, ver)
+		v := Version{Name: ver}
+		if strings.HasPrefix(ver, "v") {
+			ver = ver[1:]
+		}
+		num, err := strconv.Atoi(ver)
+		if err != nil {
+			num = -1
+		}
+		v.Num = num
+		vers = append(vers, v)
 	}
 	if len(vers) == 0 {
-		return "", fmt.Errorf("element not exists: %s", elem)
+		return "", &ElemNotExistError{elem: elem}
 	}
 	sort.Slice(vers, func(i, j int) bool {
-		return vers[i] > vers[j]
+		cmp := vers[i].Num - vers[j].Num
+		if cmp != 0 {
+			return cmp > 0
+		}
+		// prefer version having more digits
+		return len(vers[i].Name) > len(vers[j].Name)
 	})
-	return vers[0], nil
+	return vers[0].Name, nil
 }
 
 // SceneFile returns scene filepath for given arguments combination.
