@@ -5,13 +5,9 @@ import * as App from '../wailsjs/go/main/App.js'
 window.onload = async function() {
 	try {
 		await App.Prepare();
-	} catch(err) {
-		await App.GoTo("/");
-	}
-	try {
 		redrawAll();
 	} catch(err) {
-		logError("on redraw: " + err);
+		logError(err);
 	}
 }
 
