@@ -627,7 +627,13 @@ func (a *App) afterLogin() error {
 	}
 	err = a.GoTo(path) // at least one page needed in history
 	if err != nil {
-		return err
+		// the entry might be deleted, or in an unrecoverable state.
+		// start from root instead.
+		err = a.GoTo("/")
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	return nil
 }
