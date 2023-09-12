@@ -583,7 +583,7 @@ body {
     background-color: #fafafa;
 }
 
-.scene.selected {
+.item.selected {
     background-color: #cde !important;
     outline: 1px solid #9ab;
 }

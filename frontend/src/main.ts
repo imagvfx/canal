@@ -114,24 +114,11 @@ window.onclick = async function(ev) {
 	}
 	let scene = closest(target, "#entryList .scene");
 	if (scene) {
-		let sceneListExpander = closest(target, ".sceneListExpander");
-		if (sceneListExpander) {
-			let elem = closest(sceneListExpander, ".element");
-			let showing = sceneListExpander.dataset.showing as string;
-			if (!showing) {
-				showing = "1";
-			} else {
-				showing = "";
-			}
-			sceneListExpander.dataset.showing = showing;
-			let vers = elem.querySelectorAll(".scene:not(.latest)") as NodeListOf<HTMLElement>;
-			for (let v of Array.from(vers)) {
-				if (showing) {
-					v.classList.remove("hidden");
-				} else {
-					v.classList.add("hidden");
-				}
-			}
+		let expander = closest(target, ".sceneListExpander");
+		if (expander) {
+			let showing = expander.dataset.showing as string;
+			let expand = !showing
+			toggleSceneListExpander(expander, expand);
 		} else {
 			let scenes = querySelectorAll("#entryList .scene");
 			scenes.forEach(s => s.classList.remove("selected"));
@@ -236,6 +223,23 @@ window.onmouseover = async function(ev) {
 	} else {
 		HoveringRecentPath = null;
 		hideThumbnailPopup();
+	}
+}
+
+function toggleSceneListExpander(expander: HTMLElement, expand: boolean) {
+	if (expand) {
+		expander.dataset.showing = "1";
+	} else {
+		expander.dataset.showing = "";
+	}
+	let elem = expander.closest(".element") as HTMLElement;
+	let vers = elem.querySelectorAll(".scene:not(.latest)") as NodeListOf<HTMLElement>;
+	for (let v of Array.from(vers)) {
+		if (expand) {
+			v.classList.remove("hidden");
+		} else {
+			v.classList.add("hidden");
+		}
 	}
 }
 
@@ -394,6 +398,138 @@ window.onkeydown = async function(ev) {
 		App.ReloadEntry().then(redrawAll).catch(logError);
 		return;
 	}
+
+	// keyboard navigation
+	if (ev.code == "ArrowUp") {
+		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
+		if (!items) {
+			// there isn't any item.
+			return;
+		}
+		let idx = -1
+		for (let i = 0; i < items.length; i++) {
+			let it = items[i];
+			if (it.classList.contains("selected")) {
+				idx = i;
+				break;
+			}
+		}
+		if (idx != -1) {
+			let sel = items[idx];
+			sel.classList.remove("selected");
+		}
+		if (idx <= 0) {
+			idx = items.length;
+		}
+		idx -= 1;
+		let sel = items[idx];
+		sel.classList.add("selected");
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		if (entryList.clientHeight != entryList.scrollHeight) {
+			sel.scrollIntoView({block: "nearest"});
+		}
+	} else if (ev.code == "ArrowDown") {
+		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
+		if (items.length == 0) {
+			// there isn't any item.
+			return;
+		}
+		let idx = -1
+		for (let i = 0; i < items.length; i++) {
+			let it = items[i];
+			if (it.classList.contains("selected")) {
+				idx = i;
+				break;
+			}
+		}
+		if (idx != -1) {
+			let sel = items[idx];
+			sel.classList.remove("selected");
+		}
+		idx += 1;
+		if (idx == items.length) {
+			idx = 0;
+		}
+		let sel = items[idx];
+		sel.classList.add("selected");
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		if (entryList.clientHeight != entryList.scrollHeight) {
+			sel.scrollIntoView({block: "nearest"});
+		}
+	} else if (ev.code == "ArrowLeft") {
+		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
+		if (sel) {
+			if (sel.classList.contains("scene")) {
+				let ver = sel.dataset.ver as string;
+				if (ver == "") {
+					let expander = sel.querySelector(".sceneListExpander") as HTMLElement;
+					let showing = expander.dataset.showing as string ;
+					if (showing != "") {
+						toggleSceneListExpander(expander, false);
+						return;
+					}
+				} else {
+					sel.classList.remove("selected");
+					let elem = sel.dataset.elem as string;
+					let prog = sel.dataset.prog as string;
+					sel = document.querySelector(`.scene[data-elem='${elem}'][data-prog='${prog}'][data-ver='']`) as HTMLElement;
+					let expander = sel.querySelector(".sceneListExpander") as HTMLElement;
+					toggleSceneListExpander(expander, false);
+					sel.classList.add("selected");
+					return;
+				}
+			}
+		}
+		let ent = document.querySelector("#currentEntry") as HTMLElement;
+		let path = ent.dataset.path as string;
+		if (path == "/") {
+			return;
+		}
+		let toks = path.split("/");
+		toks.pop();
+		let parent = toks.join("/");
+		if (parent == "") {
+			parent = "/";
+		}
+		App.GoTo(parent).then(async function() {
+			await redrawAll();
+			let ent = document.querySelector(".entry.item[data-path='" + path + "']") as HTMLElement;
+			if (ent) {
+				ent.classList.add("selected");
+				let entryList = document.querySelector("#entryList") as HTMLElement;
+				if (entryList.clientHeight != entryList.scrollHeight) {
+					ent.scrollIntoView();
+				}
+			}
+		}).catch(logError);
+	} else if (ev.code == "ArrowRight") {
+		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
+		if (sel) {
+			if (sel.classList.contains("scene")) {
+				let ver = sel.dataset.ver as string;
+				if (ver == "") {
+					let expander = sel.querySelector(".sceneListExpander") as HTMLElement;
+					let showing = expander.dataset.showing as string;
+					if (showing == "") {
+						toggleSceneListExpander(expander, true);
+						return;
+					}
+				}
+				return;
+			}
+			await onclickElement(sel as HTMLElement);
+			let firstItem = document.querySelector(".item") as HTMLElement;
+			if (firstItem) {
+				firstItem.classList.add("selected");
+				let entryList = document.querySelector("#entryList") as HTMLElement;
+				if (entryList.clientHeight != entryList.scrollHeight) {
+					firstItem.scrollIntoView();
+				}
+			}
+		}
+	} else if (ev.code == "Enter") {
+	}
+
 	let target = (<HTMLElement> ev.target);
 	let newElementFieldInput = closest(target, ".newElementFieldInput");
 	if (newElementFieldInput) {
@@ -574,6 +710,8 @@ function setCurrentPath(app: any) {
 }
 
 function redrawCurrentEntry(app: any) {
+	let ent = querySelector("#currentEntry") as HTMLElement;
+	ent.dataset.path = app.Path;
 	let entryThumbnail = querySelector("#currentEntryThumbnail") as HTMLImageElement;
 	App.GetThumbnail(app.Path).then(function(thumb) {
 		entryThumbnail.src = "data:image/png;base64," + thumb.Data;
@@ -608,6 +746,7 @@ function redrawEntryList(app: any) {
 			}).catch(logError);
 			let expander = document.createElement("div");
 			expander.classList.add("sceneListExpander");
+			expander.dataset.showing = "";
 			scene.append(expander);
 			if (e.Name == "") {
 				scene.innerHTML += "[main] (" + e.Program + ")";
@@ -629,7 +768,7 @@ function redrawEntryList(app: any) {
 		}
 	} else {
 		for (let ent of app.Entries) {
-			let div = document.createElement("div");
+			let div = document.createElement("div") as HTMLElement;
 			div.classList.add("entry");
 			div.classList.add("item");
 			let thumbEl = document.createElement("img") as HTMLImageElement;
@@ -640,18 +779,23 @@ function redrawEntryList(app: any) {
 				thumbEl.src = "data:image/png;base64," + thumb.Data;
 			}).catch(logError);
 			div.innerHTML += ent.Name;
-			div.onclick = async function() {
-				await App.GoTo(ent.Path);
-				try {
-					redrawAll();
-				} catch (err) {
-					logError(err);
-				}
+			div.dataset.path = ent.Path;
+			div.onclick = function() {
+				onclickElement(div);
 			}
 			children.push(div);
 		}
 	}
 	entryList.replaceChildren(...children);
+}
+
+async function onclickElement(div: HTMLElement) {
+	await App.GoTo(div.dataset.path as string);
+	try {
+		await redrawAll();
+	} catch (err) {
+		logError(err);
+	}
 }
 
 async function redrawNewElementButtons(app: any) {
