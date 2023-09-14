@@ -337,6 +337,8 @@ window.onchange = async function(ev) {
 }
 
 window.onkeydown = async function(ev) {
+	let app = await App.State();
+
 	// NOTE: metaKey is used instead of both ctrl or alt on mac
 	let ctrlLike = ev.ctrlKey || ev.metaKey;
 	if (ctrlLike) {
@@ -427,6 +429,8 @@ window.onkeydown = async function(ev) {
 
 	// keyboard navigation
 	if (ev.code == "ArrowUp") {
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		entryList.dataset.oldPath = ""
 		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
 		if (!items) {
 			// there isn't any item.
@@ -451,7 +455,13 @@ window.onkeydown = async function(ev) {
 		let sel = items[idx];
 		sel.classList.add("selected");
 		sel.scrollIntoView({block: "nearest"});
+		if (!app.AtLeaf) {
+			let itemPath = sel.dataset.path as string;
+			entryList.dataset.oldPath = itemPath;
+		}
 	} else if (ev.code == "ArrowDown") {
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		entryList.dataset.oldPath = ""
 		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
 		if (items.length == 0) {
 			// there isn't any item.
@@ -476,6 +486,10 @@ window.onkeydown = async function(ev) {
 		let sel = items[idx];
 		sel.classList.add("selected");
 		sel.scrollIntoView({block: "nearest"});
+		if (!app.AtLeaf) {
+			let itemPath = sel.dataset.path as string;
+			entryList.dataset.oldPath = itemPath;
+		}
 	} else if (ev.code == "ArrowLeft") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
@@ -539,10 +553,31 @@ window.onkeydown = async function(ev) {
 				return;
 			}
 			await onclickElement(sel as HTMLElement);
-			let firstItem = document.querySelector(".item") as HTMLElement;
-			if (firstItem) {
-				firstItem.classList.add("selected");
-				firstItem.scrollIntoView();
+			let currentEntry = document.querySelector("#currentEntry") as HTMLElement;
+			let path = currentEntry.dataset.path as string;
+			let toks = path.split("/");
+			let oldPath = entryList.dataset.oldPath as string;
+			if (!oldPath) {
+				oldPath = "";
+			}
+			let selName = oldPath.split("/")[toks.length];
+			if (selName) {
+				let selPath = path + "/" + selName;
+				let sel = document.querySelector(".item[data-path='" + selPath + "']");
+				if (sel) {
+					sel.classList.add("selected");
+					sel.scrollIntoView();
+				}
+			} else {
+				let firstItem = document.querySelector(".item") as HTMLElement;
+				if (firstItem) {
+					firstItem.classList.add("selected");
+					firstItem.scrollIntoView();
+					if (!app.AtLeaf) {
+						let itemPath = firstItem.dataset.path as string;
+						entryList.dataset.oldPath = itemPath;
+					}
+				}
 			}
 		}
 	} else if (ev.code == "Enter") {
@@ -563,7 +598,6 @@ window.onkeydown = async function(ev) {
 		}
 	}
 
-	let app = await App.State();
 	if (!app.AtLeaf) {
 		// there are already hidden scenes, will conflict with search
 		if (ev.code.startsWith("Key") || ev.code.startsWith("Digit") || ev.code == "Minus" || ev.code == "Backspace" || ev.code == "Escape") {
