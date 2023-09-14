@@ -592,12 +592,15 @@ window.onkeydown = async function(ev) {
 				}
 			}
 			let sel = document.querySelector(".item.selected") as HTMLElement;
-			if (sel.classList.contains("hidden")) {
-				// hidden item shouldn't be selected.
-				sel.classList.remove("selected");
-				sel = document.querySelector(".item:not(.hidden)") as HTMLElement;
+			if (!sel || (sel && sel.classList.contains("hidden"))) {
+				// need to select a new item
 				if (sel) {
-					sel.classList.add("selected");
+					// hidden item shouldn't be selected.
+					sel.classList.remove("selected");
+				}
+				let firstItem = document.querySelector(".item:not(.hidden)") as HTMLElement;
+				if (firstItem) {
+					firstItem.classList.add("selected");
 				}
 			}
 			sel = document.querySelector(".item.selected") as HTMLElement;
