@@ -128,17 +128,7 @@ window.onclick = async function(ev) {
 				let now = Date.now();
 				let ellapsed = now - lastSceneClick;
 				if (ellapsed < 300) {
-					try {
-						let app = await App.State();
-						let elem = scene.dataset.elem as string;
-						let ver = scene.dataset.ver as string;
-						let prog = scene.dataset.prog as string;
-						await App.OpenScene(app.Path, elem, ver, prog);
-						await App.ReloadUserSetting();
-						redrawAll();
-					} catch(err) {
-						logError(err);
-					}
+					openScene(scene);
 				}
 			} else {
 				lastSceneClick = Date.now()
@@ -223,6 +213,20 @@ window.onmouseover = async function(ev) {
 	} else {
 		HoveringRecentPath = null;
 		hideThumbnailPopup();
+	}
+}
+
+async function openScene(scene: HTMLElement) {
+	try {
+		let app = await App.State();
+		let elem = scene.dataset.elem as string;
+		let ver = scene.dataset.ver as string;
+		let prog = scene.dataset.prog as string;
+		await App.OpenScene(app.Path, elem, ver, prog);
+		await App.ReloadUserSetting();
+		redrawAll();
+	} catch(err) {
+		logError(err);
 	}
 }
 
@@ -528,6 +532,22 @@ window.onkeydown = async function(ev) {
 			}
 		}
 	} else if (ev.code == "Enter") {
+		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
+		if (sel) {
+			if (sel.classList.contains("scene")) {
+				openScene(sel);
+				return;
+			}
+			await onclickElement(sel as HTMLElement);
+			let firstItem = document.querySelector(".item") as HTMLElement;
+			if (firstItem) {
+				firstItem.classList.add("selected");
+				let entryList = document.querySelector("#entryList") as HTMLElement;
+				if (entryList.clientHeight != entryList.scrollHeight) {
+					firstItem.scrollIntoView();
+				}
+			}
+		}
 	}
 
 	let target = (<HTMLElement> ev.target);
