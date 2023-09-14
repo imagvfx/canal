@@ -483,6 +483,8 @@ window.onkeydown = async function(ev) {
 			sel.scrollIntoView({block: "nearest"});
 		}
 	} else if (ev.code == "ArrowLeft") {
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		entryList.dataset.search  = "";
 		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
 		if (sel) {
 			if (sel.classList.contains("scene")) {
@@ -529,6 +531,8 @@ window.onkeydown = async function(ev) {
 			}
 		}).catch(logError);
 	} else if (ev.code == "ArrowRight") {
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		entryList.dataset.search  = "";
 		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
 		if (sel) {
 			if (sel.classList.contains("scene")) {
@@ -554,6 +558,8 @@ window.onkeydown = async function(ev) {
 			}
 		}
 	} else if (ev.code == "Enter") {
+		let entryList = document.querySelector("#entryList") as HTMLElement;
+		entryList.dataset.search  = "";
 		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
 		if (sel) {
 			if (sel.classList.contains("scene")) {
@@ -568,6 +574,55 @@ window.onkeydown = async function(ev) {
 				if (entryList.clientHeight != entryList.scrollHeight) {
 					firstItem.scrollIntoView();
 				}
+			}
+		}
+	}
+
+	let app = await App.State();
+	if (!app.AtLeaf) {
+		// there are already hidden scenes, will conflict with search
+		if (ev.code.startsWith("Key") || ev.code.startsWith("Digit") || ev.code == "Minus" || ev.code == "Backspace" || ev.code == "Escape") {
+			// wierd, but Minus also represent underscore
+			let entryList = document.querySelector("#entryList") as HTMLElement;
+			let search = entryList.dataset.search as string;
+			if (!search) {
+				search = "";
+			}
+			if (ev.code == "Escape") {
+				search = "";
+			} else if (ev.code == "Backspace") {
+				if (search != "") {
+					search = search.slice(0, search.length-1);
+				}
+			} else {
+				search += ev.key;
+			}
+			entryList.dataset.search = search;
+			let items = entryList.querySelectorAll(".item") as NodeListOf<HTMLElement>;
+			for (let it of Array.from(items)) {
+				if (!it.innerText.includes(search)) {
+					it.classList.add("hidden");
+				} else {
+					it.classList.remove("hidden");
+				}
+			}
+			let sel = document.querySelector(".item.selected") as HTMLElement;
+			if (sel.classList.contains("hidden")) {
+				// hidden item shouldn't be selected.
+				sel.classList.remove("selected");
+				sel = document.querySelector(".item:not(.hidden)") as HTMLElement;
+				if (sel) {
+					sel.classList.add("selected");
+				}
+			}
+			sel = document.querySelector(".item.selected") as HTMLElement;
+			if (sel) {
+				sel.scrollIntoView();
+			}
+			if (search != "") {
+				log("searching: " + search);
+			} else {
+				log("clear search");
 			}
 		}
 	}
