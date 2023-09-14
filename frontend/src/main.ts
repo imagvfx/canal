@@ -450,10 +450,7 @@ window.onkeydown = async function(ev) {
 		idx -= 1;
 		let sel = items[idx];
 		sel.classList.add("selected");
-		let entryList = document.querySelector("#entryList") as HTMLElement;
-		if (entryList.clientHeight != entryList.scrollHeight) {
-			sel.scrollIntoView({block: "nearest"});
-		}
+		sel.scrollIntoView({block: "nearest"});
 	} else if (ev.code == "ArrowDown") {
 		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
 		if (items.length == 0) {
@@ -478,10 +475,7 @@ window.onkeydown = async function(ev) {
 		}
 		let sel = items[idx];
 		sel.classList.add("selected");
-		let entryList = document.querySelector("#entryList") as HTMLElement;
-		if (entryList.clientHeight != entryList.scrollHeight) {
-			sel.scrollIntoView({block: "nearest"});
-		}
+		sel.scrollIntoView({block: "nearest"});
 	} else if (ev.code == "ArrowLeft") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
@@ -524,10 +518,7 @@ window.onkeydown = async function(ev) {
 			let ent = document.querySelector(".entry.item[data-path='" + path + "']") as HTMLElement;
 			if (ent) {
 				ent.classList.add("selected");
-				let entryList = document.querySelector("#entryList") as HTMLElement;
-				if (entryList.clientHeight != entryList.scrollHeight) {
-					ent.scrollIntoView();
-				}
+				ent.scrollIntoView();
 			}
 		}).catch(logError);
 	} else if (ev.code == "ArrowRight") {
@@ -551,10 +542,7 @@ window.onkeydown = async function(ev) {
 			let firstItem = document.querySelector(".item") as HTMLElement;
 			if (firstItem) {
 				firstItem.classList.add("selected");
-				let entryList = document.querySelector("#entryList") as HTMLElement;
-				if (entryList.clientHeight != entryList.scrollHeight) {
-					firstItem.scrollIntoView();
-				}
+				firstItem.scrollIntoView();
 			}
 		}
 	} else if (ev.code == "Enter") {
@@ -570,10 +558,7 @@ window.onkeydown = async function(ev) {
 			let firstItem = document.querySelector(".item") as HTMLElement;
 			if (firstItem) {
 				firstItem.classList.add("selected");
-				let entryList = document.querySelector("#entryList") as HTMLElement;
-				if (entryList.clientHeight != entryList.scrollHeight) {
-					firstItem.scrollIntoView();
-				}
+				firstItem.scrollIntoView();
 			}
 		}
 	}
