@@ -403,6 +403,28 @@ window.onkeydown = async function(ev) {
 		return;
 	}
 
+	let target = (<HTMLElement> ev.target);
+	let newElementFieldInput = closest(target, ".newElementFieldInput");
+	if (newElementFieldInput) {
+		let input = newElementFieldInput as HTMLInputElement;
+		let app = await App.State();
+		let oninput = function() {
+			if (ev.code != "Enter") {
+				return;
+			}
+			let field = closest(input, ".newElementField");
+			let prog = field.dataset.prog as string;
+			let name = input.value as string;
+			field.classList.add("hidden");
+			App.NewElement(app.Path, name, prog).then(async function() {
+				await App.ReloadUserSetting();
+				await App.ReloadEntry();
+			}).then(redrawAll).catch(logError);
+		}
+		oninput();
+		return;
+	}
+
 	// keyboard navigation
 	if (ev.code == "ArrowUp") {
 		let items = document.querySelectorAll(".item:not(.hidden)") as NodeListOf<HTMLElement>;
@@ -548,27 +570,6 @@ window.onkeydown = async function(ev) {
 				}
 			}
 		}
-	}
-
-	let target = (<HTMLElement> ev.target);
-	let newElementFieldInput = closest(target, ".newElementFieldInput");
-	if (newElementFieldInput) {
-		let input = newElementFieldInput as HTMLInputElement;
-		let app = await App.State();
-		let oninput = function() {
-			if (ev.code != "Enter") {
-				return;
-			}
-			let field = closest(input, ".newElementField");
-			let prog = field.dataset.prog as string;
-			let name = input.value as string;
-			field.classList.add("hidden");
-			App.NewElement(app.Path, name, prog).then(async function() {
-				await App.ReloadUserSetting();
-				await App.ReloadEntry();
-			}).then(redrawAll).catch(logError);
-		}
-		oninput();
 	}
 }
 
