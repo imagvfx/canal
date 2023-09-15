@@ -529,11 +529,7 @@ window.onkeydown = async function(ev) {
 		}
 		App.GoTo(parent).then(async function() {
 			await redrawAll();
-			let ent = document.querySelector(".entry.item[data-path='" + path + "']") as HTMLElement;
-			if (ent) {
-				ent.classList.add("selected");
-				ent.scrollIntoView();
-			}
+			setSelected(true);
 		}).catch(logError);
 	} else if (ev.code == "ArrowRight") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
@@ -552,33 +548,8 @@ window.onkeydown = async function(ev) {
 				}
 				return;
 			}
-			await onclickElement(sel as HTMLElement);
-			let currentEntry = document.querySelector("#currentEntry") as HTMLElement;
-			let path = currentEntry.dataset.path as string;
-			let toks = path.split("/");
-			let oldPath = entryList.dataset.oldPath as string;
-			if (!oldPath) {
-				oldPath = "";
-			}
-			let selName = oldPath.split("/")[toks.length];
-			if (selName) {
-				let selPath = path + "/" + selName;
-				let sel = document.querySelector(".item[data-path='" + selPath + "']");
-				if (sel) {
-					sel.classList.add("selected");
-					sel.scrollIntoView();
-				}
-			} else {
-				let firstItem = document.querySelector(".item") as HTMLElement;
-				if (firstItem) {
-					firstItem.classList.add("selected");
-					firstItem.scrollIntoView();
-					if (!app.AtLeaf) {
-						let itemPath = firstItem.dataset.path as string;
-						entryList.dataset.oldPath = itemPath;
-					}
-				}
-			}
+			await onclickElement(sel);
+			setSelected(true);
 		}
 	} else if (ev.code == "Enter") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
@@ -589,12 +560,8 @@ window.onkeydown = async function(ev) {
 				openScene(sel);
 				return;
 			}
-			await onclickElement(sel as HTMLElement);
-			let firstItem = document.querySelector(".item") as HTMLElement;
-			if (firstItem) {
-				firstItem.classList.add("selected");
-				firstItem.scrollIntoView();
-			}
+			await onclickElement(sel);
+			setSelected(true);
 		}
 	}
 
@@ -772,10 +739,11 @@ function setCurrentPath(app: any) {
 	root.onclick = async function() {
 		await App.GoTo("/");
 		try {
-			redrawAll();
+			await redrawAll();
 		} catch (err: any) {
 			logError(err);
 		}
+		setSelected(false);
 	}
 	children.push(root);
 	for (let t of toks) {
@@ -789,12 +757,14 @@ function setCurrentPath(app: any) {
 		span.classList.add("link");
 		span.innerText = t
 		span.onclick = async function() {
+			console.log("span");
 			await App.GoTo(gotoPath);
 			try {
-				redrawAll();
+				await redrawAll();
 			} catch (err: any) {
 				logError(err);
 			}
+			setSelected(false);
 		}
 		children.push(span)
 	}
@@ -878,13 +848,50 @@ function redrawEntryList(app: any) {
 			}).catch(logError);
 			div.innerHTML += ent.Name;
 			div.dataset.path = ent.Path;
-			div.onclick = function() {
-				onclickElement(div);
+			div.onclick = async function() {
+				await onclickElement(div);
+				setSelected(false);
 			}
 			children.push(div);
 		}
 	}
 	entryList.replaceChildren(...children);
+}
+
+function setSelected(fallbackSelection: boolean) {
+	let entryList = document.querySelector("#entryList") as HTMLElement;
+	let firstItem = entryList.querySelector(".item:not(.hidden)") as HTMLElement;
+	let currentEntry = document.querySelector("#currentEntry") as HTMLElement;
+	let path = currentEntry.dataset.path as string;
+	let oldPath = entryList.dataset.oldPath as string;
+	if (!oldPath) {
+		oldPath = "";
+	}
+	let sel = null;
+	if (oldPath.length > path.length && oldPath.slice(0, path.length) == path) {
+		if (path == "/") {
+			path = "";
+		}
+		let rest = oldPath.slice(path.length+1);
+		let selName = rest.split("/")[0];
+		if (selName) {
+			// don't need to reset old path
+			let selPath = path + "/" + selName;
+			sel = document.querySelector(".item[data-path='" + selPath + "']");
+		} else {
+			// the entry might be deleted or so...
+			entryList.dataset.oldPath = path;
+		}
+	} else {
+		entryList.dataset.oldPath = path;
+		if (fallbackSelection) {
+			sel = firstItem;
+		}
+	}
+	if (sel) {
+		sel.classList.add("selected");
+		sel.scrollIntoView();
+	}
 }
 
 async function onclickElement(div: HTMLElement) {
