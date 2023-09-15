@@ -891,6 +891,9 @@ function setSelected(fallbackSelection: boolean) {
 	if (sel) {
 		sel.classList.add("selected");
 		sel.scrollIntoView();
+		// show 1 + 1/2 items above selected item, if possible.
+		entryList.scrollTop -= 70;
+		sel.scrollIntoView({block: "nearest"});
 	}
 }
 
