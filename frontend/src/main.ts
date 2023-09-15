@@ -5,10 +5,14 @@ import * as App from '../wailsjs/go/main/App.js'
 window.onload = async function() {
 	try {
 		await App.Prepare();
-		redrawAll();
+		await redrawAll();
 	} catch(err) {
 		logError(err);
 	}
+	let entryList = document.querySelector("#entryList") as HTMLElement;
+	let currentEntry = document.querySelector("#currentEntry") as HTMLElement;
+	let path = currentEntry.dataset.path as string;
+	entryList.dataset.oldPath = path;
 }
 
 function closest(from: HTMLElement, query: string): HTMLElement {
