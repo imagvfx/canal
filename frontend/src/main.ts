@@ -384,7 +384,12 @@ window.onkeydown = async function(ev) {
 				logError("invalid path: " + path);
 				return;
 			}
-			App.GoTo(path).then(redrawAll).catch(logError);
+			App.GoTo(path).then(async function() {
+				await redrawAll();
+				let ent = document.querySelector("#currentEntry") as HTMLElement;
+				let entryList = document.querySelector("#entryList") as HTMLElement;
+				entryList.dataset.oldPath = ent.dataset.path;
+			}).catch(logError);
 			return;
 		}
 	}
