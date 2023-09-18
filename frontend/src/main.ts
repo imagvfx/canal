@@ -761,7 +761,6 @@ function setCurrentPath(app: any) {
 		span.classList.add("link");
 		span.innerText = t
 		span.onclick = async function() {
-			console.log("span");
 			await App.GoTo(gotoPath);
 			try {
 				await redrawAll();
