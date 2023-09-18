@@ -813,6 +813,7 @@ function redrawCurrentEntry(app: any) {
 
 function redrawEntryList(app: any) {
 	let entryList = querySelector("#entryList");
+	entryList.dataset.search = "";
 	let children = [];
 	if (app.User == "") {
 		entryList.replaceChildren();
