@@ -571,7 +571,10 @@ window.onkeydown = async function(ev) {
 
 	if (!app.AtLeaf) {
 		// there are already hidden scenes, will conflict with search
-		if (ev.code.startsWith("Key") || ev.code.startsWith("Digit") || ev.code == "Minus" || ev.code == "Backspace" || ev.code == "Escape") {
+		if (
+			ev.code.startsWith("Key") || ev.code.startsWith("Digit") || ev.code.startsWith("Numpad") ||
+			ev.code == "Minus" || ev.code == "Backspace" || ev.code == "Escape"
+		) {
 			// wierd, but Minus also represent underscore
 			let entryList = document.querySelector("#entryList") as HTMLElement;
 			let search = entryList.dataset.search as string;
