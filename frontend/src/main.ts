@@ -583,7 +583,7 @@ window.onkeydown = async function(ev) {
 			await onclickElement(sel);
 			setSelected(true);
 		}
-	} else if (ev.code == "Enter") {
+	} else if (ev.code == "Enter" || ev.code == "NumpadEnter") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
 		let sel = document.querySelector(".item:not(.hidden).selected") as HTMLElement;
