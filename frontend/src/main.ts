@@ -491,6 +491,7 @@ window.onkeydown = async function(ev) {
 			let itemPath = sel.dataset.path as string;
 			entryList.dataset.oldPath = itemPath;
 		}
+		return;
 	} else if (ev.code == "ArrowDown") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.oldPath = ""
@@ -522,6 +523,7 @@ window.onkeydown = async function(ev) {
 			let itemPath = sel.dataset.path as string;
 			entryList.dataset.oldPath = itemPath;
 		}
+		return;
 	} else if (ev.code == "ArrowLeft") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
@@ -563,6 +565,7 @@ window.onkeydown = async function(ev) {
 			await redrawAll();
 			setSelected(true);
 		}).catch(logError);
+		return;
 	} else if (ev.code == "ArrowRight") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
@@ -583,6 +586,7 @@ window.onkeydown = async function(ev) {
 			await onclickElement(sel);
 			setSelected(true);
 		}
+		return;
 	} else if (ev.code == "Enter" || ev.code == "NumpadEnter") {
 		let entryList = document.querySelector("#entryList") as HTMLElement;
 		entryList.dataset.search  = "";
@@ -595,6 +599,7 @@ window.onkeydown = async function(ev) {
 			await onclickElement(sel);
 			setSelected(true);
 		}
+		return;
 	}
 
 	if (!app.AtLeaf) {
