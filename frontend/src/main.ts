@@ -959,6 +959,34 @@ function isRecent(then: any) {
 	return delta < day;
 }
 
+function addEntryInfoDiv(ent: any) {
+	let div = document.createElement("div");
+	div.classList.add("entryInfo");
+	div.dataset.path = ent.Path;
+	div.dataset.type = ent.Type;
+	let title = document.createElement("div");
+	title.classList.add("title");
+	let dot = document.createElement("div");
+	dot.classList.add("statusDot", "hidden");
+	title.append(dot);
+	let name = document.createElement("div");
+	name.classList.add("titleName");
+	name.innerText = ent.Name;
+	let updated = new Date(ent.UpdatedAt);
+	if (isRecent(updated)) {
+		let dot = document.createElement("div");
+		dot.classList.add("recentlyUpdatedDot");
+		dot.classList.add("big");
+		name.append(dot);
+	}
+	title.append(name);
+	let info = document.createElement("div");
+	info.classList.add("titleInfo");
+	title.append(info);
+	div.append(title)
+	return div
+}
+
 async function redrawInfoArea(app: any) {
 	let area = querySelector("#infoArea");
 	if (!app.User) {
@@ -967,35 +995,10 @@ async function redrawInfoArea(app: any) {
 	}
 	let ents = [...app.ParentEntries];
 	ents.push(app.Entry)
-	let addEntryInfoDiv = function(ent: any) {
-		let div = document.createElement("div");
-		div.classList.add("entryInfo");
-		div.dataset.path = ent.Path;
-		div.dataset.type = ent.Type;
-		let title = document.createElement("div");
-		title.classList.add("title");
-		let dot = document.createElement("div");
-		dot.classList.add("statusDot", "hidden");
-		title.append(dot);
-		let name = document.createElement("div");
-		name.classList.add("titleName");
-		name.innerText = ent.Name;
-		let updated = new Date(ent.UpdatedAt);
-		if (isRecent(updated)) {
-			let dot = document.createElement("div");
-			dot.classList.add("recentlyUpdatedDot");
-			dot.classList.add("big");
-			name.append(dot);
-		}
-		title.append(name);
-		let info = document.createElement("div");
-		info.classList.add("titleInfo");
-		title.append(info);
-		div.append(title)
-		return div
-	}
+
 	let children = [];
 	for (let ent of ents) {
+		// draw entry info from root to current entry
 		if (ent.Path == "/") {
 			continue;
 		}
@@ -1137,40 +1140,43 @@ async function redrawInfoArea(app: any) {
 		children.push(entDiv);
 	}
 	for (let ent of ents) {
-		if (ent.Type == "shot" || ent.Type == "asset") {
-			let parts = [];
-			try {
-				parts = await App.ListAllEntries(ent.Path);
-			} catch(err) {
-				logError(err);
-				return;
-			}
-			for (let ent of parts) {
-				let entDiv = addEntryInfoDiv(ent);
-				entDiv.classList.add("sub");
-				let nameDiv = entDiv.querySelector(".titleName") as HTMLElement;
-				nameDiv.classList.add("pathLink", "link");
-				nameDiv.dataset.path = ent.Path;
-				let statusProp = ent.Property["status"];
-				if (statusProp) {
-					let status = statusProp.Eval;
-					let color = await App.StatusColor(ent.Type, status);
-					if (!color) {
-						color = "#dddddd"
-					}
-					let dot = entDiv.querySelector(".statusDot") as HTMLElement;
-					dot.title = status;
-					if (!status) {
-						dot.title = "(none)";
-					}
-					dot.style.backgroundColor = color+"dd";
-					dot.style.border = "1px solid " + color;
-					dot.classList.remove("hidden");
+		// when we are in a shot or asset, it will show the parts
+		// so we can navigate conviniently
+		if (!(ent.Type == "shot" || ent.Type == "asset")) {
+			continue
+		}
+		let parts = [];
+		try {
+			parts = await App.ListAllEntries(ent.Path);
+		} catch(err) {
+			logError(err);
+			return;
+		}
+		for (let ent of parts) {
+			let entDiv = addEntryInfoDiv(ent);
+			entDiv.classList.add("sub");
+			let nameDiv = entDiv.querySelector(".titleName") as HTMLElement;
+			nameDiv.classList.add("pathLink", "link");
+			nameDiv.dataset.path = ent.Path;
+			let statusProp = ent.Property["status"];
+			if (statusProp) {
+				let status = statusProp.Eval;
+				let color = await App.StatusColor(ent.Type, status);
+				if (!color) {
+					color = "#dddddd"
 				}
-				let info = entDiv.querySelector(".titleInfo") as HTMLElement;
-				info.innerText = ent.Property["assignee"].Eval;
-				children.push(entDiv);
+				let dot = entDiv.querySelector(".statusDot") as HTMLElement;
+				dot.title = status;
+				if (!status) {
+					dot.title = "(none)";
+				}
+				dot.style.backgroundColor = color+"dd";
+				dot.style.border = "1px solid " + color;
+				dot.classList.remove("hidden");
 			}
+			let info = entDiv.querySelector(".titleInfo") as HTMLElement;
+			info.innerText = ent.Property["assignee"].Eval;
+			children.push(entDiv);
 		}
 	}
 	area.replaceChildren(...children);
