@@ -49,7 +49,6 @@ type App struct {
 	history       []string
 	historyIdx    int
 	assigned      []*forge.Entry
-	openCmd       string
 	entrySorters  map[string]Sorter
 }
 
@@ -71,17 +70,6 @@ func NewApp(cfg *Config) *App {
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
-	switch runtime.GOOS {
-	case "windows":
-		a.openCmd = "start"
-	case "darwin":
-		a.openCmd = "open"
-	case "linux":
-		a.openCmd = "xdg-open"
-	default:
-		log.Fatalf("unsupported os: %s", runtime.GOOS)
-	}
-
 	a.ctx = ctx
 }
 
@@ -691,12 +679,7 @@ func (a *App) loadEntry(entry *forge.Entry) error {
 
 // OpenLoginPage shows login page to user.
 func (a *App) OpenLoginPage(key string) error {
-	cmd := exec.Command(a.openCmd, "https://"+a.host+"/login?app_session_key="+key)
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
+	return openPath("https://" + a.host + "/login?app_session_key=" + key)
 }
 
 // WaitLogin waits until the user log in.
@@ -1439,20 +1422,34 @@ func (a *App) DirExists(dir string) (bool, error) {
 	return true, nil
 }
 
+// openPath opens a path which can be a file, directory, or url.
+func openPath(path string) error {
+	var open []string
+	switch runtime.GOOS {
+	case "windows":
+		open = []string{"cmd", "/c", "start " + path}
+	case "darwin":
+		open = []string{"open", path}
+	case "linux":
+		open = []string{"xdg-open", path}
+	default:
+		log.Fatalf("unsupported os: %s", runtime.GOOS)
+	}
+
+	cmd := exec.Command(open[0], open[1:]...)
+	_, err := cmd.CombinedOutput()
+	return err
+}
+
 // Open opens a directory or run a file.
-func (a *App) Open(ent string) error {
-	_, err := os.Stat(ent)
+func (a *App) Open(path string) error {
+	_, err := os.Stat(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
-	cmd := exec.Command(a.openCmd, ent)
-	_, err = cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
+	return openPath(path)
 }
 
 // OpenDir opens a directory using native file browser of current OS.
@@ -1467,22 +1464,12 @@ func (a *App) OpenDir(dir string) error {
 			return err
 		}
 	}
-	cmd := exec.Command(a.openCmd, dir)
-	_, err = cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
+	return openPath(dir)
 }
 
 // OpenURL opens a url page which shows information about the entry.
 func (a *App) OpenURL(path string) error {
-	cmd := exec.Command(a.openCmd, "https://"+a.host+path)
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
+	return openPath("https://" + a.host + path)
 }
 
 func (a *App) GetClipboardText() (string, error) {
