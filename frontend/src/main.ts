@@ -105,13 +105,15 @@ window.onclick = async function(ev) {
 			recentPaths.classList.add("hidden");
 		}
 	}
-	let openDirButton = closest(target, "#openDirButton");
+	let openDirButton = closest(target, ".openDirButton");
 	if (openDirButton) {
+		let path = openDirButton.dataset.path as string;
+		if (!path) {
+			logError(openDirButton.dataset.err);
+			return;
+		}
 		try {
-			let app = await App.State();
-			if (app.Dir != "") {
-				await App.OpenDir(app.Dir);
-			}
+			await App.OpenDir(path);
 		} catch (err) {
 			logError(err);
 		}
@@ -713,30 +715,21 @@ function redrawLoginArea(app: any) {
 	}
 }
 
-function redrawOptionBar(app: any) {
+async function redrawOptionBar(app: any) {
 	let assignedCheckBox = querySelector("#assignedCheckBox") as HTMLInputElement;
 	let reloadAssignedButton = querySelector("#reloadAssignedButton");
-	let openDirButton = querySelector("#openDirButton");
+	let openDirButton = querySelector("#openCurrentDir");
 	if (app.User == "") {
 		assignedCheckBox.disabled = true;
 		assignedCheckBox.checked = false;
 		reloadAssignedButton.classList.add("disabled");
-		openDirButton.dataset.type = "disabled";
+		openDirButton.dataset.path = "";
 		return;
 	}
 	assignedCheckBox.disabled = false;
 	assignedCheckBox.checked = app.Options.AssignedOnly;
 	reloadAssignedButton.classList.remove("disabled");
-	openDirButton.dataset.type = "";
-	if (app.Dir == "") {
-		openDirButton.dataset.type = "disabled";
-		return;
-	}
-	if (app.DirExists) {
-		openDirButton.dataset.type = "";
-	} else {
-		openDirButton.dataset.type = "new";
-	}
+	await refreshOpenDirButton(openDirButton, app.Path);
 }
 
 function setCurrentPath(app: any) {
@@ -1030,7 +1023,11 @@ async function redrawInfoArea(app: any) {
 				propsDiv.classList.add("hidden");
 			}
 		}
+		let openDirButton = document.createElement("div");
+		openDirButton.classList.add("openDirButton")
+		refreshOpenDirButton(openDirButton, ent.Path)
 		let titleDiv = entDiv.querySelector(".title") as HTMLElement;
+		titleDiv.append(openDirButton);
 		titleDiv.append(plistTglDiv);
 
 		let statusProp = ent.Property["status"];
@@ -1180,6 +1177,34 @@ async function redrawInfoArea(app: any) {
 		}
 	}
 	area.replaceChildren(...children);
+}
+
+async function refreshOpenDirButton(btn: any, ent: any) {
+	let path = "";
+	try {
+		path = await App.Dir(ent);
+	} catch (err: any) {
+		btn.dataset.path = "";
+		btn.dataset.err = err;
+		return;
+	}
+	btn.dataset.path = path;
+	if (path == "") {
+		return;
+	}
+	btn.innerHTML = "";
+	try {
+		let exists = await App.DirExists(path);
+		if (!exists) {
+			let newDir = document.createElement("div");
+			newDir.classList.add("newDir")
+			newDir.innerText = "+"
+			btn.append(newDir)
+		}
+	} catch (err: any) {
+		btn.dataset.path = "";
+		btn.dataset.err = err;
+	}
 }
 
 function toggleAddProgramLinkPopup() {

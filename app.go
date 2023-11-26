@@ -664,16 +664,6 @@ func (a *App) loadEntry(entry *forge.Entry) error {
 	if err != nil {
 		return err
 	}
-	dir, err := a.Dir(path)
-	if err != nil {
-		return err
-	}
-	a.state.Dir = dir
-	dirExists, err := a.DirExists(dir)
-	if err != nil {
-		return err
-	}
-	a.state.DirExists = dirExists
 	return nil
 }
 
@@ -1400,7 +1390,7 @@ func (a *App) Dir(path string) (string, error) {
 	}
 	dirTmpl, ok := a.config.Dir[ent.Type]
 	if !ok {
-		return "", nil
+		return "", fmt.Errorf("directory not specified")
 	}
 	env, err := a.EntryEnvirons(path)
 	if err != nil {

@@ -63,7 +63,7 @@ body {
     filter: invert() brightness(0.5);
 }
 
-#openDirButton {
+.openDirButton {
     width: 1.3rem;
     height: 1.3rem;
     display: flex;
@@ -80,26 +80,22 @@ body {
     background-position: center;
 }
 
-#openDirButton:hover {
+.openDirButton:hover {
     border: 1px solid #cde;
     background-color: #cde8;
 }
 
-#openDirButton[data-type="disabled"] {
+.openDirButton[data-path=""] {
     filter: grayscale();
     cursor: default;
     border: 0;
     background-color: #0000;
 }
 
-#newDir {
+.newDir {
     font-size: 0.8rem;
-    color: #4488aa;
+    color: #4488aaff;
     -webkit-user-select: none;
-}
-
-#openDirButton:not([data-type="new"]) #newDir {
-    display: none;
 }
 
 #middle {
