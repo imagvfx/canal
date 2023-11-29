@@ -973,6 +973,9 @@ function addEntryInfoDiv(ent: any) {
 		name.append(dot);
 	}
 	title.append(name);
+	let divider = document.createElement("div");
+	divider.classList.add("divider");
+	title.append(divider);
 	let info = document.createElement("div");
 	info.classList.add("titleInfo");
 	title.append(info);
@@ -1006,12 +1009,14 @@ async function redrawInfoArea(app: any) {
 		}
 		entProps = await App.SortEntryProperties(entProps, ent.Type);
 		let entDiv = addEntryInfoDiv(ent);
+		let titleDiv = entDiv.querySelector(".title") as HTMLElement;
+		let titleNameDiv = entDiv.querySelector(".titleName") as HTMLElement;
 		let plistTglDiv = document.createElement("div");
 		plistTglDiv.classList.add("propertyListToggle");
 		let imageDiv = document.createElement("div");
 		imageDiv.classList.add("image");
 		plistTglDiv.append(imageDiv);
-		plistTglDiv.onclick = function() {
+		titleNameDiv.onclick = function() {
 			let on = plistTglDiv.classList.contains("on");
 			on = !on;
 			let propsDiv = entDiv.querySelector(".entryProperties") as HTMLElement;
@@ -1026,9 +1031,8 @@ async function redrawInfoArea(app: any) {
 		let openDirButton = document.createElement("div");
 		openDirButton.classList.add("openDirButton")
 		refreshOpenDirButton(openDirButton, ent.Path)
-		let titleDiv = entDiv.querySelector(".title") as HTMLElement;
+		titleNameDiv.append(plistTglDiv);
 		titleDiv.append(openDirButton);
-		titleDiv.append(plistTglDiv);
 
 		let statusProp = ent.Property["status"];
 		if (statusProp) {
@@ -1152,9 +1156,9 @@ async function redrawInfoArea(app: any) {
 		for (let ent of parts) {
 			let entDiv = addEntryInfoDiv(ent);
 			entDiv.classList.add("sub");
-			let nameDiv = entDiv.querySelector(".titleName") as HTMLElement;
-			nameDiv.classList.add("pathLink", "link");
-			nameDiv.dataset.path = ent.Path;
+			let titleDiv = entDiv.querySelector(".title") as HTMLElement;
+			titleDiv.classList.add("pathLink", "link");
+			titleDiv.dataset.path = ent.Path;
 			let statusProp = ent.Property["status"];
 			if (statusProp) {
 				let status = statusProp.Eval;

@@ -621,14 +621,22 @@ body {
     color: #888;
 }
 
-.titleName {
-    flex: 1;
-    display: inline-flex;
+.title.link:hover {
     text-decoration: none !important;
 }
 
-.titleName.link:hover {
-    color: #248;
+.title.link:hover .titleName {
+    color: #248 !important;
+}
+
+.titleName {
+    display: inline-flex;
+    text-decoration: none !important;
+    cursor: default;
+}
+
+.titleName:not(:hover) .propertyListToggle {
+    display: none;
 }
 
 .titleInfo {
@@ -656,12 +664,6 @@ body {
     border: 1px solid #0000;
     width: 1rem;
     height: 1rem;
-}
-
-.propertyListToggle:hover {
-    border: 1px solid #8ab8;
-    border-radius: 2px;
-    background-color: #acd8;
 }
 
 .statusDot {
