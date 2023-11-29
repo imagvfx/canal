@@ -28,33 +28,37 @@
         </div>
     </div>
     <div id="middle">
-        <div id="entryArea">
-            <div id="currentEntry">
-                <img id="currentEntryThumbnail">
+        <div id="logView"></div>
+        <div id="entryView">
+            <div id="entryArea">
+                <div id="currentEntry">
+                    <img id="currentEntryThumbnail">
+                </div>
+                <div id="navigation">
+                    <div id="recentsButton">recents</div>
+                </div>
+                <div id="recentPaths" class="hidden"></div>
+                <div id="optionBar">
+                    <input id="assignedCheckBox" type="checkbox"><label for="assignedCheckBox">assigned</label>
+                    <div id="reloadAssignedButton"></div>
+                    <div class="divider"></div>
+                    <div id="openCurrentDir" class="openDirButton"></div>
+                </div>
+                <div id="entryList" class="list"></div>
+                <div id="programsBar">
+                    <div id="addProgramLinkPopup" class="hidden"></div>
+                    <div id="addProgramLink" class="link">add a program</div>
+                    <div style="flex:1;"></div>
+                    <div id="newElementButtons"></div>
+                </div>
             </div>
-            <div id="navigation">
-                <div id="recentsButton">recents</div>
+            <div id="infoArea">
             </div>
-            <div id="recentPaths" class="hidden"></div>
-            <div id="optionBar">
-                <input id="assignedCheckBox" type="checkbox"><label for="assignedCheckBox">assigned</label>
-                <div id="reloadAssignedButton"></div>
-                <div class="divider"></div>
-                <div id="openCurrentDir" class="openDirButton"></div>
-            </div>
-            <div id="entryList" class="list"></div>
-            <div id="programsBar">
-                <div id="addProgramLinkPopup" class="hidden"></div>
-                <div id="addProgramLink" class="link">add a program</div>
-                <div style="flex:1;"></div>
-                <div id="newElementButtons"></div>
-            </div>
-        </div>
-        <div id="infoArea">
         </div>
     </div>
     <div id="bottom">
-        <div id="statusBar">done</div>
+        <div id="statusBar"></div>
+        <div id="showLogButton">log</div>
     </div>
 </div>
 <div id="contextMenu">

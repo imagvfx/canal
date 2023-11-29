@@ -1093,10 +1093,10 @@ func (a *App) NewElement(path, name, prog string) error {
 	cmd.Dir = sceneDir
 	cmd.Env = env
 	b, err := cmd.CombinedOutput()
-	out := string(b)
-	fmt.Println(out)
+	wails.EventsEmit(a.ctx, "log", string(b))
 	if err != nil {
-		fmt.Println(err)
+		wails.EventsEmit(a.ctx, "log", err.Error())
+		return err
 	}
 	err = a.addRecentPath(path)
 	if err != nil {
@@ -1373,7 +1373,8 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		fmt.Println(err)
+		wails.EventsEmit(a.ctx, "log", err.Error())
+		return err
 	}
 	err = a.addRecentPath(path)
 	if err != nil {
