@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/big"
 	"os"
@@ -1374,38 +1372,17 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 	cmd.Dir = filepath.Dir(scene)
 	cmd.Env = env
 	cmd.Stdin = os.Stdin
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	// Note: stdout, stderr will not flush until the program ends, which is unfortune.
-	// see https://stackoverflow.com/a/61748194
-	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
-	go a.logging(scanner)
-
 	err = a.addRecentPath(path)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (a *App) logging(scanner *bufio.Scanner) {
-	for scanner.Scan() {
-		wails.EventsEmit(a.ctx, "log", scanner.Text())
-	}
-	fmt.Println(scanner.Err())
 }
 
 // Dir returns directory path of an entry.
