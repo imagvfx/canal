@@ -1098,10 +1098,10 @@ func (a *App) NewElement(path, name, prog string) error {
 	cmd.Dir = sceneDir
 	cmd.Env = env
 	b, err := cmd.CombinedOutput()
-	wails.EventsEmit(a.ctx, "log", string(b))
+	out := string(b)
+	fmt.Println(out)
 	if err != nil {
-		wails.EventsEmit(a.ctx, "log", err.Error())
-		return err
+		fmt.Println(err)
 	}
 	err = a.addRecentPath(path)
 	if err != nil {
@@ -1386,8 +1386,7 @@ func (a *App) OpenScene(path, elem, ver, prog string) error {
 
 	err = cmd.Start()
 	if err != nil {
-		wails.EventsEmit(a.ctx, "log", err.Error())
-		return err
+		fmt.Println(err)
 	}
 
 	// Note: stdout, stderr will not flush until the program ends, which is unfortune.

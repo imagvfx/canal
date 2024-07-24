@@ -1,7 +1,6 @@
 'use strict';
 
 import * as App from '../wailsjs/go/main/App.js'
-import * as runtime from '../wailsjs/runtime/runtime.js'
 
 window.onload = async function() {
 	try {
@@ -14,12 +13,6 @@ window.onload = async function() {
 	let currentEntry = document.querySelector("#currentEntry") as HTMLElement;
 	let path = currentEntry.dataset.path as string;
 	entryList.dataset.oldPath = path;
-	runtime.EventsOn("log", function(l: any) {
-		let logView = document.querySelector("#logView") as HTMLElement;
-		let log = document.createElement("div");
-		log.innerText = l;
-		logView.append(log);
-	});
 }
 
 function closest(from: HTMLElement, query: string): HTMLElement {
@@ -88,20 +81,6 @@ window.onclick = async function(ev) {
 			redrawAll();
 		} catch (err: any) {
 			logError(err);
-		}
-	}
-	let showLogButton = closest(target, "#showLogButton");
-	if (showLogButton) {
-		let middle = document.querySelector("#middle") as HTMLElement;
-		if (middle.classList.contains("showLog")) {
-			middle.classList.remove("showLog");
-		} else {
-			middle.classList.add("showLog");
-			let logView = document.querySelector("#logView") as HTMLElement;
-			let lastLog = logView.querySelector("div:last-child");
-			if (lastLog) {
-				lastLog.scrollIntoView();
-			}
 		}
 	}
 	let urlLink = closest(target, "#urlLink");
