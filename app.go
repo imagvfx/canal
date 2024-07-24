@@ -1162,6 +1162,10 @@ func (a *App) ListElements(path string) ([]*Elem, error) {
 		el := string(reName.ExpandString([]byte{}, "$ELEM", name, idxs))
 		ver := string(reName.ExpandString([]byte{}, "$VER", name, idxs))
 		ext := string(reName.ExpandString([]byte{}, "$EXT", name, idxs))
+		extra := string(reName.ExpandString([]byte{}, "$EXTRA", name, idxs))
+		if extra != "" {
+			continue
+		}
 		p := programOf[ext]
 		if p == nil {
 			continue
