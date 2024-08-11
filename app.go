@@ -629,7 +629,10 @@ func (a *App) afterLogin() error {
 }
 
 func (a *App) ReloadEntry() error {
-	pth := a.history[a.historyIdx]
+	pth := "/"
+	if len(a.history) != 0 {
+		pth = a.history[a.historyIdx]
+	}
 	entry, err := a.GetEntry(pth)
 	if err != nil {
 		return err
