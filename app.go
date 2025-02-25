@@ -600,7 +600,12 @@ func (a *App) Login() (string, error) {
 }
 
 func (a *App) afterLogin() error {
-	err := ensureUserDataSection(a.host, a.session, a.user)
+	user, err := getSessionUser(a.host, a.session)
+	if err != nil {
+		return fmt.Errorf("get session user: %v", err)
+	}
+	a.user = user.Name
+	err = ensureUserDataSection(a.host, a.session, a.user)
 	if err != nil {
 		return fmt.Errorf("ensure user data section: %v", err)
 	}
@@ -688,26 +693,21 @@ func (a *App) WaitLogin(key string) error {
 
 // readSession reads session from a config file.
 func (a *App) readSession() error {
-	data, err := readConfigFile("session")
+	data, err := readConfigFile("forge/session")
 	if err != nil {
 		return err
 	}
 	if len(data) == 0 {
 		return nil
 	}
-	toks := strings.Split(string(data), " ")
-	if len(toks) != 2 {
-		return fmt.Errorf("invalid session")
-	}
-	a.user = toks[0]
-	a.session = toks[1]
+	a.session = strings.TrimSpace(string(data))
 	return nil
 }
 
 // writeSession writes session to a config file.
 func (a *App) writeSession() error {
-	data := []byte(a.user + " " + a.session)
-	err := writeConfigFile("session", data)
+	data := []byte(a.session)
+	err := writeConfigFile("forge/session", data)
 	if err != nil {
 		return err
 	}
@@ -718,7 +718,7 @@ func (a *App) writeSession() error {
 func (a *App) removeSession() error {
 	a.user = ""
 	a.session = ""
-	err := removeConfigFile("session")
+	err := removeConfigFile("forge/session")
 	if err != nil {
 		return err
 	}
